@@ -31,11 +31,17 @@ int get_fs_object(const char *path, struct FsObject *fs_object) {
     if (dir_entry->d_type == FILE) {
       // append file
       struct FsObject *child = calloc(1, sizeof(struct FsObject));
-      child->name = dir_entry->d_name;
+      strcpy(child->name, dir_entry->d_name);
+      child->child_len = 0;
+      child->child = NULL;
       append_fs_object(fs_object, child);
     } else if (dir_entry->d_type == DIRECTORY) {
       // recursively keep scanning directories
-      
+      char *child_path = calloc(strlen(path)+strlen(dir_entry->d_name)+1, sizeof(char));
+      strcpy(child_path, path);
+      strcat(child_path, "/");
+      strcat(child_path, dir_entry->d_name);
+      get_fs_object(child_path, fs_object);
     }
   }
 

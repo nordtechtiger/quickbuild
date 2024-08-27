@@ -12,10 +12,10 @@ OBJ := $(SRC:$(SRC_DIR)%.c=$(OBJ_DIR)%.o)
 .PHONY all: quickbuild
 
 quickbuild: $(OBJ) $(DEPS)
-	$(C) $(CXXFLAGS) -o $(BIN_DIR)/quickbuild $(OBJ)
+	$(C) $(CFLAGS) -o $(BIN_DIR)/quickbuild $(OBJ)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(C) $(CXXFLAGS) -c $< -o $@
+	$(C) $(CFLAGS) -c $< -o $@
 
 run: quickbuild
 	./$(BIN_DIR)/quickbuild
