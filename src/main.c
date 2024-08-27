@@ -8,10 +8,10 @@ int main(int argc, char **argv) {
   printf("= quickbuild beta\n");
 
   // get file system tree
-  struct FsObject *fs_object = get_fs_object(".");
-  if (fs_object == NULL) {
-    printf("= error: failed to get filesystem information. consider submitting "
-           "a bug report");
+  struct FsObject *fs_object;
+  int ret = get_fs_object(".", fs_object);
+  if (0 > ret) {
+    printf("= error: failed to get filesystem information. consider submitting a bug report");
     return EXIT_FAILURE;
   }
 
