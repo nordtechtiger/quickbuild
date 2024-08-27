@@ -21,5 +21,5 @@ fluent {
 objects as obj {
     depends = [obj: "[source_dir]/*.o" -> "[build_dir]/*.c"];
     run = "gcc -c [depends] -o [obj]";
-}
+};
 ```
