@@ -52,6 +52,7 @@ int get_fs_object(const char *path, struct FsObject *fs_object) {
       strcat(child_path, "/");
       strcat(child_path, dir_entry->d_name);
       get_fs_object(child_path, fs_object);
+      free(child_path);
     } else {
       // if object found isn't a file or a directory - unsure if possible
       perror("unknown filesystem type encountered");
@@ -65,14 +66,18 @@ int get_fs_object(const char *path, struct FsObject *fs_object) {
 }
 
 void free_fs_object(struct FsObject *fs_object) {
+  // if fs_object has a child node, free it first recursively
   if (fs_object->child != NULL) {
     free_fs_object(fs_object->child);
     fs_object->child = NULL;
   }
+  // free fields
   free(fs_object->name);
   fs_object->name = NULL;
   free(fs_object->path);
   fs_object->path = NULL;
+  // free itself
+  free(fs_object);
 }
 
 void append_fs_object(struct FsObject *parent_fs_object,
@@ -80,5 +85,15 @@ void append_fs_object(struct FsObject *parent_fs_object,
   while (parent_fs_object->child != NULL) {
     parent_fs_object = parent_fs_object->child;
   }
-  parent_fs_object->child = child_fs_object;
+  if (parent_fs_object->name == NULL &&
+      parent_fs_object->path == NULL) {
+    // if parent is null, replace parent by child
+    parent_fs_object->name = child_fs_object->name;
+    parent_fs_object->path = child_fs_object->path;
+    parent_fs_object->child = child_fs_object->child;
+    free(child_fs_object);
+  } else {
+    // append child
+    parent_fs_object->child = child_fs_object;
+  }
 }
