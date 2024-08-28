@@ -1,5 +1,5 @@
 C = clang
-CFLAGS = -g -o0 -Wall -Wextra -pthread -pedantic-errors
+CFLAGS = -g -O0 -Wall -Wextra -pthread -pedantic-errors
 
 SRC_DIR := src
 OBJ_DIR := obj
