@@ -16,6 +16,7 @@ void append_fs_object(struct FsObject *parent_fs_object,
                       struct FsObject *child_fs_object);
 struct FsObject *find_fs_objects(char *pattern, uint32_t max_depth,
                     struct FsObject *fs_object);
+bool str_match(char *base, char *pattern);
 int get_path_depth(char *path);
 
 // gets a file system object tree
@@ -117,13 +118,40 @@ void append_fs_object(struct FsObject *parent_fs_object,
   }
 }
 
+// TODO: make this const char
 struct FsObject *find_fs_objects(char *pattern, uint32_t max_depth,
                                  struct FsObject *fs_object) {
+  uint32_t matches = 0;
+  struct FsObject *results = calloc(1, sizeof(struct FsObject));
+
+  while (1) {
+
+    // if path matches, copy and add to results
+    if (get_path_depth(fs_object->path) <= max_depth &&
+        str_match(fs_object->path,pattern)) {
+      struct FsObject *match = calloc(1, sizeof(struct FsObject));
+
+      match->name = calloc(strlen(fs_object->name) + 1, sizeof(char));
+      strcpy(match->name, fs_object->name);
+
+      match->path = calloc(strlen(fs_object->path) + 1, sizeof(char));
+      strcpy(match->path, fs_object->path);
+
+      match->child = NULL;
+
+      matches++;
+      append_fs_object(results, match);
+    }
+
+    printf("matches: %i, done processing:%s\n", matches, fs_object->path);
+
+    // check if we're reached the final fs_object
+    if (!(fs_object = fs_object->child)) break;
+  }
 }
 
 bool str_match(char *base, char *pattern) {
-  perror("str_match is not implemented yet");
-  exit(-1);
+  return !strcmp(base, pattern);
 }
 
 int get_path_depth(char *path) {
