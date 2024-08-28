@@ -15,15 +15,21 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  // load config file
+  // debug: print all paths
+  while(1) {
+    printf("path `%s` is file `%s`\n", fs_object->path, fs_object->name);
+    if(!(fs_object = fs_object->child)) break;
+  }
 
+  // load config file
+  
 
 
 
 
   
   // clean up and exit
-  free_fs_object(fs_object);
+  // free_fs_object(fs_object);
   printf("= done\n");
   return EXIT_SUCCESS;
 }

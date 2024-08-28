@@ -13,6 +13,8 @@ struct FsObject *resolve_fs_recursive(DIR *dir_stream);
 void free_fs_object(struct FsObject *fs_object);
 void append_fs_object(struct FsObject *parent_fs_object,
                       struct FsObject *child_fs_object);
+void find_fs_object(char *pattern, uint32_t max_depth,
+                    struct FsObject *fs_object);
 
 // gets a file system object tree
 int get_fs_object(const char *path, struct FsObject *fs_object) {
@@ -40,8 +42,11 @@ int get_fs_object(const char *path, struct FsObject *fs_object) {
       struct FsObject *child = calloc(1, sizeof(struct FsObject));
       child->name = calloc(strlen(dir_entry->d_name) + 1, sizeof(char));
       strcpy(child->name, dir_entry->d_name);
-      child->path = calloc(strlen(path) + 1, sizeof(char));
+
+      child->path = calloc(strlen(path) + strlen(dir_entry->d_name) + 2, sizeof(char));
       strcpy(child->path, path);
+      strcat(child->path, "/");
+      strcat(child->path, dir_entry->d_name);
 
       // append to root object
       append_fs_object(fs_object, child);
@@ -107,4 +112,19 @@ void append_fs_object(struct FsObject *parent_fs_object,
     // if parent has content, append child at the end instead
     parent_fs_object->child = child_fs_object;
   }
+}
+
+void find_fs_objects(char *pattern, uint32_t max_depth,
+                    struct FsObject *fs_object) {
+
+}
+
+int get_path_depth(char* path) {
+  uint32_t depth = 0;
+  for (int i = 0; path[i] != '\0'; i++) {
+    if (path[i] == '/') {
+      depth++;
+    }
+  }
+  return depth;
 }
