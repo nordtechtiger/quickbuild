@@ -14,7 +14,7 @@ int get_fs_object(const char *path, struct FsObject *fs_object);
 void free_fs_object(struct FsObject *fs_object);
 void append_fs_object(struct FsObject *parent_fs_object,
                       struct FsObject *child_fs_object);
-void find_fs_object(char *pattern, uint32_t max_depth,
+struct FsObject *find_fs_objects(char *pattern, uint32_t max_depth,
                     struct FsObject *fs_object);
 
 #endif
