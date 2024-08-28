@@ -26,7 +26,11 @@ int main(int argc, char **argv) {
   } while (fs_object.child != NULL);
 
   // load config file
-  printf("- \n");
 
+  // clean up and exit
+  printf("- cleaning up\n");
+  free_fs_object(&fs_object);
+
+  printf("= done\n");
   return EXIT_SUCCESS;
 }

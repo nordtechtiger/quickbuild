@@ -65,9 +65,14 @@ int get_fs_object(const char *path, struct FsObject *fs_object) {
 }
 
 void free_fs_object(struct FsObject *fs_object) {
-  perror("free_fs_object not implemented yet");
-  exit(EXIT_FAILURE);
-  // TODO: Recursively free all children
+  if (fs_object->child != NULL) {
+    free_fs_object(fs_object->child);
+    fs_object->child = NULL;
+  }
+  free(fs_object->name);
+  fs_object->name = NULL;
+  free(fs_object->path);
+  fs_object->path = NULL;
 }
 
 void append_fs_object(struct FsObject *parent_fs_object,
