@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  printf("- filesystem scan complete");
+  printf("- filesystem scan complete\n");
   do {
     printf("File `%s` at `%s`\n", fs_object.name, fs_object.path);
     fs_object = *fs_object.child;

@@ -30,12 +30,12 @@ int get_fs_object(const char *path, struct FsObject *fs_object) {
 
   while ((dir_entry = readdir(dir_stream))) {
     // skip . and .. (recursion) and .git
+    // TODO: make this configurable
     if (strcmp(dir_entry->d_name, ".") == 0 ||
         strcmp(dir_entry->d_name, "..") == 0 ||
         strcmp(dir_entry->d_name, ".git") == 0) {
       continue;
     }
-    // printf("Found item: %s\n", dir_entry->d_name);
     if (dir_entry->d_type == FILE) {
       // append file
       struct FsObject *child = calloc(1, sizeof(struct FsObject));
@@ -53,10 +53,13 @@ int get_fs_object(const char *path, struct FsObject *fs_object) {
       strcat(child_path, dir_entry->d_name);
       get_fs_object(child_path, fs_object);
     } else {
+      // if object found isn't a file or a directory - unsure if possible
       perror("unknown filesystem type encountered");
-      return -1;
+      return -1; // error
     }
   }
+
+  closedir(dir_stream);
 
   return 0; // ok
 }
