@@ -15,20 +15,15 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  struct FsObject *fs_object_iter = fs_object;
-
-  printf("- filesystem scan complete\n");
-  do {
-    printf("File `%s` at `%s`\n", fs_object_iter->name, fs_object_iter->path);
-    fs_object_iter = fs_object_iter->child;
-  } while (fs_object_iter != NULL);
-
   // load config file
 
-  // clean up and exit
-  printf("- cleaning up\n");
-  free_fs_object(fs_object);
 
+
+
+
+  
+  // clean up and exit
+  free_fs_object(fs_object);
   printf("= done\n");
   return EXIT_SUCCESS;
 }

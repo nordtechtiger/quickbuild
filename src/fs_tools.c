@@ -12,12 +12,10 @@ int get_fs_object(const char *path, struct FsObject *fs_object);
 struct FsObject *resolve_fs_recursive(DIR *dir_stream);
 void free_fs_object(struct FsObject *fs_object);
 void append_fs_object(struct FsObject *parent_fs_object,
-                     struct FsObject *child_fs_object);
+                      struct FsObject *child_fs_object);
 
 // gets a file system object tree
 int get_fs_object(const char *path, struct FsObject *fs_object) {
-  // printf("Entering path: %s\n", path);
-
   // initialize
   struct dirent *dir_entry;
   DIR *dir_stream;
@@ -36,23 +34,30 @@ int get_fs_object(const char *path, struct FsObject *fs_object) {
         strcmp(dir_entry->d_name, ".git") == 0) {
       continue;
     }
+
     if (dir_entry->d_type == FILE) {
-      // append file
+      // allocate and fill out fields
       struct FsObject *child = calloc(1, sizeof(struct FsObject));
       child->name = calloc(strlen(dir_entry->d_name) + 1, sizeof(char));
       strcpy(child->name, dir_entry->d_name);
       child->path = calloc(strlen(path) + 1, sizeof(char));
       strcpy(child->path, path);
+
+      // append to root object
       append_fs_object(fs_object, child);
+
     } else if (dir_entry->d_type == DIRECTORY) {
-      // recursively keep scanning directories
+      // compute the new path (1 level deeper)
       char *child_path =
           calloc(strlen(path) + strlen(dir_entry->d_name) + 2, sizeof(char));
       strcpy(child_path, path);
       strcat(child_path, "/");
       strcat(child_path, dir_entry->d_name);
+
+      // add all files in new path
       get_fs_object(child_path, fs_object);
       free(child_path);
+
     } else {
       // if object found isn't a file or a directory - unsure if possible
       perror("unknown filesystem type encountered");
@@ -71,29 +76,35 @@ void free_fs_object(struct FsObject *fs_object) {
     free_fs_object(fs_object->child);
     fs_object->child = NULL;
   }
+
   // free fields
   free(fs_object->name);
   fs_object->name = NULL;
   free(fs_object->path);
   fs_object->path = NULL;
+
   // free itself
   free(fs_object);
 }
 
 void append_fs_object(struct FsObject *parent_fs_object,
-                     struct FsObject *child_fs_object) {
+                      struct FsObject *child_fs_object) {
+  // iterate to find the last child object
   while (parent_fs_object->child != NULL) {
     parent_fs_object = parent_fs_object->child;
   }
-  if (parent_fs_object->name == NULL &&
-      parent_fs_object->path == NULL) {
+
+  if (parent_fs_object->name == NULL && parent_fs_object->path == NULL) {
     // if parent is null, replace parent by child
     parent_fs_object->name = child_fs_object->name;
     parent_fs_object->path = child_fs_object->path;
     parent_fs_object->child = child_fs_object->child;
+
+    // free or we will leak memory
     free(child_fs_object);
+
   } else {
-    // append child
+    // if parent has content, append child at the end instead
     parent_fs_object->child = child_fs_object;
   }
 }
