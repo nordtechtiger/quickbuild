@@ -2,12 +2,14 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <sys/stat.h>
 
 #define FILE 8
 #define DIRECTORY 4
+
+#define MIN(a, b) (a < b ? a : b)
+#define MAX(a, b) (a > b ? a : b)
 
 int get_fs_object(const char *path, struct FsObject *fs_object);
 struct FsObject *resolve_fs_recursive(DIR *dir_stream);
@@ -15,8 +17,8 @@ void free_fs_object(struct FsObject *fs_object);
 void append_fs_object(struct FsObject *parent_fs_object,
                       struct FsObject *child_fs_object);
 struct FsObject *find_fs_objects(char *pattern, uint32_t max_depth,
-                    struct FsObject *fs_object);
-bool str_match(char *base, char *pattern);
+                                 struct FsObject *fs_object);
+char* str_match(char *base, char *pattern);
 int get_path_depth(char *path);
 
 // gets a file system object tree
@@ -127,8 +129,8 @@ struct FsObject *find_fs_objects(char *pattern, uint32_t max_depth,
   while (1) {
 
     // if path matches, copy and add to results
-    if (get_path_depth(fs_object->path) <= max_depth &&
-        str_match(fs_object->path,pattern)) {
+    if ((get_path_depth(fs_object->path) <= max_depth || max_depth == 0) &&
+        str_match(fs_object->path, pattern)) {
       struct FsObject *match = calloc(1, sizeof(struct FsObject));
 
       match->name = calloc(strlen(fs_object->name) + 1, sizeof(char));
@@ -146,12 +148,32 @@ struct FsObject *find_fs_objects(char *pattern, uint32_t max_depth,
     printf("matches: %i, done processing:%s\n", matches, fs_object->path);
 
     // check if we're reached the final fs_object
-    if (!(fs_object = fs_object->child)) break;
+    if (!(fs_object = fs_object->child))
+      break;
   }
 }
 
-bool str_match(char *base, char *pattern) {
-  return !strcmp(base, pattern);
+// TODO: make this const char
+char* str_match(char *base, char *pattern) {
+  int32_t match_base = -1;
+  int32_t match_top = -1;
+
+  // advance base pointer for base string
+  for (int i = 0; base[i] != '\0'; i++) {
+    // iterate through pattern
+    for (int j = 0; pattern[j] != '\0' && base[j+i] != '\0'; j++) {
+      if (pattern[j] == '*') {
+        
+      } else if (pattern[j] != base[j+i]) {
+          return NULL;
+      }
+    }
+  }
+
+  if (match_base != -1 && match_top != -1) {
+    char* match = calloc(match_top - match_base, sizeof(char));
+    strncpy(match, base, match_top - match_base);
+  }
 }
 
 int get_path_depth(char *path) {
