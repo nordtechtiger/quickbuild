@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 
   // load config file
   struct FsObject *config_file;
-  config_file = find_fs_objects("./makefile", 1, fs_tree);
+  config_file = find_fs_objects("./src/*.c", 2, fs_tree);
   
 
   
