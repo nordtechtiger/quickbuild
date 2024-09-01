@@ -2,35 +2,34 @@
 #define LEXER_H
 
 enum TokenType {
-  Identifier, // any text without quotes
-  Literal, // any text in quotes
-  Operation, // `=`, `:`, `->`,
-  Separator, // ','
-  LineStop, // ';`
-  ExpressionOpen, // `[`
+  Identifier,      // any text without quotes
+  Literal,         // any text in quotes
+  Operation,       // `=`, `:`, `->`,
+  Separator,       // ','
+  LineStop,        // ';`
+  ExpressionOpen,  // `[`
   ExpressionClose, // `]`
-  TargetOpen, // `{`
-  TargetClose, // `}`
+  TargetOpen,      // `{`
+  TargetClose,     // `}`
 };
 
 enum OperatorType {
-  Set, // `=`
-  Modify, // `:`
+  Set,     // `=`
+  Modify,  // `:`
   Replace, // `->`
   Iterate, // `as`
 };
 
-
 struct Token {
-  TokenType token_type;
+  enum TokenType token_type;
   union TokenData {
     enum OperatorType operator_type;
     char *string;
-  };
+  } token_data;
+  struct Token *child;
 };
 
 #endif
-
 
 /* QuickBuild config:
  *
@@ -46,6 +45,10 @@ struct Token {
  *
  * (identifier, str) (operator, =) (literal, str) (linestop, )
  * (identifier, str) (operator, =) (literal, str) (linestop, )
- * (identifier, str) (operator, =) (expressionopen, ) (identifier, str) (expressionclose, ) (literal, str) (linestop, )
- * (identifier, str) (operator, =) (expressionopen, ) (identifier, str) (operation, :) (expressionopen, ) (identifier, str) (expressionclose) (literal, str) (operator, ->) (expressionopen, ) (identifier, str) (expressionclose, ) (literal, str) (expressionclose, ), (linestop, 0)
+ * (identifier, str) (operator, =) (expressionopen, ) (identifier, str)
+(expressionclose, ) (literal, str) (linestop, )
+ * (identifier, str) (operator, =) (expressionopen, ) (identifier, str)
+(operation, :) (expressionopen, ) (identifier, str) (expressionclose) (literal,
+str) (operator, ->) (expressionopen, ) (identifier, str) (expressionclose, )
+(literal, str) (expressionclose, ), (linestop, 0)
  */
