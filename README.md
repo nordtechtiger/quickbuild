@@ -18,6 +18,10 @@ fluent {
     run = "gcc -c [objects] -o [build_dir]/fluent";
 };
 
+one, two, three {
+    depends = "this.c", "another.h";
+}
+
 objects as obj {
     depends = [obj: "[source_dir]/*.o" -> "[build_dir]/*.c"];
     run = "gcc -c [depends] -o [obj]";
