@@ -27,8 +27,10 @@ int main(int argc, char **argv) {
   size_t config_size = ftell(config_file);
   fseek(config_file, 0, SEEK_SET);
 
-  uint8_t *config_bytes = calloc(config_size, 1);
+  char *config_bytes = calloc(config_size, 1);
   fread(config_bytes, 1, config_size, config_file);
+
+  struct Token *tokens = lex_bytes(config_bytes, config_size);
 
   fclose(config_file);
 

@@ -1,6 +1,8 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include <stdint.h>
+
 enum TokenType {
   Identifier,      // any text without quotes
   Literal,         // any text in quotes
@@ -28,6 +30,8 @@ struct Token {
   } token_data;
   struct Token *child;
 };
+
+struct Token *lex_bytes(char *bytes, uint32_t len);
 
 #endif
 
