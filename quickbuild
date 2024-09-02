@@ -1,0 +1,18 @@
+compiler = "gcc";
+flags = "-g -o0";
+
+sources = "src/*.c";
+headers = "src/*.h";
+
+objects = [sources: "src/*.c" -> "obj/*.o"];
+binary = "bin/quickbuild";
+
+quickbuild {
+  depends: [objects], [headers];
+  run: "[compiler] [flags] [objects] -o [binary]";
+};
+
+objects as obj {
+  depends: [obj: "obj/*.o" -> "src/*.c"];
+  run: "[compiler] [flags] -c [depends] -o [obj]";
+};
