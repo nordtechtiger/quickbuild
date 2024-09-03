@@ -41,12 +41,12 @@ int main(int argc, char **argv) {
   vector<unsigned char> config_buffer(istreambuf_iterator(config_file), {});
 
   // Feed config into lexer
-  Lexer lexer;
+  Lexer lexer = Lexer();
   try {
     auto tokens = lexer.lex_bytes(config_buffer);
-  } catch (LexerException e) {
+  } catch (LexerException lexer_exception) {
     cerr << "= Error: Failed to lex config file. Details:\n";
-    cerr << e.what();
+    cerr << "=" << lexer_exception.what();
   }
 
   return EXIT_SUCCESS;

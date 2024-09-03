@@ -45,6 +45,7 @@ private:
   } lex_state;
 
 public:
+  Lexer();
   std::vector<Token> lex_bytes(const std::vector<unsigned char> input_bytes);
 };
 
