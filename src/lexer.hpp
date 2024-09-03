@@ -1,8 +1,10 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include <stdint.h>
+#include <string>
+#include <vector>
 
+// Defines what type of token it is
 enum TokenType {
   Identifier,      // any text without quotes
   Literal,         // any text in quotes
@@ -15,6 +17,7 @@ enum TokenType {
   TargetClose,     // `}`
 };
 
+// Defines the specific operator
 enum OperatorType {
   Set,     // `=`
   Modify,  // `:`
@@ -22,20 +25,42 @@ enum OperatorType {
   Iterate, // `as`
 };
 
+// Defines a general token, with optional data depending on the token type
 struct Token {
-  enum TokenType token_type;
-  union TokenData {
-    enum OperatorType operator_type;
-    char *string;
-  } token_data;
-  struct Token *child;
+  TokenType token_type;
+  union {
+    OperatorType operator_type;
+    std::string data;
+  } token_context;
 };
 
-struct Token *lex_bytes(char *bytes, uint32_t len);
+// Work class
+class Lexer {
+private:
+  enum {
+    NONE,
+    IN_LITERAL,
+    IN_STRING,
+  } lex_state;
+
+public:
+  std::vector<Token> lex_bytes(std::vector<unsigned char> input_bytes);
+};
+
+// Exceptions thrown by the lexer
+class LexerException : public std::exception {
+private:
+  char *details;
+
+public:
+  LexerException(char *details) : details(details) {};
+  char *what() { return details; }
+};
 
 #endif
 
-/* QuickBuild config:
+/* === LEXER NOTES / SPECIFICATIONS ===
+ * QuickBuild config:
  *
  * source_dir = "src";
  * build_dir = "bin";
