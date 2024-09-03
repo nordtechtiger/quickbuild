@@ -2,6 +2,7 @@
 #define LEXER_H
 
 #include <string>
+#include <variant>
 #include <vector>
 
 // Defines what type of token it is
@@ -25,13 +26,13 @@ enum OperatorType {
   Iterate, // `as`
 };
 
-// Defines a general token, with optional data depending on the token type
+// Defines additional data depending on the token type
+typedef std::variant<OperatorType, std::string> TokenContext;
+
+// Defines a general token, struct Token {
 struct Token {
   TokenType token_type;
-  union {
-    OperatorType operator_type;
-    std::string data;
-  } token_context;
+  TokenContext token_context;
 };
 
 // Work class
@@ -44,17 +45,17 @@ private:
   } lex_state;
 
 public:
-  std::vector<Token> lex_bytes(std::vector<unsigned char> input_bytes);
+  std::vector<Token> lex_bytes(const std::vector<unsigned char> input_bytes);
 };
 
 // Exceptions thrown by the lexer
 class LexerException : public std::exception {
 private:
-  char *details;
+  const char *details;
 
 public:
-  LexerException(char *details) : details(details) {};
-  char *what() { return details; }
+  LexerException(const char *details) : details(details) {};
+  const char *what() { return details; }
 };
 
 #endif
