@@ -6,15 +6,29 @@ using namespace std;
 Lexer::Lexer() { this->lex_state = NONE; }
 
 vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
-  cout << this->lex_state;
+  // Vector with all tokens
+  vector<Token> tokens;
+
+  // Scan through every character
   for (auto const &character : input_bytes) {
-    if (this->lex_state == NONE && (character == ' ' || character == '\n')) {
+    // Skip empty spaces and newlines
+    if (this->lex_state == NONE && character == '\n') {
       continue;
     }
+
+    // Handle expressions inside strings
+    if (character == '[') {
+      if (this->lex_state == IN_STRING) {
+
+      }
+    }
+
+    // Handle string states
     if (character == '\"')
       this->lex_state = (this->lex_state == NONE ? IN_STRING : NONE);
     cout << character;
   }
-  // flush
-  cout << endl;
+
+  // Done
+  return tokens;
 }
