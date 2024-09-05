@@ -17,7 +17,7 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
       continue;
     }
 
-    // Lex strings
+    // Lex literals
     if (this->lex_state == IN_STRING) {
       if (character != '\"') {
         working_str += character;
@@ -30,6 +30,24 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
         );
         working_str = "";
       }
+    }
+
+    // Lex identifiers
+    if (this->lex_state == IN_LITERAL) {
+      if (character != '=' && character != ',') {
+        working_str += character;
+      } else if (character == ',') {
+        tokens.push_back(
+          Token {
+            Identifier,
+            TokenContext {working_str},
+          }
+            );
+        working_str = "";
+      }
+    } else if (character != ' ' && character != ',') {
+      this->lex_state = IN_LITERAL;
+      working_str += character;
     }
 
     // Handle expressions inside strings
