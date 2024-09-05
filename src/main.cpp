@@ -11,12 +11,6 @@
 
 using namespace std;
 
-template <typename T> void print_vec(vector<T> vec) {
-  for (auto const &i : vec) {
-    cout << i << "\n";
-  }
-}
-
 int main(int argc, char **argv) {
   cout << "= Quickbuild Beta v0.1.0\n";
 
@@ -42,11 +36,17 @@ int main(int argc, char **argv) {
 
   // Feed config into lexer
   Lexer lexer = Lexer();
+  vector<Token> tokens;
   try {
-    auto tokens = lexer.lex_bytes(config_buffer);
+     tokens = lexer.lex_bytes(config_buffer);
   } catch (LexerException lexer_exception) {
     cerr << "= Error: Failed to lex config file. Details:\n";
     cerr << "=" << lexer_exception.what();
+  }
+
+  // NOTE: Debugging purposes only!
+  for (const auto &i : tokens) {
+    cout << "token: [" << i.token_type << ", \"" << get<string>(i.token_context) << "\"]" << endl;
   }
 
   return EXIT_SUCCESS;
