@@ -6,7 +6,7 @@
 #include <vector>
 
 // Defines what type of token it is
-enum TokenType {
+enum class TokenType {
   Identifier,      // any text without quotes
   Literal,         // any text in quotes
   Operation,       // `=`, `:`, `->`,
@@ -19,7 +19,7 @@ enum TokenType {
 };
 
 // Defines the specific operator
-enum OperatorType {
+enum class OperatorType {
   Set,     // `=`
   Modify,  // `:`
   Replace, // `->`
@@ -38,10 +38,11 @@ struct Token {
 // Work class
 class Lexer {
 private:
-  enum {
-    NONE,
-    IN_LITERAL,
-    IN_STRING,
+  enum class LexState {
+    None,
+    Identifier,
+    Literal,
+    EscapedExpression,
   } lex_state;
 
 public:

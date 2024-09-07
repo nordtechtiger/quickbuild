@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
   Lexer lexer = Lexer();
   vector<Token> tokens;
   try {
-     tokens = lexer.lex_bytes(config_buffer);
+    tokens = lexer.lex_bytes(config_buffer);
   } catch (LexerException lexer_exception) {
     cerr << "= Error: Failed to lex config file. Details:\n";
     cerr << "=" << lexer_exception.what();
@@ -46,7 +46,8 @@ int main(int argc, char **argv) {
 
   // NOTE: Debugging purposes only!
   for (const auto &i : tokens) {
-    cout << "token: [" << i.token_type << ", \"" << get<string>(i.token_context) << "\"]" << endl;
+    cout << "token: [" << static_cast<typename underlying_type<TokenType>::type>(i.token_type) << ", \"" << get<string>(i.token_context)
+         << "\"]" << endl;
   }
 
   return EXIT_SUCCESS;
