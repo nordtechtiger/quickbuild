@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <string>
 #include <vector>
 
 #include "lexer.hpp"
@@ -46,8 +47,13 @@ int main(int argc, char **argv) {
 
   // NOTE: Debugging purposes only!
   for (const auto &i : tokens) {
-    cout << "token: [" << static_cast<typename underlying_type<TokenType>::type>(i.token_type) << ", \"" << static_cast<typename underlying_type<OperatorType>::type>(get<OperatorType>(i.token_context))
+    if (i.token_type == TokenType::Symbol) {
+    cout << "token: [" << static_cast<typename underlying_type<TokenType>::type>(i.token_type) << ", \"" << static_cast<typename underlying_type<SymbolType>::type>(get<SymbolType>(i.token_context))
          << "\"]" << endl;
+    } else {
+    cout << "token: [" << static_cast<typename underlying_type<TokenType>::type>(i.token_type) << ", \"" << get<string>(i.token_context)
+         << "\"]" << endl;
+    }
   }
 
   return EXIT_SUCCESS;
