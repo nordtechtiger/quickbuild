@@ -7,27 +7,27 @@
 
 // Defines what type of token it is
 enum class TokenType {
-  Identifier,      // any text without quotes
-  Literal,         // any text in quotes
-  Operation,       // `=`, `:`, `->`,
-  Separator,       // ','
+  Identifier, // any text without quotes
+  Literal,    // any text in quotes
+  Symbol,     // `=`, `:`, `->`,
+};
+
+// Defines the specific operator
+enum class SymbolType {
+  Equals,          // `=`
+  Modify,          // `:`
   LineStop,        // ';`
+  Arrow,           // `->`
+  IterateAs,       // `as`
+  Separator,       // ','
   ExpressionOpen,  // `[`
   ExpressionClose, // `]`
   TargetOpen,      // `{`
   TargetClose,     // `}`
 };
 
-// Defines the specific operator
-enum class OperatorType {
-  Set,     // `=`
-  Modify,  // `:`
-  Replace, // `->`
-  Iterate, // `as`
-};
-
 // Defines additional data depending on the token type
-typedef std::variant<OperatorType, std::string> TokenContext;
+typedef std::variant<SymbolType, std::string> TokenContext;
 
 // Defines a general token, struct Token {
 struct Token {

@@ -16,30 +16,30 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
     // Lex operations, curly brackets, line stops, etc
     if (this->lex_state == LexState::None) {
       if (character == '=') {
-        tokens.push_back(Token{TokenType::Operation, OperatorType::Set});
+        tokens.push_back(Token{TokenType::Symbol, SymbolType::Equals});
         continue;
       } else if (character == ':') {
-        tokens.push_back(Token{TokenType::Operation, OperatorType::Modify});
+        tokens.push_back(Token{TokenType::Symbol, SymbolType::Modify});
         continue;
       } else if (character == ';') {
         // TODO: No need for empty string, revise token types?
-        tokens.push_back(Token{TokenType::LineStop, ""});
+        tokens.push_back(Token{TokenType::Symbol, SymbolType::LineStop});
         continue;
       } else if (character == ',') {
-        tokens.push_back(Token{TokenType::Separator, ""});
+        tokens.push_back(Token{TokenType::Symbol, SymbolType::Separator});
         continue;
       } else if (character == '{') {
-        tokens.push_back(Token{TokenType::TargetOpen, ""});
+        tokens.push_back(Token{TokenType::Symbol, SymbolType::TargetOpen});
         continue;
       } else if (character == '}') {
-        tokens.push_back(Token{TokenType::TargetClose, ""});
+        tokens.push_back(Token{TokenType::Symbol, SymbolType::TargetClose});
       } else if (i + 1 < input_bytes.size()) {
         if (character == '-' && input_bytes[i + 1] == '>') {
-          tokens.push_back(Token{TokenType::Operation, OperatorType::Replace});
+          tokens.push_back(Token{TokenType::Symbol, SymbolType::Arrow});
           i++;
           continue;
         } else if (character == 'a' && input_bytes[i + 1] == 's') {
-          tokens.push_back(Token{TokenType::Operation, OperatorType::Iterate});
+          tokens.push_back(Token{TokenType::Symbol, SymbolType::IterateAs});
           i++;
           continue;
         }
