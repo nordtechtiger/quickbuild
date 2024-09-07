@@ -4,7 +4,7 @@
 using namespace std;
 
 #define IS_ALPHABETIC(x)                                                       \
-  ((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z'))
+  (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')))
 
 Lexer::Lexer() { this->lex_state = LexState::None; }
 
@@ -13,7 +13,7 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
   vector<Token> tokens;
   string buf;
 
-  // Scan through every input_bytes[i]
+  // Scan through every character
   for (int i = 0; i < input_bytes.size(); i++) {
     // Lex operations, curly brackets, line stops, etc
     if (this->lex_state == LexState::None) {
@@ -24,7 +24,6 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
         tokens.push_back(Token{TokenType::Symbol, SymbolType::Modify});
         continue;
       } else if (input_bytes[i] == ';') {
-        // TODO: No need for empty string, revise token types?
         tokens.push_back(Token{TokenType::Symbol, SymbolType::LineStop});
         continue;
       } else if (input_bytes[i] == ',') {
@@ -48,7 +47,7 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
       }
     }
 
-    // Lex identifiers
+    // Lex identifiers (variables)
     if (this->lex_state == LexState::None && IS_ALPHABETIC(input_bytes[i])) {
       this->lex_state = LexState::Identifier;
       buf += input_bytes[i];
@@ -66,12 +65,13 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
       }
     }
 
-    // Lex literals
+    // Lex literals (strings)
     if (this->lex_state == LexState::None && input_bytes[i] == '\"') {
       this->lex_state = LexState::Literal;
       continue;
     }
-    if (this->lex_state == LexState::Literal && input_bytes[i] != '\"' && input_bytes[i] != '[') {
+    if (this->lex_state == LexState::Literal && input_bytes[i] != '\"' /* &&
+        input_bytes[i] != '[' */ ) {
       buf += input_bytes[i];
       continue;
     }
