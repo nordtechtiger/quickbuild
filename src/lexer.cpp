@@ -13,6 +13,8 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
   vector<Token> tokens;
   string buf;
 
+  bool unescaped_literal = false;
+
   // Scan through every character
   for (int i = 0; i < input_bytes.size(); i++) {
     // Lex operations, curly brackets, line stops, etc
@@ -70,10 +72,28 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
       this->lex_state = LexState::Literal;
       continue;
     }
-    if (this->lex_state == LexState::Literal && input_bytes[i] != '\"' /* &&
-        input_bytes[i] != '[' */ ) {
+    if (this->lex_state == LexState::Literal && input_bytes[i] != '\"' &&
+        input_bytes[i] != '[') {
       buf += input_bytes[i];
       continue;
+    }
+    if (this->lex_state == LexState::Literal && input_bytes[i] == '[') {
+      tokens.push_back(Token{TokenType::Literal, buf});
+      this->lex_state = LexState::None;
+      unescaped_literal = true;
+      buf = "";
+      continue;
+    }
+    if (this->lex_state != LexState::Literal && input_bytes[i] == ']' &&
+        unescaped_literal == true) {
+      tokens.push_back(Token{TokenType::Literal, buf});
+      this->lex_state = LexState::Literal;
+      unescaped_literal = false;
+      buf = "";
+      continue;
+    }
+    if (this->lex_state != LexState::Literal && input_bytes[i] == ']' &&
+        unescaped_literal == true) {
     }
     if (this->lex_state == LexState::Literal && input_bytes[i] == '\"') {
       tokens.push_back(Token{TokenType::Literal, buf});
