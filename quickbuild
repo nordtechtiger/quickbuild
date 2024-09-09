@@ -1,3 +1,18 @@
+*** NEW CONFIG TESTING ***
+
+setup:
+  compiler: "gcc"
+  flags: "-g -o0"
+
+  sources: "src/*.c"
+  headers: "src/*.h"
+  objects: 
+
+
+
+
+*** STANDARD CONFIG ***
+
 compiler = "gcc";
 flags = "-g -o0";
 
