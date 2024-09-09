@@ -17,6 +17,14 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
 
   // Scan through every character
   for (int i = 0; i < input_bytes.size(); i++) {
+    if (this->lex_state == LexState::Identifier && input_bytes[i] == ']') {
+      tokens.push_back(Token{TokenType::Literal, buf});
+      tokens.push_back(Token{TokenType::Symbol, SymbolType::ExpressionClose});
+      this->lex_state = LexState::None;
+      buf = "";
+      continue;
+    }
+
     // Lex operations, curly brackets, line stops, etc
     if (this->lex_state == LexState::None) {
       if (input_bytes[i] == '=') {
@@ -99,6 +107,16 @@ vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
       tokens.push_back(Token{TokenType::Literal, buf});
       this->lex_state = LexState::None;
       buf = "";
+      continue;
+    }
+
+    // Lex normal expressions
+    if (this->lex_state != LexState::Literal && input_bytes[i] == '[') {
+      tokens.push_back(Token{TokenType::Symbol, SymbolType::ExpressionOpen});
+      continue;
+    }
+    if (this->lex_state != LexState::Literal && input_bytes[i] == ']') {
+      tokens.push_back(Token{TokenType::Symbol, SymbolType::ExpressionClose});
       continue;
     }
   }
