@@ -39,13 +39,13 @@ struct Token {
 // Work class
 class Lexer {
 private:
-  std::vector<unsigned char> m_input_bytes;
-  unsigned long long m_input_index;
+  std::vector<unsigned char> m_input;
+  unsigned long long m_index;
 
 public:
   Token get_next_token();
-  unsigned char m_peek_next_byte;
-  unsigned char m_peek_current_byte;
+  unsigned char m_next;
+  unsigned char m_current;
   unsigned char advance_input_byte();
   Lexer(std::vector<unsigned char> input_bytes);
 };

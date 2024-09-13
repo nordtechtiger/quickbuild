@@ -15,39 +15,31 @@ const vector<tuple<bool, Token> (*)(Lexer &)> match_tokens{
 
 // initializes new lexer
 Lexer::Lexer(vector<unsigned char> input_bytes) {
-  m_input_index = 0;
-  m_input_bytes = input_bytes;
-  if (m_input_bytes.size() >= 2) {
-    m_peek_current_byte = m_input_bytes[m_input_index];
-    m_peek_next_byte = m_input_bytes[m_input_index + 1];
-  } else if (m_input_bytes.size() == 1) {
-    m_peek_current_byte = m_input_bytes[m_input_index];
-    m_peek_next_byte = '\0';
-  } else {
-    m_peek_current_byte = '\0';
-    m_peek_next_byte = '\0';
-  }
+  m_index = 0;
+  m_input = input_bytes;
+  m_current = (m_input.size() >= m_index + 1) ? m_input[m_index] : '\0';
+  m_next = (m_input.size() >= m_index + 2) ? m_input[m_index + 1] : '\0';
 }
 
 unsigned char Lexer::advance_input_byte() {
-  m_input_index++;
+  m_index++;
 
   // end of byte stream
-  if (m_input_index >= m_input_bytes.size()) {
-    m_peek_current_byte = '\0';
-    m_peek_next_byte = '\0';
-    return m_peek_current_byte;
+  if (m_index >= m_input.size()) {
+    m_current = '\0';
+    m_next = '\0';
+    return m_current;
   }
   // last byte
-  if (m_input_index >= (m_input_bytes.size() - 1)) {
-    m_peek_current_byte = m_input_bytes[m_input_index];
-    m_peek_next_byte = '\0';
-    return m_peek_current_byte;
+  if (m_index >= (m_input.size() - 1)) {
+    m_current = m_input[m_index];
+    m_next = '\0';
+    return m_current;
   }
   // more than 2 bytes left
-  m_peek_current_byte = m_input_bytes[m_input_index];
-  m_peek_next_byte = m_input_bytes[m_input_index + 1];
-  return m_peek_current_byte;
+  m_current = m_input[m_index];
+  m_next = m_input[m_index + 1];
+  return m_current;
 }
 
 // gets next token from stream
@@ -69,7 +61,6 @@ Token Lexer::get_next_token() {
 // == all functions for validating/checking tokens below ==
 tuple<bool, Token> match_literal(Lexer &lexer) {
   cout << "Hello from literal matching function, current state: "
-       << lexer.m_peek_current_byte << endl;
+       << lexer.m_current << endl;
   return make_tuple(false, Token{TokenType::Literal, "huh"});
 }
-
