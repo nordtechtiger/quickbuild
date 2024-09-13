@@ -36,10 +36,10 @@ int main(int argc, char **argv) {
   vector<unsigned char> config_buffer(istreambuf_iterator(config_file), {});
 
   // Feed config into lexer
-  Lexer lexer = Lexer();
+  Lexer lexer = Lexer(config_buffer);
   vector<Token> tokens;
   try {
-    tokens = lexer.lex_bytes(config_buffer);
+    tokens.push_back(lexer.get_next_token());
   } catch (LexerException lexer_exception) {
     cerr << "= Error: Failed to lex config file. Details:\n";
     cerr << "=" << lexer_exception.what();
@@ -48,10 +48,10 @@ int main(int argc, char **argv) {
   // NOTE: Debugging purposes only!
   for (const auto &i : tokens) {
     if (i.token_type == TokenType::Symbol) {
-    cout << "token: (" << static_cast<typename underlying_type<TokenType>::type>(i.token_type) << ", \"" << static_cast<typename underlying_type<SymbolType>::type>(get<SymbolType>(i.token_context))
+    cout << "symbol: (" << static_cast<typename underlying_type<TokenType>::type>(i.token_type) << ", \"" << static_cast<typename underlying_type<SymbolType>::type>(get<SymbolType>(i.token_context))
          << "\")" << endl;
     } else {
-    cout << "token: (" << static_cast<typename underlying_type<TokenType>::type>(i.token_type) << ", \"" << get<string>(i.token_context)
+    cout << "str: (" << static_cast<typename underlying_type<TokenType>::type>(i.token_type) << ", \"" << get<string>(i.token_context)
          << "\")" << endl;
     }
   }

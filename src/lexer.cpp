@@ -6,113 +6,61 @@ using namespace std;
 #define IS_ALPHABETIC(x)                                                       \
   (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')))
 
-Lexer::Lexer() { this->lex_state = LexState::None; }
+Token match_literal(Lexer &lexer);
 
-vector<Token> Lexer::lex_bytes(const vector<unsigned char> input_bytes) {
-  // Vector with all tokens
-  vector<Token> tokens;
-  string buf;
+const vector<Token (*)(Lexer &)> match_tokens{
+    match_literal,
+};
 
-  bool unescaped_literal = false;
+Lexer::Lexer(vector<unsigned char> input_bytes) {
+  m_input_index = 0;
+  m_input_bytes = input_bytes;
+  if (m_input_bytes.size() >= 2) {
+    m_peek_current_byte = m_input_bytes[m_input_index];
+    m_peek_next_byte = m_input_bytes[m_input_index + 1];
+  } else if (m_input_bytes.size() == 1) {
+    m_peek_current_byte = m_input_bytes[m_input_index];
+    m_peek_next_byte = '\0';
+  } else {
+    m_peek_current_byte = '\0';
+    m_peek_next_byte = '\0';
+  }
+}
 
-  // Scan through every character
-  for (int i = 0; i < input_bytes.size(); i++) {
-    // Lex normal expressions
-    if (this->lex_state != LexState::Literal && input_bytes[i] == '[') {
-      tokens.push_back(Token{TokenType::Symbol, SymbolType::ExpressionOpen});
-      continue;
-    }
-    if (this->lex_state != LexState::Literal && input_bytes[i] == ']') {
-      tokens.push_back(Token{TokenType::Symbol, SymbolType::ExpressionClose});
-      continue;
-    }
+Token Lexer::get_next_token() {
+  Token token;
 
-    // Lex operations, curly brackets, line stops, etc
-    if (this->lex_state == LexState::None) {
-      if (input_bytes[i] == '=') {
-        tokens.push_back(Token{TokenType::Symbol, SymbolType::Equals});
-        continue;
-      } else if (input_bytes[i] == ':') {
-        tokens.push_back(Token{TokenType::Symbol, SymbolType::Modify});
-        continue;
-      } else if (input_bytes[i] == ';') {
-        tokens.push_back(Token{TokenType::Symbol, SymbolType::LineStop});
-        continue;
-      } else if (input_bytes[i] == ',') {
-        tokens.push_back(Token{TokenType::Symbol, SymbolType::Separator});
-        continue;
-      } else if (input_bytes[i] == '{') {
-        tokens.push_back(Token{TokenType::Symbol, SymbolType::TargetOpen});
-        continue;
-      } else if (input_bytes[i] == '}') {
-        tokens.push_back(Token{TokenType::Symbol, SymbolType::TargetClose});
-      } else if (i + 1 < input_bytes.size()) {
-        if (input_bytes[i] == '-' && input_bytes[i + 1] == '>') {
-          tokens.push_back(Token{TokenType::Symbol, SymbolType::Arrow});
-          i++;
-          continue;
-        } else if (input_bytes[i] == 'a' && input_bytes[i + 1] == 's') {
-          tokens.push_back(Token{TokenType::Symbol, SymbolType::IterateAs});
-          i++;
-          continue;
-        }
-      }
-    }
-
-    // Lex identifiers (variables)
-    if (this->lex_state == LexState::None && IS_ALPHABETIC(input_bytes[i])) {
-      this->lex_state = LexState::Identifier;
-      buf += input_bytes[i];
-      continue;
-    }
-    if (this->lex_state == LexState::Identifier) {
-      if (IS_ALPHABETIC(input_bytes[i])) {
-        buf += input_bytes[i];
-        continue;
-      } else {
-        tokens.push_back(Token{TokenType::Identifier, buf});
-        this->lex_state = LexState::None;
-        buf = "";
-        continue;
-      }
-    }
-
-    // Lex literals (strings)
-    if (this->lex_state == LexState::None && input_bytes[i] == '\"') {
-      this->lex_state = LexState::Literal;
-      continue;
-    }
-    if (this->lex_state == LexState::Literal && input_bytes[i] != '\"' &&
-        input_bytes[i] != '[') {
-      buf += input_bytes[i];
-      continue;
-    }
-    if (this->lex_state == LexState::Literal && input_bytes[i] == '[') {
-      tokens.push_back(Token{TokenType::Literal, buf});
-      this->lex_state = LexState::None;
-      unescaped_literal = true;
-      buf = "";
-      continue;
-    }
-    if (this->lex_state != LexState::Literal && input_bytes[i] == ']' &&
-        unescaped_literal == true) {
-      tokens.push_back(Token{TokenType::Literal, buf});
-      this->lex_state = LexState::Literal;
-      unescaped_literal = false;
-      buf = "";
-      continue;
-    }
-    if (this->lex_state != LexState::Literal && input_bytes[i] == ']' &&
-        unescaped_literal == true) {
-    }
-    if (this->lex_state == LexState::Literal && input_bytes[i] == '\"') {
-      tokens.push_back(Token{TokenType::Literal, buf});
-      this->lex_state = LexState::None;
-      buf = "";
-      continue;
-    }
+  for (const auto &fn : match_tokens) {
+    fn(*this);
   }
 
-  // Done
-  return tokens;
+  advance_input_byte();
+  return token;
+}
+
+Token match_literal(Lexer &lexer) {
+  cout << "Hello from literal matching function, current state: "
+       << lexer.m_peek_current_byte << endl;
+  return Token{TokenType::Literal, "huh"};
+}
+
+unsigned char Lexer::advance_input_byte() {
+  m_input_index++;
+
+  // end of byte stream
+  if (m_input_index >= m_input_bytes.size()) {
+    m_peek_current_byte = '\0';
+    m_peek_next_byte = '\0';
+    return m_peek_current_byte;
+  }
+  // last byte
+  if (m_input_index >= (m_input_bytes.size() - 1)) {
+    m_peek_current_byte = m_input_bytes[m_input_index];
+    m_peek_next_byte = '\0';
+    return m_peek_current_byte;
+  }
+  // more than 2 bytes left
+  m_peek_current_byte = m_input_bytes[m_input_index];
+  m_peek_next_byte = m_input_bytes[m_input_index + 1];
+  return m_peek_current_byte;
 }

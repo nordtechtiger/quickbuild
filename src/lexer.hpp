@@ -38,16 +38,15 @@ struct Token {
 // Work class
 class Lexer {
 private:
-  enum class LexState {
-    None,
-    Identifier,
-    Literal,
-    EscapedExpression,
-  } lex_state;
+  std::vector<unsigned char> m_input_bytes;
+  unsigned long long m_input_index;
 
 public:
-  Lexer();
-  std::vector<Token> lex_bytes(const std::vector<unsigned char> input_bytes);
+  Token get_next_token();
+  unsigned char m_peek_next_byte;
+  unsigned char m_peek_current_byte;
+  unsigned char advance_input_byte();
+  Lexer(std::vector<unsigned char> input_bytes);
 };
 
 // Exceptions thrown by the lexer
