@@ -23,22 +23,8 @@ Lexer::Lexer(vector<unsigned char> input_bytes) {
 
 unsigned char Lexer::advance_input_byte() {
   m_index++;
-
-  // end of byte stream
-  if (m_index >= m_input.size()) {
-    m_current = '\0';
-    m_next = '\0';
-    return m_current;
-  }
-  // last byte
-  if (m_index >= (m_input.size() - 1)) {
-    m_current = m_input[m_index];
-    m_next = '\0';
-    return m_current;
-  }
-  // more than 2 bytes left
-  m_current = m_input[m_index];
-  m_next = m_input[m_index + 1];
+  m_current = (m_input.size() >= m_index + 1) ? m_input[m_index] : '\0';
+  m_next = (m_input.size() >= m_index + 2) ? m_input[m_index + 1] : '\0';
   return m_current;
 }
 
