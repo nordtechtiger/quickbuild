@@ -9,12 +9,30 @@ using namespace std;
 tuple<bool, Token> debug_lexer_state(Lexer &lexer);
 tuple<bool, Token> skip_whitespace(Lexer &lexer);
 tuple<bool, Token> match_equals(Lexer &lexer);
+tuple<bool, Token> match_modify(Lexer &lexer);
+tuple<bool, Token> match_linestop(Lexer &lexer);
+tuple<bool, Token> match_arrow(Lexer &lexer);
+tuple<bool, Token> match_iterateas(Lexer &lexer);
+tuple<bool, Token> match_separator(Lexer &lexer);
+tuple<bool, Token> match_expressionopen(Lexer &lexer);
+tuple<bool, Token> match_expressionclose(Lexer &lexer);
+tuple<bool, Token> match_targetopen(Lexer &lexer);
+tuple<bool, Token> match_targetclose(Lexer &lexer);
 
 // contains all tokens to match against
 const vector<tuple<bool, Token> (*)(Lexer &)> match_tokens{
     debug_lexer_state,
     skip_whitespace,
     match_equals,
+    match_modify,
+    match_linestop,
+    match_arrow,
+    match_iterateas,
+    /* match_separator,
+    match_expressionopen,
+    match_expressionclose,
+    match_targetopen,
+    match_targetclose, */
 };
 
 // initializes new lexer
@@ -77,11 +95,39 @@ tuple<bool, Token> match_equals(Lexer &lexer) {
   }
 }
 
+// match :
+tuple<bool, Token> match_modify(Lexer &lexer) {
+  if (lexer.m_current == ':') {
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::Modify});
+  } else {
+    return make_tuple(false, TOKEN_INVALID);
+  }
+}
+
 // match ;
 tuple<bool, Token> match_linestop(Lexer &lexer) {
   if (lexer.m_current == ';') {
     return make_tuple(true, Token{TokenType::Symbol, SymbolType::LineStop});
   } else {
     return make_tuple(false, TOKEN_INVALID);
+  }
+}
+
+// match ->
+tuple<bool, Token> match_arrow(Lexer &lexer) {
+  if (lexer.m_current == '-' && lexer.m_next == '>') {
+    // skip an extra byte due to 2-character token
+    lexer.advance_input_byte();
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::IterateAs});
+  } else {
+    return make_tuple(false, TOKEN_INVALID);
+  }
+}
+
+// match as
+tuple<bool, Token> match_iterateas(Lexer &lexer) {
+  if (lexer.m_current == 'a' && lexer.m_next == 's') {
+    // skip an extra byte due to 2-character token
+    lexer.advance_input_byte();
   }
 }
