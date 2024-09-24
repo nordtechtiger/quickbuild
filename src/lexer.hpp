@@ -5,6 +5,9 @@
 #include <variant>
 #include <vector>
 
+#define TOKEN_INVALID                                                          \
+  Token { TokenType::Invalid, SymbolType::LineStop }
+
 // Defines what type of token it is
 enum class TokenType {
   Identifier, // any text without quotes
@@ -25,6 +28,7 @@ enum class SymbolType {
   ExpressionClose, // `]`
   TargetOpen,      // `{`
   TargetClose,     // `}`
+  ConcatLiteral // internal token used for escaped expressions inside literals
 };
 
 // Defines additional data depending on the token type

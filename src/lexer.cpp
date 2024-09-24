@@ -6,11 +6,15 @@ using namespace std;
 #define IS_ALPHABETIC(x)                                                       \
   (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')))
 
-tuple<bool, Token> match_literal(Lexer &lexer);
+tuple<bool, Token> debug_lexer_state(Lexer &lexer);
+tuple<bool, Token> skip_whitespace(Lexer &lexer);
+tuple<bool, Token> match_equals(Lexer &lexer);
 
 // contains all tokens to match against
 const vector<tuple<bool, Token> (*)(Lexer &)> match_tokens{
-    match_literal,
+    debug_lexer_state,
+    skip_whitespace,
+    match_equals,
 };
 
 // initializes new lexer
@@ -30,23 +34,54 @@ unsigned char Lexer::advance_input_byte() {
 
 // gets next token from stream
 Token Lexer::get_next_token() {
-  Token token = {TokenType::Invalid, ""};
+  Token token = TOKEN_INVALID;
 
-  for (const auto &fn : match_tokens) {
-    tuple<bool, Token> result = fn(*this);
-    if (get<0>(result)) {
-      token = get<1>(result);
-      break;
+  while (token.token_type == TokenType::Invalid && m_current != '\0') {
+    for (const auto &fn : match_tokens) {
+      tuple<bool, Token> result = fn(*this);
+      if (get<0>(result)) {
+        token = get<1>(result);
+        break;
+      }
     }
+    advance_input_byte();
   }
 
-  advance_input_byte();
   return token;
 }
 
 // == all functions for validating/checking tokens below ==
-tuple<bool, Token> match_literal(Lexer &lexer) {
+
+// debugging
+tuple<bool, Token> debug_lexer_state(Lexer &lexer) {
   cout << "Hello from literal matching function, current state: "
        << lexer.m_current << endl;
-  return make_tuple(false, Token{TokenType::Literal, "huh"});
+  return make_tuple(false, TOKEN_INVALID);
+}
+
+// skip whitespace
+tuple<bool, Token> skip_whitespace(Lexer &lexer) {
+  // always return false - we just want to increase the iterator until we hit a
+  // non-whitespace
+  while (lexer.m_current == ' ')
+    lexer.advance_input_byte();
+  return make_tuple(false, TOKEN_INVALID);
+}
+
+// match =
+tuple<bool, Token> match_equals(Lexer &lexer) {
+  if (lexer.m_current == '=') {
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::Equals});
+  } else {
+    return make_tuple(false, TOKEN_INVALID);
+  }
+}
+
+// match ;
+tuple<bool, Token> match_linestop(Lexer &lexer) {
+  if (lexer.m_current == ';') {
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::LineStop});
+  } else {
+    return make_tuple(false, TOKEN_INVALID);
+  }
 }
