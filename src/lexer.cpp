@@ -118,7 +118,7 @@ tuple<bool, Token> match_arrow(Lexer &lexer) {
   if (lexer.m_current == '-' && lexer.m_next == '>') {
     // skip an extra byte due to 2-character token
     lexer.advance_input_byte();
-    return make_tuple(true, Token{TokenType::Symbol, SymbolType::IterateAs});
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::Arrow});
   } else {
     return make_tuple(false, TOKEN_INVALID);
   }
@@ -129,5 +129,8 @@ tuple<bool, Token> match_iterateas(Lexer &lexer) {
   if (lexer.m_current == 'a' && lexer.m_next == 's') {
     // skip an extra byte due to 2-character token
     lexer.advance_input_byte();
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::IterateAs});
+  } else {
+    return make_tuple(false, TOKEN_INVALID);
   }
 }

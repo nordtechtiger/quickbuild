@@ -28,7 +28,7 @@ enum class SymbolType {
   ExpressionClose, // `]`
   TargetOpen,      // `{`
   TargetClose,     // `}`
-  ConcatLiteral // internal token used for escaped expressions inside literals
+  ConcatLiteral,   // internal token used for escaped expressions inside literals
 };
 
 // Defines additional data depending on the token type
