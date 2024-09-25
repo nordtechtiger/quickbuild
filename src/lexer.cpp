@@ -28,11 +28,11 @@ const vector<tuple<bool, Token> (*)(Lexer &)> match_tokens{
     match_linestop,
     match_arrow,
     match_iterateas,
-    /* match_separator,
+    match_separator,
     match_expressionopen,
     match_expressionclose,
     match_targetopen,
-    match_targetclose, */
+    match_targetclose,
 };
 
 // initializes new lexer
@@ -134,3 +134,52 @@ tuple<bool, Token> match_iterateas(Lexer &lexer) {
     return make_tuple(false, TOKEN_INVALID);
   }
 }
+
+// match ,
+tuple<bool, Token> match_separator(Lexer &lexer) {
+  if (lexer.m_current == ',') {
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::Separator});
+  } else {
+    return make_tuple(false, TOKEN_INVALID);
+  }
+}
+
+// match [
+tuple<bool, Token> match_expressionopen(Lexer &lexer) {
+  if (lexer.m_current == '[') {
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::ExpressionOpen});
+  } else {
+    return make_tuple(false, TOKEN_INVALID);
+  }
+}
+
+// match ]
+tuple<bool, Token> match_expressionclose(Lexer &lexer) {
+  // TODO: If is in an escaped literal, add custom token and begin next string!!!!
+  if (lexer.m_current == ']') {
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::ExpressionClose});
+  } else {
+    return make_tuple(false, TOKEN_INVALID);
+  }
+}
+
+// match {
+tuple<bool, Token> match_targetopen(Lexer &lexer) {
+  // TODO: If is in an escaped literal, add custom token and begin next string!!!!
+  if (lexer.m_current == '{') {
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::TargetOpen});
+  } else {
+    return make_tuple(false, TOKEN_INVALID);
+  }
+}
+
+// match }
+tuple<bool, Token> match_targetclose(Lexer &lexer) {
+  // TODO: If is in an escaped literal, add custom token and begin next string!!!!
+  if (lexer.m_current == '}') {
+    return make_tuple(true, Token{TokenType::Symbol, SymbolType::TargetClose});
+  } else {
+    return make_tuple(false, TOKEN_INVALID);
+  }
+}
+
