@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
   Lexer lexer = Lexer(config_buffer);
   vector<Token> tokens;
   try {
-    while(lexer.m_current != '\0') {
+    while (lexer.m_current != '\0') {
       tokens.push_back(lexer.get_next_token());
     }
   } catch (LexerException lexer_exception) {
@@ -49,12 +49,20 @@ int main(int argc, char **argv) {
 
   // NOTE: Debugging purposes only!
   for (const auto &i : tokens) {
-    if (i.token_type == TokenType::Symbol || i.token_type == TokenType::Invalid) {
-    cout << "symbol: (" << static_cast<typename underlying_type<TokenType>::type>(i.token_type) << ", \"" << static_cast<typename underlying_type<SymbolType>::type>(get<SymbolType>(i.token_context))
-         << "\")" << endl;
+    if (i.token_type == TokenType::Symbol ||
+        i.token_type == TokenType::Invalid) {
+      cout << "symbol: ("
+           << static_cast<typename underlying_type<TokenType>::type>(
+                  i.token_type)
+           << ", \""
+           << static_cast<typename underlying_type<SymbolType>::type>(
+                  get<SymbolType>(i.token_context))
+           << "\")" << endl;
     } else {
-    cout << "str: (" << static_cast<typename underlying_type<TokenType>::type>(i.token_type) << ", \"" << get<string>(i.token_context)
-         << "\")" << endl;
+      cout << "str: ("
+           << static_cast<typename underlying_type<TokenType>::type>(
+                  i.token_type)
+           << ", \"" << get<string>(i.token_context) << "\")" << endl;
     }
   }
 
