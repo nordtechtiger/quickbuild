@@ -28,7 +28,12 @@ enum class SymbolType {
   ExpressionClose, // `]`
   TargetOpen,      // `{`
   TargetClose,     // `}`
-  ConcatLiteral,   // internal token used for escaped expressions inside literals
+  ConcatLiteral,   // internal token for escaped expressions inside literals
+};
+
+enum class LexerState {
+  Normal,
+  EscapedLiteral,
 };
 
 // Defines additional data depending on the token type
@@ -44,14 +49,15 @@ struct Token {
 class Lexer {
 private:
   std::vector<unsigned char> m_input;
-  unsigned long long m_index;
 
 public:
+  Lexer(std::vector<unsigned char> input_bytes);
   Token get_next_token();
   unsigned char m_next;
   unsigned char m_current;
+  unsigned long long m_index;
   unsigned char advance_input_byte();
-  Lexer(std::vector<unsigned char> input_bytes);
+  LexerState m_state;
 };
 
 // Exceptions thrown by the lexer

@@ -157,7 +157,11 @@ tuple<bool, Token> match_expressionopen(Lexer &lexer) {
 tuple<bool, Token> match_expressionclose(Lexer &lexer) {
   // TODO: If is in an escaped literal, add custom token and begin next string!!!!
   if (lexer.m_current == ']') {
-    return make_tuple(true, Token{TokenType::Symbol, SymbolType::ExpressionClose});
+    if (lexer.m_state == LexerState::Normal) {
+      return make_tuple(true, Token{TokenType::Symbol, SymbolType::ExpressionClose});
+    } else if (lexer.m_state == LexerState::EscapedLiteral) {
+
+    }
   } else {
     return make_tuple(false, TOKEN_INVALID);
   }
@@ -165,7 +169,6 @@ tuple<bool, Token> match_expressionclose(Lexer &lexer) {
 
 // match {
 tuple<bool, Token> match_targetopen(Lexer &lexer) {
-  // TODO: If is in an escaped literal, add custom token and begin next string!!!!
   if (lexer.m_current == '{') {
     return make_tuple(true, Token{TokenType::Symbol, SymbolType::TargetOpen});
   } else {
@@ -175,7 +178,6 @@ tuple<bool, Token> match_targetopen(Lexer &lexer) {
 
 // match }
 tuple<bool, Token> match_targetclose(Lexer &lexer) {
-  // TODO: If is in an escaped literal, add custom token and begin next string!!!!
   if (lexer.m_current == '}') {
     return make_tuple(true, Token{TokenType::Symbol, SymbolType::TargetClose});
   } else {
