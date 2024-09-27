@@ -39,9 +39,7 @@ int main(int argc, char **argv) {
   Lexer lexer = Lexer(config_buffer);
   vector<Token> tokens;
   try {
-    while (lexer.m_current != '\0') {
-      tokens.push_back(lexer.get_next_token());
-    }
+    tokens = lexer.get_token_stream();
   } catch (LexerException lexer_exception) {
     cerr << "= Error: Failed to lex config file. Details:\n";
     cerr << "=" << lexer_exception.what();

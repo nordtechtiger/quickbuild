@@ -43,21 +43,19 @@ unsigned char Lexer::advance_input_byte() {
 }
 
 // gets next token from stream
-Token Lexer::get_next_token() {
-  Token token = TOKEN_INVALID;
-
-  while (token.token_type == TokenType::Invalid && m_current != '\0') {
+vector<Token> Lexer::get_token_stream() {
+  vector<Token> tokens;
+  while (m_current != '\0') {
     for (const auto &fn : match_tokens) {
       tuple<bool, Token> result = fn(*this);
       if (get<0>(result)) {
-        token = get<1>(result);
+        tokens.push_back(get<1>(result));
         break;
       }
     }
     advance_input_byte();
   }
-
-  return token;
+  return tokens;
 }
 
 // == all functions for validating/checking tokens below ==

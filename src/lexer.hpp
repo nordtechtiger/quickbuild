@@ -52,7 +52,7 @@ private:
 
 public:
   Lexer(std::vector<unsigned char> input_bytes);
-  Token get_next_token();
+  std::vector<Token> get_token_stream();
   unsigned char m_next;
   unsigned char m_current;
   unsigned long long m_index;
