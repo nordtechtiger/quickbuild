@@ -6,21 +6,21 @@ using namespace std;
 #define IS_ALPHABETIC(x)                                                       \
   (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')))
 
-tuple<bool, Token> debug_lexer_state(Lexer &lexer);
-tuple<bool, Token> skip_whitespace(Lexer &lexer);
-tuple<bool, Token> match_equals(Lexer &lexer);
-tuple<bool, Token> match_modify(Lexer &lexer);
-tuple<bool, Token> match_linestop(Lexer &lexer);
-tuple<bool, Token> match_arrow(Lexer &lexer);
-tuple<bool, Token> match_iterateas(Lexer &lexer);
-tuple<bool, Token> match_separator(Lexer &lexer);
-tuple<bool, Token> match_expressionopen(Lexer &lexer);
-tuple<bool, Token> match_expressionclose(Lexer &lexer);
-tuple<bool, Token> match_targetopen(Lexer &lexer);
-tuple<bool, Token> match_targetclose(Lexer &lexer);
+int debug_lexer_state(Lexer &, vector<Token> &);
+int skip_whitespace(Lexer &, vector<Token> &);
+int match_equals(Lexer &, vector<Token> &);
+int match_modify(Lexer &, vector<Token> &);
+int match_linestop(Lexer &, vector<Token> &);
+int match_arrow(Lexer &, vector<Token> &);
+int match_iterateas(Lexer &, vector<Token> &);
+int match_separator(Lexer &, vector<Token> &);
+int match_expressionopen(Lexer &, vector<Token> &);
+int match_expressionclose(Lexer &, vector<Token> &);
+int match_targetopen(Lexer &, vector<Token> &);
+int match_targetclose(Lexer &, vector<Token> &);
 
 // contains all tokens to match against
-const vector<tuple<bool, Token> (*)(Lexer &)> match_tokens{
+const vector<int (*)(Lexer &, vector<Token> &)> match_tokens{
     debug_lexer_state,     skip_whitespace,  match_equals,
     match_modify,          match_linestop,   match_arrow,
     match_iterateas,       match_separator,  match_expressionopen,
@@ -42,16 +42,22 @@ unsigned char Lexer::advance_input_byte() {
   return m_current;
 }
 
+void Lexer::insert_next_byte(unsigned char byte) {
+  m_input.insert(m_input.begin() + m_index, byte);
+}
+
 // gets next token from stream
 vector<Token> Lexer::get_token_stream() {
   vector<Token> tokens;
   while (m_current != '\0') {
     for (const auto &fn : match_tokens) {
-      tuple<bool, Token> result = fn(*this);
-      if (get<0>(result)) {
-        tokens.push_back(get<1>(result));
-        break;
+      int result = fn(*this, tokens);
+      if (0 > result) {
+        // Token doesn't match
+        continue;
       }
+      // Token matches
+      break;
     }
     advance_input_byte();
   }
@@ -61,118 +67,129 @@ vector<Token> Lexer::get_token_stream() {
 // == all functions for validating/checking tokens below ==
 
 // debugging
-tuple<bool, Token> debug_lexer_state(Lexer &lexer) {
+int debug_lexer_state(Lexer &lexer, vector<Token> &tokenstream) {
   cout << "Hello from literal matching function, current state: "
        << lexer.m_current << endl;
-  return make_tuple(false, TOKEN_INVALID);
+  return -1;
 }
 
 // skip whitespace
-tuple<bool, Token> skip_whitespace(Lexer &lexer) {
+int skip_whitespace(Lexer &lexer, vector<Token> &tokenstream) {
   // always return false - we just want to increase the iterator until we hit a
   // non-whitespace
   while (lexer.m_current == ' ')
     lexer.advance_input_byte();
-  return make_tuple(false, TOKEN_INVALID);
+  return -1;
 }
 
 // match =
-tuple<bool, Token> match_equals(Lexer &lexer) {
+int match_equals(Lexer &lexer, vector<Token> &tokenstream) {
   if (lexer.m_current == '=') {
-    return make_tuple(true, Token{TokenType::Symbol, SymbolType::Equals});
+    tokenstream.push_back(Token{TokenType::Symbol, SymbolType::Equals});
+    return 0;
   } else {
-    return make_tuple(false, TOKEN_INVALID);
+    return -1;
   }
 }
 
 // match :
-tuple<bool, Token> match_modify(Lexer &lexer) {
+int match_modify(Lexer &lexer, vector<Token> &tokenstream) {
   if (lexer.m_current == ':') {
-    return make_tuple(true, Token{TokenType::Symbol, SymbolType::Modify});
+    tokenstream.push_back(Token{TokenType::Symbol, SymbolType::Modify});
+    return 0;
   } else {
-    return make_tuple(false, TOKEN_INVALID);
+    return -1;
   }
 }
 
 // match ;
-tuple<bool, Token> match_linestop(Lexer &lexer) {
+int match_linestop(Lexer &lexer, vector<Token> &tokenstream) {
   if (lexer.m_current == ';') {
-    return make_tuple(true, Token{TokenType::Symbol, SymbolType::LineStop});
+    tokenstream.push_back(Token{TokenType::Symbol, SymbolType::LineStop});
+    return 0;
   } else {
-    return make_tuple(false, TOKEN_INVALID);
+    return -1;
   }
 }
 
 // match ->
-tuple<bool, Token> match_arrow(Lexer &lexer) {
+int match_arrow(Lexer &lexer, vector<Token> &tokenstream) {
   if (lexer.m_current == '-' && lexer.m_next == '>') {
     // skip an extra byte due to 2-character token
     lexer.advance_input_byte();
-    return make_tuple(true, Token{TokenType::Symbol, SymbolType::Arrow});
+    tokenstream.push_back(Token{TokenType::Symbol, SymbolType::Arrow});
+    return 0;
   } else {
-    return make_tuple(false, TOKEN_INVALID);
+    return -1;
   }
 }
 
 // match as
-tuple<bool, Token> match_iterateas(Lexer &lexer) {
+int match_iterateas(Lexer &lexer, vector<Token> &tokenstream) {
   if (lexer.m_current == 'a' && lexer.m_next == 's') {
     // skip an extra byte due to 2-character token
     lexer.advance_input_byte();
-    return make_tuple(true, Token{TokenType::Symbol, SymbolType::IterateAs});
+    tokenstream.push_back(Token{TokenType::Symbol, SymbolType::IterateAs});
+    return 0;
   } else {
-    return make_tuple(false, TOKEN_INVALID);
+    return -1;
   }
 }
 
 // match ,
-tuple<bool, Token> match_separator(Lexer &lexer) {
+int match_separator(Lexer &lexer, vector<Token> &tokenstream) {
   if (lexer.m_current == ',') {
-    return make_tuple(true, Token{TokenType::Symbol, SymbolType::Separator});
+    tokenstream.push_back(Token{TokenType::Symbol, SymbolType::Separator});
+    return 0;
   } else {
-    return make_tuple(false, TOKEN_INVALID);
+    return -1;
   }
 }
 
 // match [
-tuple<bool, Token> match_expressionopen(Lexer &lexer) {
+int match_expressionopen(Lexer &lexer, vector<Token> &tokenstream) {
   if (lexer.m_current == '[') {
-    return make_tuple(true,
-                      Token{TokenType::Symbol, SymbolType::ExpressionOpen});
+    tokenstream.push_back(Token{TokenType::Symbol, SymbolType::ExpressionOpen});
+    return 0;
   } else {
-    return make_tuple(false, TOKEN_INVALID);
+    return -1;
   }
 }
 
 // match ]
-tuple<bool, Token> match_expressionclose(Lexer &lexer) {
+int match_expressionclose(Lexer &lexer, vector<Token> &tokenstream) {
   // TODO: If is in an escaped literal, add custom token and begin next
   // string!!!!
   if (lexer.m_current == ']') {
-    if (lexer.m_state == LexerState::Normal) {
-      return make_tuple(true,
-                        Token{TokenType::Symbol, SymbolType::ExpressionClose});
-    } else if (lexer.m_state == LexerState::EscapedLiteral) {
+    tokenstream.push_back(
+        Token{TokenType::Symbol, SymbolType::ExpressionClose});
+    if (lexer.m_state == LexerState::EscapedLiteral) {
+      tokenstream.push_back(Token{TokenType::Symbol, SymbolType::ConcatLiteral});
+      // Boostrap the next part to be parsed as a string
+      lexer.insert_next_byte('\"');
     }
+    return 0;
   } else {
-    return make_tuple(false, TOKEN_INVALID);
+    return -1;
   }
 }
 
 // match {
-tuple<bool, Token> match_targetopen(Lexer &lexer) {
+int match_targetopen(Lexer &lexer, vector<Token> &tokenstream) {
   if (lexer.m_current == '{') {
-    return make_tuple(true, Token{TokenType::Symbol, SymbolType::TargetOpen});
+    tokenstream.push_back(Token{TokenType::Symbol, SymbolType::TargetOpen});
+    return 0;
   } else {
-    return make_tuple(false, TOKEN_INVALID);
+    return -1;
   }
 }
 
 // match }
-tuple<bool, Token> match_targetclose(Lexer &lexer) {
+int match_targetclose(Lexer &lexer, vector<Token> &tokenstream) {
   if (lexer.m_current == '}') {
-    return make_tuple(true, Token{TokenType::Symbol, SymbolType::TargetClose});
+    tokenstream.push_back(Token{TokenType::Symbol, SymbolType::TargetClose});
+    return 0;
   } else {
-    return make_tuple(false, TOKEN_INVALID);
+    return -1;
   }
 }
