@@ -218,8 +218,8 @@ int match_identifier(Lexer &lexer, vector<Token> &tokenstream) {
     string identifier;
     do {
       identifier += lexer.m_current;
-      cout << "identifier: " << identifier << ", ";
-    } while (IS_ALPHABETIC(lexer.advance_input_byte()));
+      lexer.advance_input_byte();
+    } while (IS_ALPHABETIC(lexer.m_current));
     tokenstream.push_back(Token{TokenType::Identifier, identifier});
     return 0;
   } else {
