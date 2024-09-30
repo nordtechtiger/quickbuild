@@ -203,6 +203,10 @@ int match_literal(Lexer &lexer, vector<Token> &tokenstream) {
   if (lexer.m_current == '\"') {
     string literal;
     while (lexer.advance_input_byte() != '\"') {
+      if (lexer.m_current == '[') {
+        lexer.m_state = LexerState::EscapedLiteral;
+        break;
+      }
       literal += lexer.m_current;
     }
     tokenstream.push_back(Token{TokenType::Literal, literal});
