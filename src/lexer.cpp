@@ -63,6 +63,7 @@ vector<Token> Lexer::get_token_stream() {
       break;
     }
     advance_input_byte();
+    cout << "Tokenstream length: " << tokens.size() << std::endl;
   }
   return tokens;
 }
@@ -71,8 +72,8 @@ vector<Token> Lexer::get_token_stream() {
 
 // debugging
 int debug_lexer_state(Lexer &lexer, vector<Token> &tokenstream) {
-  cout << "Lex round initial char: "
-       << lexer.m_current << endl;
+  cout << "Lex round initial char: " << lexer.m_current
+       << ", index: " << lexer.m_index << endl;
   return -1;
 }
 
@@ -171,6 +172,7 @@ int match_expressionclose(Lexer &lexer, vector<Token> &tokenstream) {
           Token{TokenType::Symbol, SymbolType::ConcatLiteral});
       // Boostrap the next part to be parsed as a string
       lexer.insert_next_byte('\"');
+      lexer.m_state = LexerState::Normal;
     }
     return 0;
   } else {
@@ -200,14 +202,17 @@ int match_targetclose(Lexer &lexer, vector<Token> &tokenstream) {
 
 // match literals
 int match_literal(Lexer &lexer, vector<Token> &tokenstream) {
+  cout << "literal" << endl;
   if (lexer.m_current == '\"') {
     string literal;
-    while (lexer.advance_input_byte() != '\"') {
+    lexer.advance_input_byte();
+    while (lexer.m_current != '\"' && lexer.m_current != '\0') {
       if (lexer.m_current == '[') {
         lexer.m_state = LexerState::EscapedLiteral;
         break;
       }
       literal += lexer.m_current;
+      lexer.advance_input_byte();
     }
     tokenstream.push_back(Token{TokenType::Literal, literal});
     return 0;
@@ -218,12 +223,14 @@ int match_literal(Lexer &lexer, vector<Token> &tokenstream) {
 
 // match identifiers
 int match_identifier(Lexer &lexer, vector<Token> &tokenstream) {
+  cout << "identifier" << endl;
   if (IS_ALPHABETIC(lexer.m_current)) {
     string identifier;
-    do {
-      identifier += lexer.m_current;
+    identifier += lexer.m_current;
+    while (IS_ALPHABETIC(lexer.m_next)) {
+      identifier += lexer.m_next;
       lexer.advance_input_byte();
-    } while (IS_ALPHABETIC(lexer.m_current));
+    }
     tokenstream.push_back(Token{TokenType::Identifier, identifier});
     return 0;
   } else {
