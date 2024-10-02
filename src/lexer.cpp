@@ -203,7 +203,7 @@ int match_targetclose(Lexer &lexer, vector<Token> &tokenstream) {
 // match literals
 int match_literal(Lexer &lexer, vector<Token> &tokenstream) {
   cout << "literal" << endl;
-  if (lexer.m_current == '\"') {
+  if (lexer.m_current == '\"' && lexer.m_next != '[') {
     string literal;
     lexer.advance_input_byte();
     while (lexer.m_current != '\"' && lexer.m_current != '\0') {
