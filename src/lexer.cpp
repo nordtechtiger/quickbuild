@@ -81,7 +81,7 @@ int debug_lexer_state(Lexer &lexer, vector<Token> &tokenstream) {
 int skip_whitespace(Lexer &lexer, vector<Token> &tokenstream) {
   // always return false - we just want to increase the iterator until we hit a
   // non-whitespace
-  while (lexer.m_current == ' ')
+  while (lexer.m_current == ' ' || lexer.m_current == '\n' || lexer.m_current == '\t')
     lexer.advance_input_byte();
   return -1;
 }
