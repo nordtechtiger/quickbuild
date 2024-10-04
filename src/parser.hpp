@@ -4,13 +4,9 @@
 #include <string>
 #include <vector>
 
-enum class FieldType {
-  Literal,
-  Expression,
-};
-
 struct Field {
-  FieldType field_type;
+  std::string identifier;
+  std::string value;
 };
 
 struct Object {
