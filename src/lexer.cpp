@@ -62,17 +62,9 @@ vector<Token> Lexer::get_token_stream() {
         continue;
       }
       // Token matches
-      cout << "<> Token successfully matched. Status:" << endl;
-      cout << "Index: " << m_index << endl;
-      cout << "New scan pointer: " << m_input[MAX(0, m_index - 2)]
-           << m_input[MAX(0, m_index - 1)] << m_input[m_index]
-           << m_input[MIN(m_input.size() - 1, m_index + 1)]
-           << m_input[MIN(m_input.size() - 1, m_index + 2)] << endl;
-      cout << "                    ^" << endl;
       break;
     }
     advance_input_byte();
-    cout << "Tokenstream length: " << tokens.size() << std::endl;
   }
   return tokens;
 }
@@ -181,7 +173,6 @@ int match_expressionclose(Lexer &lexer, vector<Token> &tokenstream) {
       // Boostrap the next part to be parsed as a string
       lexer.insert_next_byte('\"');
       lexer.m_state = LexerState::Normal;
-      cout << "=== Escaped expression: String icon injected!" << endl;
     }
     return 0;
   } else {
