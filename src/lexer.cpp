@@ -5,6 +5,8 @@ using namespace std;
 
 #define IS_ALPHABETIC(x)                                                       \
   (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')))
+#define MIN(x, y) ((x < y) ? x : y)
+#define MAX(x, y) ((x > y) ? x : y)
 
 int debug_lexer_state(Lexer &, vector<Token> &);
 int skip_whitespace(Lexer &, vector<Token> &);
@@ -46,7 +48,7 @@ unsigned char Lexer::advance_input_byte() {
 }
 
 void Lexer::insert_next_byte(unsigned char byte) {
-  m_input.insert(m_input.begin() + m_index, byte);
+  m_input.insert(m_input.begin() + m_index + 1, byte);
 }
 
 // gets next token from stream
@@ -60,6 +62,13 @@ vector<Token> Lexer::get_token_stream() {
         continue;
       }
       // Token matches
+      cout << "<> Token successfully matched. Status:" << endl;
+      cout << "Index: " << m_index << endl;
+      cout << "New scan pointer: " << m_input[MAX(0, m_index - 2)]
+           << m_input[MAX(0, m_index - 1)] << m_input[m_index]
+           << m_input[MIN(m_input.size() - 1, m_index + 1)]
+           << m_input[MIN(m_input.size() - 1, m_index + 2)] << endl;
+      cout << "                    ^" << endl;
       break;
     }
     advance_input_byte();
@@ -72,8 +81,8 @@ vector<Token> Lexer::get_token_stream() {
 
 // debugging
 int debug_lexer_state(Lexer &lexer, vector<Token> &tokenstream) {
-  cout << "Lex round initial char: " << lexer.m_current
-       << ", index: " << lexer.m_index << endl;
+  /* cout << "Parsing: " << lexer.m_current << lexer.m_next << endl;
+  cout << "         ^" << endl; */
   return -1;
 }
 
@@ -81,7 +90,8 @@ int debug_lexer_state(Lexer &lexer, vector<Token> &tokenstream) {
 int skip_whitespace(Lexer &lexer, vector<Token> &tokenstream) {
   // always return false - we just want to increase the iterator until we hit a
   // non-whitespace
-  while (lexer.m_current == ' ' || lexer.m_current == '\n' || lexer.m_current == '\t')
+  while (lexer.m_current == ' ' || lexer.m_current == '\n' ||
+         lexer.m_current == '\t')
     lexer.advance_input_byte();
   return -1;
 }
@@ -162,8 +172,6 @@ int match_expressionopen(Lexer &lexer, vector<Token> &tokenstream) {
 
 // match ]
 int match_expressionclose(Lexer &lexer, vector<Token> &tokenstream) {
-  // TODO: If is in an escaped literal, add custom token and begin next
-  // string!!!!
   if (lexer.m_current == ']') {
     tokenstream.push_back(
         Token{TokenType::Symbol, SymbolType::ExpressionClose});
@@ -173,6 +181,7 @@ int match_expressionclose(Lexer &lexer, vector<Token> &tokenstream) {
       // Boostrap the next part to be parsed as a string
       lexer.insert_next_byte('\"');
       lexer.m_state = LexerState::Normal;
+      cout << "=== Escaped expression: String icon injected!" << endl;
     }
     return 0;
   } else {
@@ -202,8 +211,7 @@ int match_targetclose(Lexer &lexer, vector<Token> &tokenstream) {
 
 // match literals
 int match_literal(Lexer &lexer, vector<Token> &tokenstream) {
-  cout << "literal" << endl;
-  if (lexer.m_current == '\"' && lexer.m_next != '[') {
+  if (lexer.m_current == '\"') {
     string literal;
     lexer.advance_input_byte();
     while (lexer.m_current != '\"' && lexer.m_current != '\0') {
@@ -215,6 +223,9 @@ int match_literal(Lexer &lexer, vector<Token> &tokenstream) {
       lexer.advance_input_byte();
     }
     tokenstream.push_back(Token{TokenType::Literal, literal});
+    if (lexer.m_state == LexerState::EscapedLiteral) {
+      tokenstream.push_back(Token{TokenType::Symbol, SymbolType::ConcatLiteral});
+    }
     return 0;
   } else {
     return -1;
@@ -223,7 +234,6 @@ int match_literal(Lexer &lexer, vector<Token> &tokenstream) {
 
 // match identifiers
 int match_identifier(Lexer &lexer, vector<Token> &tokenstream) {
-  cout << "identifier" << endl;
   if (IS_ALPHABETIC(lexer.m_current)) {
     string identifier;
     identifier += lexer.m_current;
