@@ -215,8 +215,10 @@ int match_literal(Lexer &lexer, vector<Token> &tokenstream) {
     }
     tokenstream.push_back(Token{TokenType::Literal, literal});
     if (lexer.m_state == LexerState::EscapedLiteral) {
-      tokenstream.push_back(Token{TokenType::Symbol, SymbolType::ConcatLiteral});
-      tokenstream.push_back(Token{TokenType::Symbol, SymbolType::ExpressionOpen});
+      tokenstream.push_back(
+          Token{TokenType::Symbol, SymbolType::ConcatLiteral});
+      tokenstream.push_back(
+          Token{TokenType::Symbol, SymbolType::ExpressionOpen});
     }
     return 0;
   } else {

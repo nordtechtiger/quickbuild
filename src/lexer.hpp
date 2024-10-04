@@ -67,7 +67,7 @@ private:
   const char *details;
 
 public:
-  LexerException(const char *details) : details(details) {};
+  LexerException(const char *details) : details(details){};
   const char *what() { return details; }
 };
 
