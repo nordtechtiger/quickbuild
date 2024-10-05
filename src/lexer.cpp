@@ -1,14 +1,10 @@
 #include "lexer.hpp"
-#include <iostream>
 
 using namespace std;
 
 #define IS_ALPHABETIC(x)                                                       \
   (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')))
-#define MIN(x, y) ((x < y) ? x : y)
-#define MAX(x, y) ((x > y) ? x : y)
 
-int debug_lexer_state(Lexer &, vector<Token> &);
 int skip_whitespace(Lexer &, vector<Token> &);
 int match_equals(Lexer &, vector<Token> &);
 int match_modify(Lexer &, vector<Token> &);
@@ -25,11 +21,11 @@ int match_identifier(Lexer &, vector<Token> &);
 
 // contains all tokens to match against
 const vector<int (*)(Lexer &, vector<Token> &)> match_tokens{
-    debug_lexer_state,     skip_whitespace,  match_equals,
-    match_modify,          match_linestop,   match_arrow,
-    match_iterateas,       match_separator,  match_expressionopen,
-    match_expressionclose, match_targetopen, match_targetclose,
-    match_literal,         match_identifier,
+    skip_whitespace,  match_equals,         match_modify,
+    match_linestop,   match_arrow,          match_iterateas,
+    match_separator,  match_expressionopen, match_expressionclose,
+    match_targetopen, match_targetclose,    match_literal,
+    match_identifier,
 };
 
 // initializes new lexer
@@ -70,13 +66,6 @@ vector<Token> Lexer::get_token_stream() {
 }
 
 // == all functions for validating/checking tokens below ==
-
-// debugging
-int debug_lexer_state(Lexer &lexer, vector<Token> &tokenstream) {
-  /* cout << "Parsing: " << lexer.m_current << lexer.m_next << endl;
-  cout << "         ^" << endl; */
-  return -1;
-}
 
 // skip whitespace
 int skip_whitespace(Lexer &lexer, vector<Token> &tokenstream) {
