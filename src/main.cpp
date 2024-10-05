@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "lexer.hpp"
+#include "parser.hpp"
 
 #define SEARCH_DIR "."
 #define CONFIG_FILE "quickbuild"
@@ -63,6 +64,9 @@ int main(int argc, char **argv) {
            << ", \"" << get<string>(i.token_context) << "\")" << endl;
     }
   }
+
+  Parser parser = Parser();
+  Object root = parser.parse_tokens(tokens);
 
   return EXIT_SUCCESS;
 }

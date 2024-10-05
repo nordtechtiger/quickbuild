@@ -16,6 +16,7 @@ struct Object {
 
 // Work class
 class Parser {
+public:
   Object parse_tokens(std::vector<Token> token_stream);
 };
 
