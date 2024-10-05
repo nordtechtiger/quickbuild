@@ -4,19 +4,30 @@
 
 using namespace std;
 
-int parse_variable(std::vector<Token>);
-int parse_child(std::vector<Token>);
+int parse_variable(std::vector<Token>, AST&);
+int parse_child(std::vector<Token>, AST&);
 
-const vector<int (*)(vector<Token>)> parsing_rules{
+const vector<int (*)(vector<Token>, AST&)> parsing_rules{
     /* parse_variable,
     parse_child, */
 };
 
 AST Parser::parse_tokens(std::vector<Token> token_stream) {
+  AST ast;
+  for (int token_index = 0; token_index < token_stream.size(); token_index++) {
+    token_stream = vector(token_stream.begin() + 1, token_stream.end());
+    if (0 == parse_variable(token_stream, ast)) {
+      continue;
+    }
+    if (0 == parse_child(token_stream, ast)) {
+      continue;
+    }
+    throw ParserException("Failed to match tokens");
+  }
 }
 
 /* # Assuming current config, the AST should look like the following:
- * 
+ *
  * field("compiler", <Literal"gcc">)
  * field("flags", <Literal"-g -o0">)
  * field("sources", <Literal"src/*.c">)

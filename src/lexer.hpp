@@ -59,6 +59,7 @@ public:
 };
 
 // Exceptions thrown by the lexer
+
 class LexerException : public std::exception {
 private:
   const char *details;

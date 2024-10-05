@@ -40,4 +40,14 @@ public:
   AST parse_tokens(std::vector<Token> token_stream);
 };
 
+// Exceptions thrown by parser
+class ParserException : public std::exception {
+private:
+  const char *details;
+
+public:
+  ParserException(const char *details) : details(details){};
+  const char *what() { return details; }
+};
+
 #endif
