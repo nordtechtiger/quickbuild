@@ -13,9 +13,9 @@ struct Replace {
   Literal original;
   Literal replacement;
 };
-typedef std::variant<Variable, Literal, Replace> Expression;
-// typedef std::vector<_expression> Concatenation;
-// typedef _expression Expression;
+typedef std::variant<Variable, Literal, Replace> _expression;
+typedef std::vector<_expression> Concatenation;
+typedef std::variant<Variable, Literal, Replace, Concatenation> Expression;
 
 // Config: Fields, targets, AST
 
