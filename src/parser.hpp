@@ -4,20 +4,38 @@
 #include <string>
 #include <vector>
 
+// Logic: Expressions
+
+typedef std::string Variable;
+typedef std::string Literal;
+struct Replace {
+  Variable variable;
+  Literal original;
+  Literal replacement;
+};
+typedef std::variant<Variable, Literal, Replace> Expression;
+
+// Config: Fields, targets, AST
+
 struct Field {
   std::string identifier;
-  std::string value;
+  std::vector<Expression> value;
 };
-
-struct Object {
+struct Target {
+  Expression identifier;
+  std::string public_name;
   std::vector<Field> fields;
-  std::vector<Object> children;
+};
+struct AST {
+  std::vector<Field> fields;
+  std::vector<Target> targets;
 };
 
 // Work class
+
 class Parser {
 public:
-  Object parse_tokens(std::vector<Token> token_stream);
+  AST parse_tokens(std::vector<Token> token_stream);
 };
 
 #endif
