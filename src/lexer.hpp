@@ -5,9 +5,6 @@
 #include <variant>
 #include <vector>
 
-#define TOKEN_INVALID                                                          \
-  Token { TokenType::Invalid, SymbolType::LineStop }
-
 // Defines what type of token it is
 enum class TokenType {
   Identifier, // any text without quotes

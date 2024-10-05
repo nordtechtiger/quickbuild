@@ -7,12 +7,12 @@ int parse_variable(std::vector<Token>);
 int parse_child(std::vector<Token>);
 
 const vector<int (*)(vector<Token>)> parsing_rules{
-  parse_variable,
-  parse_child,
+    /* parse_variable,
+    parse_child, */
 };
 
 AST Parser::parse_tokens(std::vector<Token> token_stream) {
-  
+
 }
 
 /* # Assuming current config, the AST should look like the following:

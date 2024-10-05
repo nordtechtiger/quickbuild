@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
   }
 
   Parser parser = Parser();
-  Object root = parser.parse_tokens(tokens);
+  AST root = parser.parse_tokens(tokens);
 
   return EXIT_SUCCESS;
 }
