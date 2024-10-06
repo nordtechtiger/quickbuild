@@ -36,7 +36,7 @@ enum class LexerState {
 // Defines additional data depending on the token type
 typedef std::variant<SymbolType, std::string> TokenContext;
 
-// Defines a general token, struct Token {
+// Defines a general token
 struct Token {
   TokenType token_type;
   TokenContext token_context;
@@ -59,7 +59,6 @@ public:
 };
 
 // Exceptions thrown by the lexer
-
 class LexerException : public std::exception {
 private:
   const char *details;
