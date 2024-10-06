@@ -4,11 +4,11 @@
 
 using namespace std;
 
-int parse_variable(vector<Token>, AST &);
+int parse_field(vector<Token>, AST &);
 int parse_target(vector<Token>, AST &);
 
 const vector<int (*)(vector<Token>, AST &)> parsing_rules{
-    parse_variable,
+    parse_field,
     parse_target,
 };
 
@@ -41,9 +41,10 @@ int _parse_expression() {
 }
 
 int _parse_expressions(vector<Token> token_stream, vector<Expression> &expression) {
+  
 }
 
-int parse_variable(vector<Token> token_stream, AST &ast) {
+int parse_field(vector<Token> token_stream, AST &ast) {
   // Verify the basic signature
   if (token_stream.size() < 4) {
     return -1;
@@ -59,17 +60,28 @@ int parse_variable(vector<Token> token_stream, AST &ast) {
 
   Field field;
   field.identifier = get<1>(token_stream[0].token_context);
-  if (0 > _parse_expressions(_token_stream, field.value)) {
+  int expression_length = _parse_expressions(_token_stream, field.value);
+  if (0 >= expression_length) {
+    throw ParserException("Failed to parse expression");
   }
 
-  return 0; // TODO
+  return expression_length+; // TODO
 }
 
 int parse_target(vector<Token> token_stream, AST &ast) {
   return 0; // TODO
 }
 
-/* # Assuming current config, the AST should look like the following:
+/* # Matching "rules":
+ * field:
+ *   identifier, equals, (expression), linestop
+ * (expression):
+ *   literal
+ *   expressionopen, identifier, expressionclose
+ *   expressionopen, identifier, modify, literal, arrow, literal, expressionclose
+ *   // or any of these combined
+ *
+ * # Assuming current config, the AST should look like the following:
  *
  * field("compiler", <Literal"gcc">)
  * field("flags", <Literal"-g -o0">)
