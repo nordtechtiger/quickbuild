@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
   cout << "= Quickbuild Beta v0.1.0\n";
 
   // Get a list of all files in this diectory, recursively
-  cout << "- Scanning directory...\n";
+  cout << "- (wait) scanning directory...\n";
   vector<filesystem::directory_entry> file_tree;
   auto dir_iterator = filesystem::recursive_directory_iterator(SEARCH_DIR);
   for (auto &entry : dir_iterator) {
@@ -28,10 +28,13 @@ int main(int argc, char **argv) {
     file_tree.push_back(entry);
   }
 
+  // Build config file
+  cout << "- (wait) building configuration...\n";
+
   // Read config file
   ifstream config_file(CONFIG_FILE, ios::binary);
   if (!config_file.is_open()) {
-    cerr << "= Error: Couldn't find config file\n";
+    cerr << "= (fatal) couldn't find config file!\n";
     return EXIT_FAILURE;
   }
   vector<unsigned char> config_buffer(istreambuf_iterator(config_file), {});
@@ -42,8 +45,8 @@ int main(int argc, char **argv) {
   try {
     tokens = lexer.get_token_stream();
   } catch (LexerException lexer_exception) {
-    cerr << "= Error: Failed to lex config file. Details:\n";
-    cerr << "=" << lexer_exception.what();
+    cerr << "= (fatal) failed to lex configuration! details: ";
+    cerr << "`" << lexer_exception.what() << "`" << endl;
   }
 
   // NOTE: Debugging purposes only!
@@ -65,8 +68,15 @@ int main(int argc, char **argv) {
     }
   }
 
+  AST root;
   Parser parser = Parser();
-  AST root = parser.parse_tokens(tokens);
+  
+  try {
+    root = parser.parse_tokens(tokens);
+  } catch (ParserException parser_exception) {
+    cerr << "= (fatal) failed to parse configuration! details: ";
+    cerr << "`" << parser_exception.what() << "`" << endl;
+  }
 
   return EXIT_SUCCESS;
 }
