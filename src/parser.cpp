@@ -12,6 +12,7 @@ const vector<int (*)(vector<Token>, AST &)> parsing_rules{
     parse_target,
 };
 
+// Tries to match against all rules, returns tokens parsed
 int try_parse(vector<Token> token_stream, AST &ast) {
   for (const auto &fn : parsing_rules) {
     int tokens_parsed = fn(token_stream, ast);
@@ -19,31 +20,41 @@ int try_parse(vector<Token> token_stream, AST &ast) {
       return tokens_parsed;
     }
   }
-  return -1;
+  return 0;
 }
 
 AST Parser::parse_tokens(vector<Token> token_stream) {
   AST ast;
-  for (int index = 0; index < token_stream.size(); index++) {
+  for (int index = 0; index < token_stream.size();) {
     vector<Token> _token_stream =
         vector(token_stream.begin() + index, token_stream.end());
-    if (0 == try_parse(_token_stream, ast))
+    int tokens_parsed = try_parse(_token_stream, ast);
+    if (0 < tokens_parsed) {
+      index += tokens_parsed;
       continue;
-    throw ParserException("Failed to match tokens");
+    }
+    throw ParserException("[P001] No matching parsing rules");
   }
   return ast;
 }
 
 // === All parsing logic below ===
+// NOTE: All parsing rules return the number of tokens parsed
 
-int _parse_expression() {
-  
+// Parses an expression, returns tokens parsed
+int _parse_expressions(vector<Token> token_stream,
+                       vector<Expression> &expression) {
+  int tokens_parsed = 0;
+  for (int index; true; index++) {
+
+    if (index >= token_stream.size() - 1) {
+      // No more tokens to parse
+      return 0;
+    }
+  }
 }
 
-int _parse_expressions(vector<Token> token_stream, vector<Expression> &expression) {
-  
-}
-
+// Parses a complete field, returns tokens parsed
 int parse_field(vector<Token> token_stream, AST &ast) {
   // Verify the basic signature
   if (token_stream.size() < 4) {
@@ -62,12 +73,14 @@ int parse_field(vector<Token> token_stream, AST &ast) {
   field.identifier = get<1>(token_stream[0].token_context);
   int expression_length = _parse_expressions(_token_stream, field.value);
   if (0 >= expression_length) {
-    throw ParserException("Failed to parse expression");
+    throw ParserException("[P002] Field expression tokens invalid");
   }
 
-  return expression_length+; // TODO
+  ast.fields.push_back(field);
+  return expression_length + 2;
 }
 
+// Parses a complete target, returns tokens parsed
 int parse_target(vector<Token> token_stream, AST &ast) {
   return 0; // TODO
 }
@@ -78,7 +91,8 @@ int parse_target(vector<Token> token_stream, AST &ast) {
  * (expression):
  *   literal
  *   expressionopen, identifier, expressionclose
- *   expressionopen, identifier, modify, literal, arrow, literal, expressionclose
+ *   expressionopen, identifier, modify, literal, arrow, literal,
+ * expressionclose
  *   // or any of these combined
  *
  * # Assuming current config, the AST should look like the following:
