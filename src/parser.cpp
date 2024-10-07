@@ -44,13 +44,35 @@ AST Parser::parse_tokens(vector<Token> token_stream) {
 // Parses an expression, returns tokens parsed
 int _parse_expressions(vector<Token> token_stream,
                        vector<Expression> &expression) {
-  int tokens_parsed = 0;
-  for (int index; true; index++) {
+  int token_index = 0;
+  while (true) {
+    // Match concatenations
+    // TODO
 
-    if (index >= token_stream.size() - 1) {
+    // Match replacements/modifies
+    // TODO
+
+    // Match simple literal
+    if (token_stream[token_index].token_type == TokenType::Literal) {
+      // expression.push_back(Expression(Literal(""))); // Rework expression
+      // objects
+    }
+
+    // Match linestop ;
+    if (token_stream[token_index].token_type == TokenType::Symbol &&
+        get<0>(token_stream[token_index].token_context) ==
+            SymbolType::LineStop) {
+      // Everything is parsed up until the linestop
+      // TODO: Ensure that this is the correct return
+      return token_index + 1;
+    }
+
+    if (token_index >= token_stream.size() - 1) {
       // No more tokens to parse
       return 0;
     }
+    // Nothing matched (?)
+    return 0;
   }
 }
 
