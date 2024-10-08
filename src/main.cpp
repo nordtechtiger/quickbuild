@@ -58,13 +58,13 @@ int main(int argc, char **argv) {
                   i.token_type)
            << ", \""
            << static_cast<typename underlying_type<SymbolType>::type>(
-                  get<SymbolType>(i.token_context))
+                  get<CONTEXT_SYMBOLTYPE>(i.token_context))
            << "\")" << endl;
     } else {
       cout << "str: ("
            << static_cast<typename underlying_type<TokenType>::type>(
                   i.token_type)
-           << ", \"" << get<string>(i.token_context) << "\")" << endl;
+           << ", \"" << get<CONTEXT_STRING>(i.token_context) << "\")" << endl;
     }
   }
 

@@ -6,8 +6,12 @@
 
 // Logic: Expressions
 
-typedef std::string Variable;
-typedef std::string Literal;
+struct Variable {
+  std::string identifier;
+};
+struct Literal {
+  std::string content;
+};
 struct Replace {
   Variable variable;
   Literal original;

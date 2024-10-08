@@ -54,13 +54,12 @@ int _parse_expressions(vector<Token> token_stream,
 
     // Match simple literal
     if (token_stream[token_index].token_type == TokenType::Literal) {
-      // expression.push_back(Expression(Literal(""))); // Rework expression
-      // objects
+       expression.push_back(Expression(Literal{get<CONTEXT_STRING>(token_stream[token_index].token_context)}));
     }
 
     // Match linestop ;
     if (token_stream[token_index].token_type == TokenType::Symbol &&
-        get<0>(token_stream[token_index].token_context) ==
+        get<CONTEXT_SYMBOLTYPE>(token_stream[token_index].token_context) ==
             SymbolType::LineStop) {
       // Everything is parsed up until the linestop
       // TODO: Ensure that this is the correct return
@@ -84,7 +83,7 @@ int parse_field(vector<Token> token_stream, AST &ast) {
   }
   if (!((token_stream[0].token_type == TokenType::Identifier) &&
         (token_stream[1].token_type == TokenType::Symbol) &&
-        (get<0>(token_stream[1].token_context) == SymbolType::Equals))) {
+        (get<CONTEXT_SYMBOLTYPE>(token_stream[1].token_context) == SymbolType::Equals))) {
     return -1;
   }
 
@@ -92,7 +91,7 @@ int parse_field(vector<Token> token_stream, AST &ast) {
       vector(token_stream.begin() + 2, token_stream.end());
 
   Field field;
-  field.identifier = get<1>(token_stream[0].token_context);
+  field.identifier = get<CONTEXT_STRING>(token_stream[0].token_context);
   int expression_length = _parse_expressions(_token_stream, field.value);
   if (0 >= expression_length) {
     throw ParserException("[P002] Field expression tokens invalid");

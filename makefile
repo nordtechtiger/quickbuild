@@ -1,5 +1,6 @@
 CXX = clang++
-CXXFLAGS = -g -O0 -Wall -Wextra -pthread -pedantic-errors
+# CXXFLAGS = -O3 -Wall -Wextra -pthread -pedantic-errors # release
+CXXFLAGS = -g -O0 -Wall -Wextra -pthread -pedantic-errors # debug
 
 SRC_DIR := src
 OBJ_DIR := obj

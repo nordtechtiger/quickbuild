@@ -1,6 +1,9 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#define CONTEXT_SYMBOLTYPE 0
+#define CONTEXT_STRING 1
+
 #include <string>
 #include <variant>
 #include <vector>
