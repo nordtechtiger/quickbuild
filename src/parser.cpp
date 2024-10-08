@@ -54,7 +54,8 @@ int _parse_expressions(vector<Token> token_stream,
 
     // Match simple literal
     if (token_stream[token_index].token_type == TokenType::Literal) {
-       expression.push_back(Expression(Literal{get<CONTEXT_STRING>(token_stream[token_index].token_context)}));
+      expression.push_back(Expression(Literal{
+          get<CONTEXT_STRING>(token_stream[token_index].token_context)}));
     }
 
     // Match linestop ;
@@ -83,7 +84,8 @@ int parse_field(vector<Token> token_stream, AST &ast) {
   }
   if (!((token_stream[0].token_type == TokenType::Identifier) &&
         (token_stream[1].token_type == TokenType::Symbol) &&
-        (get<CONTEXT_SYMBOLTYPE>(token_stream[1].token_context) == SymbolType::Equals))) {
+        (get<CONTEXT_SYMBOLTYPE>(token_stream[1].token_context) ==
+         SymbolType::Equals))) {
     return -1;
   }
 

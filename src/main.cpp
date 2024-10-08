@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 
   AST root;
   Parser parser = Parser();
-  
+
   try {
     root = parser.parse_tokens(tokens);
   } catch (ParserException parser_exception) {
