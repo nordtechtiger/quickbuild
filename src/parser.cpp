@@ -41,14 +41,15 @@ AST Parser::parse_tokens(vector<Token> t_stream) {
 // NOTE: All parsing rules return the number of tokens parsed
 
 // Parses an expression, returns tokens parsed
-int _parse_expressions(vector<Token> t_stream, vector<Expression> &o_expression) {
+int _parse_expressions(vector<Token> t_stream,
+                       vector<Expression> &o_expression) {
   int i = 0;
   while (true) {
     // Match concatenations
     // TODO
 
     // Match replacements/modifies
-    if (t_stream[i].type == TokenType::Symbol &&
+    if (t_stream.size() >= 6 && t_stream[i].type == TokenType::Symbol &&
         get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::ExpressionOpen &&
         t_stream[i + 1].type == TokenType::Identifier &&
         t_stream[i + 2].type == TokenType::Symbol &&
@@ -56,11 +57,16 @@ int _parse_expressions(vector<Token> t_stream, vector<Expression> &o_expression)
         t_stream[i + 3].type == TokenType::Literal &&
         t_stream[i + 4].type == TokenType::Symbol &&
         get<CTX_SYMBOL>(t_stream[i + 4].context) == SymbolType::Arrow &&
-        t_stream[i + 5].type == TokenType::Literal) {
+        t_stream[i + 5].type == TokenType::Literal &&
+        t_stream[i + 6].type == TokenType::Symbol &&
+        get<CTX_SYMBOL>(t_stream[i + 6].context) ==
+            SymbolType::ExpressionClose) {
       Variable variable = Variable{get<CTX_STRING>(t_stream[i + 1].context)};
       Literal original = Literal{get<CTX_STRING>(t_stream[i + 3].context)};
       Literal replacement = Literal{get<CTX_STRING>(t_stream[i + 5].context)};
-      o_expression.push_back(Expression(Replace{variable, original, replacement}));
+      o_expression.push_back(
+          Expression(Replace{variable, original, replacement}));
+      i += 6;
     }
 
     // Match simple literal
