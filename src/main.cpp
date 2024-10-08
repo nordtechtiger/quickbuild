@@ -51,20 +51,17 @@ int main(int argc, char **argv) {
 
   // NOTE: Debugging purposes only!
   for (const auto &i : tokens) {
-    if (i.token_type == TokenType::Symbol ||
-        i.token_type == TokenType::Invalid) {
+    if (i.type == TokenType::Symbol || i.type == TokenType::Invalid) {
       cout << "symbol: ("
-           << static_cast<typename underlying_type<TokenType>::type>(
-                  i.token_type)
+           << static_cast<typename underlying_type<TokenType>::type>(i.type)
            << ", \""
            << static_cast<typename underlying_type<SymbolType>::type>(
-                  get<CONTEXT_SYMBOLTYPE>(i.token_context))
+                  get<CTX_SYMBOL>(i.context))
            << "\")" << endl;
     } else {
       cout << "str: ("
-           << static_cast<typename underlying_type<TokenType>::type>(
-                  i.token_type)
-           << ", \"" << get<CONTEXT_STRING>(i.token_context) << "\")" << endl;
+           << static_cast<typename underlying_type<TokenType>::type>(i.type)
+           << ", \"" << get<CTX_STRING>(i.context) << "\")" << endl;
     }
   }
 

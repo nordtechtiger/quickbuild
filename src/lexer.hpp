@@ -1,8 +1,9 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#define CONTEXT_SYMBOLTYPE 0
-#define CONTEXT_STRING 1
+// Token context indexes
+#define CTX_SYMBOL 0
+#define CTX_STRING 1
 
 #include <string>
 #include <variant>
@@ -41,8 +42,8 @@ typedef std::variant<SymbolType, std::string> TokenContext;
 
 // Defines a general token
 struct Token {
-  TokenType token_type;
-  TokenContext token_context;
+  TokenType type;
+  TokenContext context;
 };
 
 // Work class
