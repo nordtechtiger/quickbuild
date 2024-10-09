@@ -1,4 +1,4 @@
-#include "parser.hpp"
+# include "parser.hpp"
 #include "lexer.hpp"
 #include <iostream>
 
@@ -49,7 +49,7 @@ int _parse_expressions(vector<Token> t_stream,
     // TODO
 
     // Match replacements/modifies
-    if (t_stream.size() >= 6 && t_stream[i].type == TokenType::Symbol &&
+    if (t_stream.size() >= 7 && t_stream[i].type == TokenType::Symbol &&
         get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::ExpressionOpen &&
         t_stream[i + 1].type == TokenType::Identifier &&
         t_stream[i + 2].type == TokenType::Symbol &&
@@ -66,7 +66,9 @@ int _parse_expressions(vector<Token> t_stream,
       Literal replacement = Literal{get<CTX_STRING>(t_stream[i + 5].context)};
       o_expression.push_back(
           Expression(Replace{variable, original, replacement}));
-      i += 6;
+      i += 7;
+      cout << "Matched replacement expression" << endl;
+      continue;
     }
 
     // Match simple literal
@@ -74,6 +76,8 @@ int _parse_expressions(vector<Token> t_stream,
       string literal_string = get<CTX_STRING>(t_stream[i].context);
       o_expression.push_back(Expression(Literal{literal_string}));
       i += 1;
+      cout << "Matched literal expression" << endl;
+      continue;
     }
 
     // Match linestop ;
