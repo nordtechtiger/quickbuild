@@ -5,7 +5,6 @@
 #include <vector>
 
 // Logic: Expressions
-
 struct Variable {
   std::string identifier;
 };
@@ -22,7 +21,6 @@ typedef std::vector<_expression> Concatenation;
 typedef std::variant<Variable, Literal, Replace, Concatenation> Expression;
 
 // Config: Fields, targets, AST
-
 struct Field {
   std::string identifier;
   std::vector<Expression> value;
@@ -38,7 +36,6 @@ struct AST {
 };
 
 // Work class
-
 class Parser {
 public:
   AST parse_tokens(std::vector<Token> token_stream);

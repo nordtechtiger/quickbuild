@@ -156,12 +156,18 @@ int parse_target(vector<Token> t_stream, AST &ast) {
     return 0;
   }
 
+  cout << "matching target..." << endl;
+
+  int i = 2; // FIXME: This is incorrect for declarations that use `objects as obj { ...`
   std::vector<Field> fields;
-  for (int i = 2;
-       !(t_stream[i].type == TokenType::Symbol &&
-         get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::TargetClose);) {
+  for (; !(t_stream[i].type == TokenType::Symbol &&
+           get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::TargetClose);) {
     vector<Token> _t_stream = vector(t_stream.begin() + i, t_stream.end());
+    cout << "tokens parsed: " << i << endl;
     Field field;
+    for (const auto &t : _t_stream) {
+      cout << (int)t.type << endl;
+    }
     int parsed_tokens = _parse_field(_t_stream, field);
     if (0 >= parsed_tokens) {
       // Couldn't parse field
@@ -177,9 +183,11 @@ int parse_target(vector<Token> t_stream, AST &ast) {
     }
   }
   ast.targets.push_back(Target{
-
+    identifier,
+    public_name,
+    fields,
   });
-  return 0; // TODO
+  return i; // TODO
 }
 
 /* # Matching "rules":
