@@ -137,18 +137,19 @@ int parse_target(vector<Token> t_stream, AST &ast) {
   }
   Expression identifier;
   string public_name;
-  // This is utter garbage. Terry Davis would be rolling in his grave if he saw this. TODO: Better identifier parsing needed!
+  // This is utter garbage. Terry Davis would be rolling in his grave if he saw
+  // this. TODO: Better identifier parsing needed!
   if (t_stream[0].type == TokenType::Identifier &&
-        t_stream[1].type == TokenType::Symbol &&
-        get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::TargetOpen) {
+      t_stream[1].type == TokenType::Symbol &&
+      get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::TargetOpen) {
     identifier = Literal{get<CTX_STRING>(t_stream[0].context)};
     public_name = get<CTX_STRING>(t_stream[0].context);
   } else if (t_stream[0].type == TokenType::Identifier &&
-            t_stream[1].type == TokenType::Symbol &&
-            get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::IterateAs &&
-            t_stream[2].type == TokenType::Literal &&
-            t_stream[3].type == TokenType::Symbol &&
-            get<CTX_SYMBOL>(t_stream[3].context) == SymbolType::TargetOpen) {
+             t_stream[1].type == TokenType::Symbol &&
+             get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::IterateAs &&
+             t_stream[2].type == TokenType::Literal &&
+             t_stream[3].type == TokenType::Symbol &&
+             get<CTX_SYMBOL>(t_stream[3].context) == SymbolType::TargetOpen) {
     identifier = Variable{get<CTX_STRING>(t_stream[0].context)};
     public_name = get<CTX_STRING>(t_stream[2].context);
   } else {
@@ -176,7 +177,7 @@ int parse_target(vector<Token> t_stream, AST &ast) {
     }
   }
   ast.targets.push_back(Target{
-    
+
   });
   return 0; // TODO
 }
