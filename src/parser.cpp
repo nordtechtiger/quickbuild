@@ -1,4 +1,4 @@
-# include "parser.hpp"
+#include "parser.hpp"
 #include "lexer.hpp"
 #include <iostream>
 
@@ -25,11 +25,11 @@ int try_parse(vector<Token> t_stream, AST &ast) {
 
 AST Parser::parse_tokens(vector<Token> t_stream) {
   AST ast;
-  for (int index = 0; index < t_stream.size();) {
-    vector<Token> _t_stream = vector(t_stream.begin() + index, t_stream.end());
+  for (int i = 0; i < t_stream.size();) {
+    vector<Token> _t_stream = vector(t_stream.begin() + i, t_stream.end());
     int tokens_parsed = try_parse(_t_stream, ast);
     if (0 < tokens_parsed) {
-      index += tokens_parsed;
+      i += tokens_parsed;
       continue;
     }
     throw ParserException("[P001] No matching parsing rules");
@@ -98,32 +98,86 @@ int _parse_expressions(vector<Token> t_stream,
 }
 
 // Parses a complete field, returns tokens parsed
-int parse_field(vector<Token> t_stream, AST &ast) {
+int _parse_field(vector<Token> t_stream, Field &field) {
   // Verify the basic signature
   if (t_stream.size() < 4) {
-    return -1;
+    return 0;
   }
   if (!((t_stream[0].type == TokenType::Identifier) &&
         (t_stream[1].type == TokenType::Symbol) &&
         (get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::Equals))) {
-    return -1;
+    return 0;
   }
 
   vector<Token> _t_stream = vector(t_stream.begin() + 2, t_stream.end());
 
-  Field field;
   field.identifier = get<CTX_STRING>(t_stream[0].context);
   int expression_length = _parse_expressions(_t_stream, field.value);
   if (0 >= expression_length) {
     throw ParserException("[P002] Field expression tokens invalid");
   }
 
-  ast.fields.push_back(field);
   return expression_length + 2;
+}
+
+int parse_field(vector<Token> t_stream, AST &ast) {
+  Field field;
+  int parsed_tokens = _parse_field(t_stream, field);
+  if (0 >= parsed_tokens) {
+    return 0;
+  }
+  ast.fields.push_back(field);
+  return parsed_tokens;
 }
 
 // Parses a complete target, returns tokens parsed
 int parse_target(vector<Token> t_stream, AST &ast) {
+  if (t_stream.size() < 3) {
+    return 0;
+  }
+  Expression identifier;
+  string public_name;
+  // This is utter garbage. Terry Davis would be rolling in his grave if he saw this. TODO: Better identifier parsing needed!
+  if (t_stream[0].type == TokenType::Identifier &&
+        t_stream[1].type == TokenType::Symbol &&
+        get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::TargetOpen) {
+    identifier = Literal{get<CTX_STRING>(t_stream[0].context)};
+    public_name = get<CTX_STRING>(t_stream[0].context);
+  } else if (t_stream[0].type == TokenType::Identifier &&
+            t_stream[1].type == TokenType::Symbol &&
+            get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::IterateAs &&
+            t_stream[2].type == TokenType::Literal &&
+            t_stream[3].type == TokenType::Symbol &&
+            get<CTX_SYMBOL>(t_stream[3].context) == SymbolType::TargetOpen) {
+    identifier = Variable{get<CTX_STRING>(t_stream[0].context)};
+    public_name = get<CTX_STRING>(t_stream[2].context);
+  } else {
+    return 0;
+  }
+
+  std::vector<Field> fields;
+  for (int i = 2;
+       !(t_stream[i].type == TokenType::Symbol &&
+         get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::TargetClose);) {
+    vector<Token> _t_stream = vector(t_stream.begin() + i, t_stream.end());
+    Field field;
+    int parsed_tokens = _parse_field(_t_stream, field);
+    if (0 >= parsed_tokens) {
+      // Couldn't parse field
+      return 0;
+    } else {
+      fields.push_back(field);
+      i += parsed_tokens;
+    }
+
+    if (i >= t_stream.size() - 1) {
+      // No more tokens to parse
+      return 0;
+    }
+  }
+  ast.targets.push_back(Target{
+    
+  });
   return 0; // TODO
 }
 
