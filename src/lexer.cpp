@@ -6,6 +6,7 @@ using namespace std;
   (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')))
 
 int skip_whitespace(Lexer &, vector<Token> &);
+int skip_comments(Lexer &, vector<Token> &);
 int match_equals(Lexer &, vector<Token> &);
 int match_modify(Lexer &, vector<Token> &);
 int match_linestop(Lexer &, vector<Token> &);
@@ -21,11 +22,11 @@ int match_identifier(Lexer &, vector<Token> &);
 
 // contains all tokens to match against
 const vector<int (*)(Lexer &, vector<Token> &)> match_tokens{
-    skip_whitespace,  match_equals,         match_modify,
-    match_linestop,   match_arrow,          match_iterateas,
-    match_separator,  match_expressionopen, match_expressionclose,
-    match_targetopen, match_targetclose,    match_literal,
-    match_identifier,
+    skip_whitespace,       skip_comments,    match_equals,
+    match_modify,          match_linestop,   match_arrow,
+    match_iterateas,       match_separator,  match_expressionopen,
+    match_expressionclose, match_targetopen, match_targetclose,
+    match_literal,         match_identifier,
 };
 
 // initializes new lexer
@@ -74,6 +75,17 @@ int skip_whitespace(Lexer &lexer, vector<Token> &t_stream) {
   while (lexer.m_current == ' ' || lexer.m_current == '\n' ||
          lexer.m_current == '\t')
     lexer.advance_input_byte();
+  return -1;
+}
+
+// skip any comments (#)
+int skip_comments(Lexer &lexer, vector<Token> &t_stream) {
+  if (lexer.m_current != '#') {
+    return -1; // No comments
+  }
+  while (lexer.m_current != '\n') {
+    lexer.advance_input_byte(); // Currently in a comment
+  }
   return -1;
 }
 

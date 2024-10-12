@@ -4,6 +4,7 @@ flags = "-g -o0";
 sources = "src/*.c";
 headers = "src/*.h";
 
+# comment
 temp = [sources], [headers];
 
 objects = [sources: "src/*.c" -> "obj/*.o"];
