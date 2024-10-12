@@ -98,6 +98,7 @@ int _parse_expressions(vector<Token> t_stream,
         get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::LineStop) {
       // Everything is parsed up until the linestop
       // TODO: Ensure that this is the correct return
+      cout << "done!" << endl;
       return i + 1;
     }
 
@@ -114,7 +115,8 @@ int _parse_expressions(vector<Token> t_stream,
       return 0;
     }
     // Nothing matched (?)
-    cerr << "nothing matched" << endl;
+    cerr << "nothing matched, o_expression.size() = " << o_expression.size()
+         << endl;
     return 0;
   }
 }
@@ -189,20 +191,22 @@ int parse_target(vector<Token> t_stream, AST &ast) {
     cout << "tokens parsed: " << i << endl;
     Field field;
     // NOTE: Debugging purposes only!
-    for (const auto &i : _t_stream) {
-      if (i.type == TokenType::Symbol || i.type == TokenType::Invalid) {
-        cout << "symbol: ("
-             << static_cast<typename underlying_type<TokenType>::type>(i.type)
-             << ", \""
-             << static_cast<typename underlying_type<SymbolType>::type>(
-                    get<CTX_SYMBOL>(i.context))
-             << "\")" << endl;
-      } else {
-        cout << "str: ("
-             << static_cast<typename underlying_type<TokenType>::type>(i.type)
-             << ", \"" << get<CTX_STRING>(i.context) << "\")" << endl;
-      }
-    }
+    // for (const auto &i : _t_stream) {
+    //   if (i.type == TokenType::Symbol || i.type == TokenType::Invalid) {
+    //     cout << "symbol: ("
+    //          << static_cast<typename
+    //          underlying_type<TokenType>::type>(i.type)
+    //          << ", \""
+    //          << static_cast<typename underlying_type<SymbolType>::type>(
+    //                 get<CTX_SYMBOL>(i.context))
+    //          << "\")" << endl;
+    //   } else {
+    //     cout << "str: ("
+    //          << static_cast<typename
+    //          underlying_type<TokenType>::type>(i.type)
+    //          << ", \"" << get<CTX_STRING>(i.context) << "\")" << endl;
+    //   }
+    // }
     int parsed_tokens = _parse_field(_t_stream, field);
     if (0 >= parsed_tokens) {
       // Couldn't parse field
