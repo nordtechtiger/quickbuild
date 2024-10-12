@@ -4,6 +4,8 @@ flags = "-g -o0";
 sources = "src/*.c";
 headers = "src/*.h";
 
+temp = [sources], [headers];
+
 objects = [sources: "src/*.c" -> "obj/*.o"];
 binary = "bin/quickbuild";
 

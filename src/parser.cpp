@@ -45,8 +45,21 @@ int _parse_expressions(vector<Token> t_stream,
                        vector<Expression> &o_expression) {
   int i = 0;
   while (true) {
-    // Match concatenations
-    // TODO
+    // TODO: Match concatenations
+
+    // Match variables
+    if (t_stream.size() >= 3 && t_stream[i].type == TokenType::Symbol &&
+        get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::ExpressionOpen &&
+        t_stream[i + 1].type == TokenType::Identifier &&
+        t_stream[i + 2].type == TokenType::Symbol &&
+        get<CTX_SYMBOL>(t_stream[i + 2].context) ==
+            SymbolType::ExpressionClose) {
+      o_expression.push_back(
+          Expression(Variable{get<CTX_STRING>(t_stream[i + 1].context)}));
+      i += 3;
+      cout << "variable match" << endl;
+      continue;
+    }
 
     // Match replacements/modifies
     if (t_stream.size() >= 7 && t_stream[i].type == TokenType::Symbol &&
@@ -88,11 +101,20 @@ int _parse_expressions(vector<Token> t_stream,
       return i + 1;
     }
 
+    // Match separators ,
+    if (t_stream[i].type == TokenType::Symbol &&
+        get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::Separator) {
+      i += 1;
+      continue;
+    }
+
     if (i >= t_stream.size() - 1) {
       // No more tokens to parse
+      cerr << "no more tokens to parse" << endl;
       return 0;
     }
     // Nothing matched (?)
+    cerr << "nothing matched" << endl;
     return 0;
   }
 }
@@ -138,7 +160,7 @@ int parse_target(vector<Token> t_stream, AST &ast) {
   Expression identifier;
   string public_name;
   // This is utter garbage. Terry Davis would be rolling in his grave if he saw
-  // this. TODO: Better identifier parsing needed!
+  // this. TODO:Comma Better identifier parsing needed!
   if (t_stream[0].type == TokenType::Identifier &&
       t_stream[1].type == TokenType::Symbol &&
       get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::TargetOpen) {
@@ -158,15 +180,28 @@ int parse_target(vector<Token> t_stream, AST &ast) {
 
   cout << "matching target..." << endl;
 
-  int i = 2; // FIXME: This is incorrect for declarations that use `objects as obj { ...`
+  int i = 2; // FIXME: This is incorrect for declarations that use `objects as
+             // obj { ...`
   std::vector<Field> fields;
   for (; !(t_stream[i].type == TokenType::Symbol &&
            get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::TargetClose);) {
     vector<Token> _t_stream = vector(t_stream.begin() + i, t_stream.end());
     cout << "tokens parsed: " << i << endl;
     Field field;
-    for (const auto &t : _t_stream) {
-      cout << (int)t.type << endl;
+    // NOTE: Debugging purposes only!
+    for (const auto &i : _t_stream) {
+      if (i.type == TokenType::Symbol || i.type == TokenType::Invalid) {
+        cout << "symbol: ("
+             << static_cast<typename underlying_type<TokenType>::type>(i.type)
+             << ", \""
+             << static_cast<typename underlying_type<SymbolType>::type>(
+                    get<CTX_SYMBOL>(i.context))
+             << "\")" << endl;
+      } else {
+        cout << "str: ("
+             << static_cast<typename underlying_type<TokenType>::type>(i.type)
+             << ", \"" << get<CTX_STRING>(i.context) << "\")" << endl;
+      }
     }
     int parsed_tokens = _parse_field(_t_stream, field);
     if (0 >= parsed_tokens) {
@@ -183,9 +218,9 @@ int parse_target(vector<Token> t_stream, AST &ast) {
     }
   }
   ast.targets.push_back(Target{
-    identifier,
-    public_name,
-    fields,
+      identifier,
+      public_name,
+      fields,
   });
   return i; // TODO
 }
