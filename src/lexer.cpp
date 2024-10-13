@@ -3,7 +3,8 @@
 using namespace std;
 
 #define IS_ALPHABETIC(x)                                                       \
-  (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')) || x == '_' || x == '-')
+  (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')) || x == '_' ||     \
+   x == '-')
 
 int skip_whitespace(Lexer &, vector<Token> &);
 int skip_comments(Lexer &, vector<Token> &);

@@ -162,12 +162,16 @@ int parse_target(vector<Token> t_stream, AST &ast) {
   Expression identifier;
   string public_name;
   // This is utter garbage. Terry Davis would be rolling in his grave if he saw
-  // this. TODO:Comma Better identifier parsing needed!
+  // this. TODO: Comma Better identifier parsing needed!
+  // TODO2: This currently can't parse a collection of variables or identifiers
+  // as a target. For instance, `obj1, obj2 as foo {...` wouldn't work.
+  int i = 0;
   if (t_stream[0].type == TokenType::Identifier &&
       t_stream[1].type == TokenType::Symbol &&
       get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::TargetOpen) {
     identifier = Literal{get<CTX_STRING>(t_stream[0].context)};
     public_name = get<CTX_STRING>(t_stream[0].context);
+    i = 2;
   } else if (t_stream[0].type == TokenType::Identifier &&
              t_stream[1].type == TokenType::Symbol &&
              get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::IterateAs &&
@@ -176,14 +180,13 @@ int parse_target(vector<Token> t_stream, AST &ast) {
              get<CTX_SYMBOL>(t_stream[3].context) == SymbolType::TargetOpen) {
     identifier = Variable{get<CTX_STRING>(t_stream[0].context)};
     public_name = get<CTX_STRING>(t_stream[2].context);
+    i = 4;
   } else {
     return 0;
   }
 
   cout << "matching target..." << endl;
 
-  int i = 2; // FIXME: This is incorrect for declarations that use `objects as
-             // obj { ...`
   std::vector<Field> fields;
   for (; !(t_stream[i].type == TokenType::Symbol &&
            get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::TargetClose);) {
