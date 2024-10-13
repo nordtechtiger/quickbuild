@@ -14,6 +14,7 @@ const vector<int (*)(vector<Token>, AST &)> parsing_rules{
 
 // Tries to match against all rules, returns tokens parsed
 int try_parse(vector<Token> t_stream, AST &ast) {
+  cout << ">>>> first token being parsed: " << (int)t_stream[0].type << endl;
   for (const auto &fn : parsing_rules) {
     int tokens_parsed = fn(t_stream, ast);
     if (0 < tokens_parsed) {
@@ -44,8 +45,42 @@ AST Parser::parse_tokens(vector<Token> t_stream) {
 int _parse_expressions(vector<Token> t_stream,
                        vector<Expression> &o_expression) {
   int i = 0;
+  vector<Expression> _expression_buf;
   while (true) {
     // TODO: Match concatenations
+    if (t_stream[i].type == TokenType::Symbol &&
+        get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::ConcatLiteral) {
+      i += 1; // TODO: Not optimal.
+      continue;
+    }
+
+    // Match separators ,
+    if (t_stream[i].type == TokenType::Symbol &&
+        get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::Separator) {
+      if (_expression_buf.size() != 1) {
+        // FIXME: This could be incorrect (concatenations?)
+        return 0; // Incorrect syntax
+      }
+      o_expression.push_back(Expression{_expression_buf[0]});
+      _expression_buf.clear();
+      i += 1;
+      continue;
+    }
+
+    // Match linestop ;
+    if (t_stream[i].type == TokenType::Symbol &&
+        get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::LineStop) {
+      // Everything is parsed up until the linestop
+      // TODO: Ensure that this is the correct return
+      if (_expression_buf.size() < 1) {
+        return 0;
+      }
+      for (auto const &expr : _expression_buf) {
+        o_expression.push_back(expr);
+      }
+      cout << "done!" << endl;
+      return i + 1;
+    }
 
     // Match variables
     if (t_stream.size() >= 3 && t_stream[i].type == TokenType::Symbol &&
@@ -54,7 +89,7 @@ int _parse_expressions(vector<Token> t_stream,
         t_stream[i + 2].type == TokenType::Symbol &&
         get<CTX_SYMBOL>(t_stream[i + 2].context) ==
             SymbolType::ExpressionClose) {
-      o_expression.push_back(
+      _expression_buf.push_back(
           Expression(Variable{get<CTX_STRING>(t_stream[i + 1].context)}));
       i += 3;
       cout << "variable match" << endl;
@@ -77,7 +112,7 @@ int _parse_expressions(vector<Token> t_stream,
       Variable variable = Variable{get<CTX_STRING>(t_stream[i + 1].context)};
       Literal original = Literal{get<CTX_STRING>(t_stream[i + 3].context)};
       Literal replacement = Literal{get<CTX_STRING>(t_stream[i + 5].context)};
-      o_expression.push_back(
+      _expression_buf.push_back(
           Expression(Replace{variable, original, replacement}));
       i += 7;
       cout << "Matched replacement expression" << endl;
@@ -87,25 +122,9 @@ int _parse_expressions(vector<Token> t_stream,
     // Match simple literal
     if (t_stream[i].type == TokenType::Literal) {
       string literal_string = get<CTX_STRING>(t_stream[i].context);
-      o_expression.push_back(Expression(Literal{literal_string}));
+      _expression_buf.push_back(Expression(Literal{literal_string}));
       i += 1;
       cout << "Matched literal expression" << endl;
-      continue;
-    }
-
-    // Match linestop ;
-    if (t_stream[i].type == TokenType::Symbol &&
-        get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::LineStop) {
-      // Everything is parsed up until the linestop
-      // TODO: Ensure that this is the correct return
-      cout << "done!" << endl;
-      return i + 1;
-    }
-
-    // Match separators ,
-    if (t_stream[i].type == TokenType::Symbol &&
-        get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::Separator) {
-      i += 1;
       continue;
     }
 
@@ -114,6 +133,7 @@ int _parse_expressions(vector<Token> t_stream,
       cerr << "no more tokens to parse" << endl;
       return 0;
     }
+
     // Nothing matched (?)
     cerr << "nothing matched, o_expression.size() = " << o_expression.size()
          << endl;
@@ -175,12 +195,14 @@ int parse_target(vector<Token> t_stream, AST &ast) {
   } else if (t_stream[0].type == TokenType::Identifier &&
              t_stream[1].type == TokenType::Symbol &&
              get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::IterateAs &&
-             t_stream[2].type == TokenType::Literal &&
+             t_stream[2].type ==
+                 TokenType::Identifier && // FIXME: Is techincally literal
              t_stream[3].type == TokenType::Symbol &&
              get<CTX_SYMBOL>(t_stream[3].context) == SymbolType::TargetOpen) {
     identifier = Variable{get<CTX_STRING>(t_stream[0].context)};
     public_name = get<CTX_STRING>(t_stream[2].context);
     i = 4;
+    cout << "yayyyyyy" << endl;
   } else {
     return 0;
   }
@@ -229,7 +251,8 @@ int parse_target(vector<Token> t_stream, AST &ast) {
       public_name,
       fields,
   });
-  return i; // TODO
+  cout << "!!!!!!!!! target done!" << endl;
+  return i + 2; // Account for targetclose and linestop
 }
 
 /* # Matching "rules":
