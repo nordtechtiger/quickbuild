@@ -50,20 +50,20 @@ int main(int argc, char **argv) {
   }
 
   // NOTE: Debugging purposes only!
-  for (const auto &i : tokens) {
-    if (i.type == TokenType::Symbol || i.type == TokenType::Invalid) {
-      cout << "symbol: ("
-           << static_cast<typename underlying_type<TokenType>::type>(i.type)
-           << ", \""
-           << static_cast<typename underlying_type<SymbolType>::type>(
-                  get<CTX_SYMBOL>(i.context))
-           << "\")" << endl;
-    } else {
-      cout << "str: ("
-           << static_cast<typename underlying_type<TokenType>::type>(i.type)
-           << ", \"" << get<CTX_STRING>(i.context) << "\")" << endl;
-    }
-  }
+  // for (const auto &i : tokens) {
+  //   if (i.type == TokenType::Symbol || i.type == TokenType::Invalid) {
+  //     cout << "symbol: ("
+  //          << static_cast<typename underlying_type<TokenType>::type>(i.type)
+  //          << ", \""
+  //          << static_cast<typename underlying_type<SymbolType>::type>(
+  //                 get<CTX_SYMBOL>(i.context))
+  //          << "\")" << endl;
+  //   } else {
+  //     cout << "str: ("
+  //          << static_cast<typename underlying_type<TokenType>::type>(i.type)
+  //          << ", \"" << get<CTX_STRING>(i.context) << "\")" << endl;
+  //   }
+  // }
 
   AST root;
   Parser parser = Parser();
