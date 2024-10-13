@@ -1,20 +1,22 @@
+# General compiler arguments
 compiler = "gcc";
 flags = "-g -o0";
 
+# Files to compile
 sources = "src/*.c";
 headers = "src/*.h";
 
-# comment
-temp = [sources], [headers];
-
+# Files to create
 objects = [sources: "src/*.c" -> "obj/*.o"];
 binary = "bin/quickbuild";
 
+# Main target
 quickbuild {
   depends = [objects], [headers];
   run = "[compiler] [flags] [objects] -o [binary]";
 };
 
+# Object files
 objects as obj {
   depends = [obj: "obj/*.o" -> "src/*.c"];
   run = "[compiler] [flags] -c [depends] -o [obj]";
