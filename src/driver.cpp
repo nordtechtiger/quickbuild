@@ -40,7 +40,7 @@ vector<unsigned char> Driver::get_config() {
 int Driver::run() {
   // Out: Greeting
   if (LL_SETUP >= LL::Standard) {
-    cout << "== Quickbuild Dev v0.1.0" << endl;
+    cout << "@ Quickbuild Dev v0.1.0" << endl;
   }
 
   // Out: Compiling config
