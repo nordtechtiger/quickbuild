@@ -52,6 +52,8 @@ private:
   std::vector<unsigned char> m_input;
 
 public:
+  // TODO: Make this private and have all the lexing function
+  // signatures be private functions
   Lexer(std::vector<unsigned char> input_bytes);
   std::vector<Token> get_token_stream();
   unsigned char m_next;

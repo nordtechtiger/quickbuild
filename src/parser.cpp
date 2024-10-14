@@ -78,7 +78,6 @@ int _parse_expressions(vector<Token> t_stream,
       for (auto const &expr : _expression_buf) {
         o_expression.push_back(expr);
       }
-      // cout << "done!" << endl;
       return i + 1;
     }
 
@@ -92,7 +91,6 @@ int _parse_expressions(vector<Token> t_stream,
       _expression_buf.push_back(
           Expression(Variable{get<CTX_STRING>(t_stream[i + 1].context)}));
       i += 3;
-      // cout << "variable match" << endl;
       continue;
     }
 
@@ -115,7 +113,6 @@ int _parse_expressions(vector<Token> t_stream,
       _expression_buf.push_back(
           Expression(Replace{variable, original, replacement}));
       i += 7;
-      // cout << "Matched replacement expression" << endl;
       continue;
     }
 
@@ -124,7 +121,6 @@ int _parse_expressions(vector<Token> t_stream,
       string literal_string = get<CTX_STRING>(t_stream[i].context);
       _expression_buf.push_back(Expression(Literal{literal_string}));
       i += 1;
-      // cout << "Matched literal expression" << endl;
       continue;
     }
 
@@ -202,36 +198,15 @@ int parse_target(vector<Token> t_stream, AST &ast) {
     identifier = Variable{get<CTX_STRING>(t_stream[0].context)};
     public_name = get<CTX_STRING>(t_stream[2].context);
     i = 4;
-    // cout << "yayyyyyy" << endl;
   } else {
     return 0;
   }
-
-  // cout << "matching target..." << endl;
 
   std::vector<Field> fields;
   for (; !(t_stream[i].type == TokenType::Symbol &&
            get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::TargetClose);) {
     vector<Token> _t_stream = vector(t_stream.begin() + i, t_stream.end());
-    // cout << "tokens parsed: " << i << endl;
     Field field;
-    // NOTE: Debugging purposes only!
-    // for (const auto &i : _t_stream) {
-    //   if (i.type == TokenType::Symbol || i.type == TokenType::Invalid) {
-    //     cout << "symbol: ("
-    //          << static_cast<typename
-    //          underlying_type<TokenType>::type>(i.type)
-    //          << ", \""
-    //          << static_cast<typename underlying_type<SymbolType>::type>(
-    //                 get<CTX_SYMBOL>(i.context))
-    //          << "\")" << endl;
-    //   } else {
-    //     cout << "str: ("
-    //          << static_cast<typename
-    //          underlying_type<TokenType>::type>(i.type)
-    //          << ", \"" << get<CTX_STRING>(i.context) << "\")" << endl;
-    //   }
-    // }
     int parsed_tokens = _parse_field(_t_stream, field);
     if (0 >= parsed_tokens) {
       // Couldn't parse field
@@ -251,7 +226,6 @@ int parse_target(vector<Token> t_stream, AST &ast) {
       public_name,
       fields,
   });
-  // cout << "!!!!!!!!! target done!" << endl;
   return i + 2; // Account for targetclose and linestop
 }
 
