@@ -54,6 +54,7 @@ int Driver::run() {
   // Lex
   Lexer lexer(config);
   vector<Token> t_stream = lexer.get_token_stream();
+  cout << "Tokens: " << t_stream.size() << endl;
 
   // Parse
   Parser parser;
