@@ -1,9 +1,10 @@
 #include "driver.hpp"
+#include "lexer.hpp"
+#include "parser.hpp"
+
 #include <fstream>
 #include <iostream>
 #include <iterator>
-
-#include "lexer.hpp"
 
 #define LL LoggingLevel
 #define LL_SETUP m_setup.logging_level
@@ -47,9 +48,20 @@ int Driver::run() {
     cout << "=> Building configuration..." << endl;
   }
 
+  // Get config
   vector<unsigned char> config = get_config();
 
-  return EXIT_FAILURE; // TODO: Replace when working driver
+  // Lex
+  Lexer lexer(config);
+  vector<Token> t_stream = lexer.get_token_stream();
+
+  // Parse
+  Parser parser;
+  AST ast = parser.parse_tokens(t_stream);
+
+
+
+  return EXIT_FAILURE; // TODO: Replace this when driver is finished
 
   /*
 
