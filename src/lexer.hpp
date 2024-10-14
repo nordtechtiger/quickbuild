@@ -41,7 +41,6 @@ enum class TokenType {
   Identifier, // any text without quotes
   Literal,    // any text in quotes
   Symbol,     // `=`, `:`, `->`,
-  Invalid,
 };
 
 // Defines the specific operator
