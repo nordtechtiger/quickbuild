@@ -1,17 +1,39 @@
 #include "driver.hpp"
+#include <fstream>
 #include <iostream>
+#include <iterator>
 
 #include "lexer.hpp"
 
 #define LL LoggingLevel
 #define LL_SETUP m_setup.logging_level
+#define CONFIG_FILE "./quickbuild"
 
 using namespace std;
 
 Driver::Driver(Setup setup) { m_setup = setup; }
 
 Setup Driver::default_setup() {
-  return Setup {InputMethod::ConfigFile, LoggingLevel::Standard, false};
+  return Setup{InputMethod::ConfigFile, LoggingLevel::Standard, false};
+}
+
+vector<unsigned char> Driver::get_config() {
+  switch (m_setup.input_method) {
+  case InputMethod::ConfigFile: {
+    ifstream config_file(CONFIG_FILE, ios::binary);
+    if (!config_file.is_open())
+      throw DriverException("Driver-D002: Couldn't find config file");
+    return vector<unsigned char>(istreambuf_iterator(config_file), {});
+  }
+  case InputMethod::Stdin: {
+    string line;
+    string all;
+    while (getline(cin, line))
+      all += line;
+    return vector<unsigned char>(all.begin(), all.end());
+  }
+  }
+  throw DriverException("Driver-D001: Failed to get config.");
 }
 
 int Driver::run() {
@@ -24,6 +46,8 @@ int Driver::run() {
   if (LL_SETUP >= LL::Standard) {
     cout << "=> Building configuration..." << endl;
   }
+
+  vector<unsigned char> config = get_config();
 
   return EXIT_FAILURE; // TODO: Replace when working driver
 

@@ -31,4 +31,13 @@ public:
   int run();
 };
 
+class DriverException : public std::exception {
+private:
+  const char *details;
+
+public:
+  DriverException(const char *details) : details(details){};
+  const char *what() { return details; }
+};
+
 #endif
