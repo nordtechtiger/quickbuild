@@ -45,6 +45,7 @@ AST Parser::parse_tokens(vector<Token> t_stream) {
 int _parse_expressions(vector<Token> t_stream,
                        vector<Expression> &o_expression) {
   int i = 0;
+  int concatenations = 0;
   vector<Expression> _expression_buf;
   while (true) {
     // TODO: Match concatenations
@@ -76,6 +77,9 @@ int _parse_expressions(vector<Token> t_stream,
         return 0;
       }
       for (auto const &expr : _expression_buf) {
+        // FIXME: This is incorrect! Do NOT push all of these! Only push the 1st
+        // element if there is one, and if there are more, they need to be
+        // concatenated
         o_expression.push_back(expr);
       }
       return i + 1;
