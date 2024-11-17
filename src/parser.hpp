@@ -4,6 +4,11 @@
 #include <string>
 #include <vector>
 
+// Grammar rules
+// target -> IDENTIFIER "=" expression ";"
+// expression -> (LITERAL | replace "."*)+
+// replace -> "
+
 // Logic: Expressions
 struct Variable {
   std::string identifier;

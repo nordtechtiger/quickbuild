@@ -7,17 +7,17 @@ sources = "src/*.c";
 headers = "src/*.h";
 
 # Files to create
-objects = [sources: "src/*.c" -> "obj/*.o"];
+objects = sources: "src/*.c" -> "obj/*.o";
 binary = "bin/quickbuild";
 
 # Main target
 quickbuild {
-  depends = [objects], [headers];
+  depends = objects, headers;
   run = "[compiler] [flags] [objects] -o [binary]";
 };
 
 # Object files
 objects as obj {
-  depends = [obj: "obj/*.o" -> "src/*.c"];
+  depends = obj: "obj/*.o" -> "src/*.c";
   run = "[compiler] [flags] -c [depends] -o [obj]";
 };

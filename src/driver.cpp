@@ -60,5 +60,6 @@ int Driver::run() {
   Parser parser;
   AST ast = parser.parse_tokens(t_stream);
 
+  cerr << ">>> Driver exiting normally." << endl;
   return EXIT_FAILURE; // TODO: Replace this when driver is finished
 }
