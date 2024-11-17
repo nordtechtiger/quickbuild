@@ -6,8 +6,12 @@
 
 // Grammar rules
 // target -> IDENTIFIER "=" expression ";"
-// expression -> (LITERAL | replace "."*)+
-// replace -> "
+// expression -> (LITERAL | IDENTIFIER | replace "."*)+
+// expression -> ((LITERAL | IDENTIFIER | replace) CONCAT)*
+// replace -> IDENTIFIER COLON LITERAL ARROW LITERAL
+//
+// target -> IDENTIFIER TARGETOPEN expression* TARGETCLOSE
+// target -> IDENTIFIER AS IDENTIFIER TARGETOPEN expression* TARGETCLOSE
 
 // Logic: Expressions
 struct Variable {
