@@ -79,8 +79,8 @@ private:
   std::vector<Token> m_t_stream;
   LexerState m_state;
 
-  unsigned char m_next;
   unsigned char m_current;
+  unsigned char m_next;
   unsigned long long m_index;
   unsigned char advance_input_byte();
   void insert_next_byte(unsigned char);

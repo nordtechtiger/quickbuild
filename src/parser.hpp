@@ -4,14 +4,15 @@
 #include <string>
 #include <vector>
 
-// Grammar rules
-// target -> IDENTIFIER "=" expression ";"
-// expression -> (LITERAL | IDENTIFIER | replace "."*)+
-// expression -> ((LITERAL | IDENTIFIER | replace) CONCAT)*
+// == Grammar rules ==
+// var -> IDENTIFIER EQUALS expression ";"
+// expression -> (LITERAL | IDENTIFIER | replace)","+
+// expression -> ((LITERAL | IDENTIFIER | replace) CONCAT)+
 // replace -> IDENTIFIER COLON LITERAL ARROW LITERAL
 //
 // target -> IDENTIFIER TARGETOPEN expression* TARGETCLOSE
 // target -> IDENTIFIER AS IDENTIFIER TARGETOPEN expression* TARGETCLOSE
+//
 
 // Logic: Expressions
 struct Variable {
@@ -46,8 +47,17 @@ struct AST {
 
 // Work class
 class Parser {
+private:
+  std::vector<Token> m_t_stream;
+
+  Token m_current;
+  Token m_next;
+
+  Token advance_token();
+
 public:
-  AST parse_tokens(std::vector<Token> token_stream);
+  Parser(std::vector<Token> token_stream);
+  AST parse_tokens();
 };
 
 // Exceptions thrown by parser

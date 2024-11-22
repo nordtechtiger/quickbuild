@@ -53,12 +53,18 @@ int Driver::run() {
 
   // Lex
   Lexer lexer(config);
-  vector<Token> t_stream = lexer.get_token_stream();
+  vector<Token> t_stream = lexer.get_token_stream(); // TODO: Handle properly
   cout << "Tokens: " << t_stream.size() << endl;
 
   // Parse
-  Parser parser;
-  AST ast = parser.parse_tokens(t_stream);
+  try {
+    Parser parser;
+    AST ast = parser.parse_tokens(t_stream);
+  } catch (ParserException e) {
+    // TODO: Handle properly
+    // cerr << e.what();
+    return -1;
+  }
 
   cerr << ">>> Driver exiting normally." << endl;
   return EXIT_FAILURE; // TODO: Replace this when driver is finished
