@@ -48,13 +48,16 @@ struct AST {
 // Work class
 class Parser {
 private:
-  std::vector<Token> m_t_stream;
+  std::vector<Token> m_token_stream;
+  AST m_ast;
 
   unsigned long long m_index;
   Token m_current;
   Token m_next;
 
   Token advance_token();
+  int parse_variable();
+  int parse_target();
 
 public:
   Parser(std::vector<Token> token_stream);

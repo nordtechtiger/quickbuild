@@ -3,29 +3,37 @@
 #include <iostream>
 
 Parser::Parser(std::vector<Token> token_stream) {
-  m_t_stream = token_stream;
+  m_token_stream = token_stream;
   m_index = 0;
-  m_current = (m_t_stream.size() >= m_index + 1)
-                  ? m_t_stream[m_index]
+  m_current = (m_token_stream.size() >= m_index + 1)
+                  ? m_token_stream[m_index]
                   : Token{TokenType::Invalid, "__invalid__"};
-  m_next = (m_t_stream.size() >= m_index + 2)
-               ? m_t_stream[m_index]
+  m_next = (m_token_stream.size() >= m_index + 2)
+               ? m_token_stream[m_index]
                : Token{TokenType::Invalid, "__invalid__"};
 }
 
 Token Parser::advance_token() {
   m_index++;
-  m_current = (m_t_stream.size() >= m_index + 1)
-                  ? m_t_stream[m_index]
+  m_current = (m_token_stream.size() >= m_index + 1)
+                  ? m_token_stream[m_index]
                   : Token{TokenType::Invalid, "__invalid__"};
-  m_next = (m_t_stream.size() >= m_index + 2)
-               ? m_t_stream[m_index]
+  m_next = (m_token_stream.size() >= m_index + 2)
+               ? m_token_stream[m_index]
                : Token{TokenType::Invalid, "__invalid__"};
   return m_current;
 }
 
 AST Parser::parse_tokens() {
   // TODO: Implement
+  while (m_current.type != TokenType::Invalid) {
+    if (0 > parse_variable())
+      continue;
+    if (0 > parse_target())
+      continue;
+    throw new ParserException("[P001] Unknown statement encountered.");
+  }
+  return m_ast;
 }
 
 //
