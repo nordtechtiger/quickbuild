@@ -50,6 +50,7 @@ class Parser {
 private:
   std::vector<Token> m_t_stream;
 
+  unsigned long long m_index;
   Token m_current;
   Token m_next;
 

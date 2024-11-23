@@ -4,24 +4,43 @@
 
 Parser::Parser(std::vector<Token> token_stream) {
   m_t_stream = token_stream;
+  m_index = 0;
+  m_current = (m_t_stream.size() >= m_index + 1)
+                  ? m_t_stream[m_index]
+                  : Token{TokenType::Invalid, "__invalid__"};
+  m_next = (m_t_stream.size() >= m_index + 2)
+               ? m_t_stream[m_index]
+               : Token{TokenType::Invalid, "__invalid__"};
+}
+
+Token Parser::advance_token() {
+  m_index++;
+  m_current = (m_t_stream.size() >= m_index + 1)
+                  ? m_t_stream[m_index]
+                  : Token{TokenType::Invalid, "__invalid__"};
+  m_next = (m_t_stream.size() >= m_index + 2)
+               ? m_t_stream[m_index]
+               : Token{TokenType::Invalid, "__invalid__"};
+  return m_current;
 }
 
 AST Parser::parse_tokens() {
   // TODO: Implement
 }
 
+//
 // int parse_field(vector<Token>, AST &);
 // int parse_target(vector<Token>, AST &);
-// 
+//
 // const vector<int (*)(vector<Token>, AST &)> parsing_rules{
 //     parse_field,
 //     parse_target,
 // };
-// 
+//
 // // Tries to match against all rules, returns tokens parsed
 // int try_parse(vector<Token> t_stream, AST &ast) {
-//   // cout << ">>>> first token being parsed: " << (int)t_stream[0].type << endl;
-//   for (const auto &fn : parsing_rules) {
+//   // cout << ">>>> first token being parsed: " << (int)t_stream[0].type <<
+//   endl; for (const auto &fn : parsing_rules) {
 //     int tokens_parsed = fn(t_stream, ast);
 //     if (0 < tokens_parsed) {
 //       return tokens_parsed;
@@ -29,7 +48,7 @@ AST Parser::parse_tokens() {
 //   }
 //   return 0;
 // }
-// 
+//
 // AST Parser::parse_tokens(vector<Token> t_stream) {
 //   AST ast;
 //   for (int i = 0; i < t_stream.size();) {
@@ -43,10 +62,10 @@ AST Parser::parse_tokens() {
 //   }
 //   return ast;
 // }
-// 
+//
 // // === All parsing logic below ===
 // // NOTE: All parsing rules return the number of tokens parsed
-// 
+//
 // // Parses an expression, returns tokens parsed
 // int _parse_expressions(vector<Token> t_stream,
 //                        vector<Expression> &o_expression) {
@@ -60,7 +79,7 @@ AST Parser::parse_tokens() {
 //       i += 1; // TODO: Not optimal.
 //       continue;
 //     }
-// 
+//
 //     // Match separators ,
 //     if (t_stream[i].type == TokenType::Symbol &&
 //         get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::Separator) {
@@ -73,7 +92,7 @@ AST Parser::parse_tokens() {
 //       i += 1;
 //       continue;
 //     }
-// 
+//
 //     // Match linestop ;
 //     if (t_stream[i].type == TokenType::Symbol &&
 //         get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::LineStop) {
@@ -83,14 +102,15 @@ AST Parser::parse_tokens() {
 //         return 0;
 //       }
 //       for (auto const &expr : _expression_buf) {
-//         // FIXME: This is incorrect! Do NOT push all of these! Only push the 1st
+//         // FIXME: This is incorrect! Do NOT push all of these! Only push the
+//         1st
 //         // element if there is one, and if there are more, they need to be
 //         // concatenated
 //         o_expression.push_back(expr);
 //       }
 //       return i + 1;
 //     }
-// 
+//
 //     // Match variables
 //     if (t_stream.size() >= 3 && t_stream[i].type == TokenType::Symbol &&
 //         get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::ExpressionOpen &&
@@ -103,7 +123,7 @@ AST Parser::parse_tokens() {
 //       i += 3;
 //       continue;
 //     }
-// 
+//
 //     // Match replacements/modifies
 //     if (t_stream.size() >= 7 && t_stream[i].type == TokenType::Symbol &&
 //         get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::ExpressionOpen &&
@@ -119,13 +139,13 @@ AST Parser::parse_tokens() {
 //             SymbolType::ExpressionClose) {
 //       Variable variable = Variable{get<CTX_STRING>(t_stream[i + 1].context)};
 //       Literal original = Literal{get<CTX_STRING>(t_stream[i + 3].context)};
-//       Literal replacement = Literal{get<CTX_STRING>(t_stream[i + 5].context)};
-//       _expression_buf.push_back(
+//       Literal replacement = Literal{get<CTX_STRING>(t_stream[i +
+//       5].context)}; _expression_buf.push_back(
 //           Expression(Replace{variable, original, replacement}));
 //       i += 7;
 //       continue;
 //     }
-// 
+//
 //     // Match simple literal
 //     if (t_stream[i].type == TokenType::Literal) {
 //       string literal_string = get<CTX_STRING>(t_stream[i].context);
@@ -133,20 +153,20 @@ AST Parser::parse_tokens() {
 //       i += 1;
 //       continue;
 //     }
-// 
+//
 //     if (i >= t_stream.size() - 1) {
 //       // No more tokens to parse
 //       cerr << "no more tokens to parse" << endl;
 //       return 0;
 //     }
-// 
+//
 //     // Nothing matched (?)
 //     cerr << "nothing matched, o_expression.size() = " << o_expression.size()
 //          << endl;
 //     return 0;
 //   }
 // }
-// 
+//
 // // Parses a complete field, returns tokens parsed
 // int _parse_field(vector<Token> t_stream, Field &field) {
 //   // Verify the basic signature
@@ -158,18 +178,18 @@ AST Parser::parse_tokens() {
 //         (get<CTX_SYMBOL>(t_stream[1].context) == SymbolType::Equals))) {
 //     return 0;
 //   }
-// 
+//
 //   vector<Token> _t_stream = vector(t_stream.begin() + 2, t_stream.end());
-// 
+//
 //   field.identifier = get<CTX_STRING>(t_stream[0].context);
 //   int expression_length = _parse_expressions(_t_stream, field.value);
 //   if (0 >= expression_length) {
 //     throw ParserException("[P002] Field expression tokens invalid");
 //   }
-// 
+//
 //   return expression_length + 2;
 // }
-// 
+//
 // int parse_field(vector<Token> t_stream, AST &ast) {
 //   Field field;
 //   int parsed_tokens = _parse_field(t_stream, field);
@@ -179,7 +199,7 @@ AST Parser::parse_tokens() {
 //   ast.fields.push_back(field);
 //   return parsed_tokens;
 // }
-// 
+//
 // // Parses a complete target, returns tokens parsed
 // int parse_target(vector<Token> t_stream, AST &ast) {
 //   if (t_stream.size() < 3) {
@@ -187,9 +207,11 @@ AST Parser::parse_tokens() {
 //   }
 //   Expression identifier;
 //   string public_name;
-//   // This is utter garbage. Terry Davis would be rolling in his grave if he saw
+//   // This is utter garbage. Terry Davis would be rolling in his grave if he
+//   saw
 //   // this. TODO: Comma Better identifier parsing needed!
-//   // TODO2: This currently can't parse a collection of variables or identifiers
+//   // TODO2: This currently can't parse a collection of variables or
+//   identifiers
 //   // as a target. For instance, `obj1, obj2 as foo {...` wouldn't work.
 //   int i = 0;
 //   if (t_stream[0].type == TokenType::Identifier &&
@@ -204,17 +226,19 @@ AST Parser::parse_tokens() {
 //              t_stream[2].type ==
 //                  TokenType::Identifier && // FIXME: Is techincally literal
 //              t_stream[3].type == TokenType::Symbol &&
-//              get<CTX_SYMBOL>(t_stream[3].context) == SymbolType::TargetOpen) {
+//              get<CTX_SYMBOL>(t_stream[3].context) == SymbolType::TargetOpen)
+//              {
 //     identifier = Variable{get<CTX_STRING>(t_stream[0].context)};
 //     public_name = get<CTX_STRING>(t_stream[2].context);
 //     i = 4;
 //   } else {
 //     return 0;
 //   }
-// 
+//
 //   std::vector<Field> fields;
 //   for (; !(t_stream[i].type == TokenType::Symbol &&
-//            get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::TargetClose);) {
+//            get<CTX_SYMBOL>(t_stream[i].context) == SymbolType::TargetClose);)
+//            {
 //     vector<Token> _t_stream = vector(t_stream.begin() + i, t_stream.end());
 //     Field field;
 //     int parsed_tokens = _parse_field(_t_stream, field);
@@ -225,7 +249,7 @@ AST Parser::parse_tokens() {
 //       fields.push_back(field);
 //       i += parsed_tokens;
 //     }
-// 
+//
 //     if (i >= t_stream.size() - 1) {
 //       // No more tokens to parse
 //       return 0;

@@ -41,6 +41,7 @@ enum class TokenType {
   Identifier, // any text without quotes
   Literal,    // any text in quotes
   Symbol,     // `=`, `:`, `->`,
+  Invalid,    // internal return type in parser
 };
 
 // Defines the specific operator
@@ -64,11 +65,11 @@ enum class LexerState {
 };
 
 // Defines additional data depending on the token type
-typedef std::variant<SymbolType, std::string> TokenContext;
 
 // Defines a general token
 struct Token {
   TokenType type;
+  typedef std::variant<SymbolType, std::string> TokenContext;
   TokenContext context;
 };
 
