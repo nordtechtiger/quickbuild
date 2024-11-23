@@ -25,15 +25,22 @@ Token Parser::advance_token() {
 }
 
 AST Parser::parse_tokens() {
-  // TODO: Implement
   while (m_current.type != TokenType::Invalid) {
-    if (0 > parse_variable())
+    if (0 == parse_variable())
       continue;
-    if (0 > parse_target())
+    if (0 == parse_target())
       continue;
     throw new ParserException("[P001] Unknown statement encountered.");
   }
   return m_ast;
+}
+
+int Parser::parse_target() {
+  
+}
+
+int Parser::parse_variable() {
+
 }
 
 //
