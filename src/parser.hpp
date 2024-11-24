@@ -3,6 +3,7 @@
 #include "lexer.hpp"
 #include <string>
 #include <vector>
+#include <variant>
 
 // == Grammar rules ==
 // var -> IDENTIFIER EQUALS expression ";"

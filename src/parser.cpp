@@ -45,18 +45,19 @@ int Parser::check_next(TokenType token_type) {
 
 // Retuns 0 if matched, -1 if not
 int Parser::parse_target() {
-  
+  std::cerr << "niy parse_target" << std::endl;
 }
 
 // Retuns 0 if matched, -1 if not
 int Parser::parse_variable() {
-
+  std::cerr << "niy parse_variable" << std::endl;
 }
 
 Expression Parser::parse_replace() {
   if (check_current(TokenType::Identifier) && check_next(TokenType::Modify)) {
     // TODO
   }
+  std::cerr << "niy parse_replace" << std::endl;
 }
 
 //

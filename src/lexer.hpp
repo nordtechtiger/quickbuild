@@ -33,19 +33,13 @@
 
 #include <functional>
 #include <string>
-#include <variant>
+#include <optional>
 #include <vector>
 
 // Defines what type of token it is
 enum class TokenType {
   Identifier, // any text without quotes
   Literal,    // any text in quotes
-  Symbol,     // `=`, `:`, `->`,
-  Invalid,    // internal return type in parser
-};
-
-// Defines the specific operator
-enum class SymbolType {
   Equals,          // `=`
   Modify,          // `:`
   LineStop,        // ';`
@@ -57,6 +51,7 @@ enum class SymbolType {
   TargetOpen,      // `{`
   TargetClose,     // `}`
   ConcatLiteral,   // internal token for escaped expressions inside literals
+  Invalid,    // internal return type in parser
 };
 
 enum class LexerState {
@@ -69,8 +64,7 @@ enum class LexerState {
 // Defines a general token
 struct Token {
   TokenType type;
-  typedef std::variant<SymbolType, std::string> TokenContext;
-  TokenContext context;
+  std::optional<std::string> context;
 };
 
 // Work class

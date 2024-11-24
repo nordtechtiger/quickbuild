@@ -66,7 +66,7 @@ int Lexer::skip_comments() {
 // match =
 int Lexer::match_equals() {
   if (m_current == '=') {
-    m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::Equals});
+    m_t_stream.push_back(Token{TokenType::Equals});
     return 0;
   } else {
     return -1;
@@ -76,7 +76,7 @@ int Lexer::match_equals() {
 // match :
 int Lexer::match_modify() {
   if (m_current == ':') {
-    m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::Modify});
+    m_t_stream.push_back(Token{TokenType::Modify});
     return 0;
   } else {
     return -1;
@@ -86,7 +86,7 @@ int Lexer::match_modify() {
 // match ;
 int Lexer::match_linestop() {
   if (m_current == ';') {
-    m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::LineStop});
+    m_t_stream.push_back(Token{TokenType::LineStop});
     return 0;
   } else {
     return -1;
@@ -98,7 +98,7 @@ int Lexer::match_arrow() {
   if (m_current == '-' && m_next == '>') {
     // skip an extra byte due to 2-character token
     advance_input_byte();
-    m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::Arrow});
+    m_t_stream.push_back(Token{TokenType::Arrow});
     return 0;
   } else {
     return -1;
@@ -110,7 +110,7 @@ int Lexer::match_iterateas() {
   if (m_current == 'a' && m_next == 's') {
     // skip an extra byte due to 2-character token
     advance_input_byte();
-    m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::IterateAs});
+    m_t_stream.push_back(Token{TokenType::IterateAs});
     return 0;
   } else {
     return -1;
@@ -120,7 +120,7 @@ int Lexer::match_iterateas() {
 // match ,
 int Lexer::match_separator() {
   if (m_current == ',') {
-    m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::Separator});
+    m_t_stream.push_back(Token{TokenType::Separator});
     return 0;
   } else {
     return -1;
@@ -130,7 +130,7 @@ int Lexer::match_separator() {
 // match [
 int Lexer::match_expressionopen() {
   if (m_current == '[') {
-    m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::ExpressionOpen});
+    m_t_stream.push_back(Token{TokenType::ExpressionOpen});
     return 0;
   } else {
     return -1;
@@ -140,9 +140,9 @@ int Lexer::match_expressionopen() {
 // match ]
 int Lexer::match_expressionclose() {
   if (m_current == ']') {
-    m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::ExpressionClose});
+    m_t_stream.push_back(Token{TokenType::ExpressionClose});
     if (m_state == LexerState::EscapedLiteral) {
-      m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::ConcatLiteral});
+      m_t_stream.push_back(Token{TokenType::ConcatLiteral});
       // Boostrap the next part to be parsed as a string
       insert_next_byte('\"');
       m_state = LexerState::Normal;
@@ -156,7 +156,7 @@ int Lexer::match_expressionclose() {
 // match {
 int Lexer::match_targetopen() {
   if (m_current == '{') {
-    m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::TargetOpen});
+    m_t_stream.push_back(Token{TokenType::TargetOpen});
     return 0;
   } else {
     return -1;
@@ -166,7 +166,7 @@ int Lexer::match_targetopen() {
 // match }
 int Lexer::match_targetclose() {
   if (m_current == '}') {
-    m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::TargetClose});
+    m_t_stream.push_back(Token{TokenType::TargetClose});
     return 0;
   } else {
     return -1;
@@ -188,9 +188,9 @@ int Lexer::match_literal() {
     }
     m_t_stream.push_back(Token{TokenType::Literal, literal});
     if (m_state == LexerState::EscapedLiteral) {
-      m_t_stream.push_back(Token{TokenType::Symbol, SymbolType::ConcatLiteral});
+      m_t_stream.push_back(Token{TokenType::ConcatLiteral});
       m_t_stream.push_back(
-          Token{TokenType::Symbol, SymbolType::ExpressionOpen});
+          Token{TokenType::ExpressionOpen});
     }
     return 0;
   } else {
