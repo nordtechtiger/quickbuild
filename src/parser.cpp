@@ -55,9 +55,9 @@ int Parser::parse_variable() {
 
 Expression Parser::parse_replace() {
   if (check_current(TokenType::Identifier) && check_next(TokenType::Modify)) {
+
     // TODO
   }
-  std::cerr << "niy parse_replace" << std::endl;
 }
 
 //

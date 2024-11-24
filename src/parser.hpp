@@ -5,6 +5,7 @@
 #include <vector>
 #include <variant>
 
+// TODO: We need to figure out how to parse [] properly
 // == Grammar rules ==
 // var -> IDENTIFIER EQUALS expression ";"
 // expression -> (LITERAL | IDENTIFIER | replace)","+
