@@ -56,8 +56,11 @@ private:
   Token m_next;
 
   Token advance_token();
+  int check_current(TokenType token_type);
+  int check_next(TokenType token_type);
   int parse_variable();
   int parse_target();
+  Expression parse_replace();
 
 public:
   Parser(std::vector<Token> token_stream);

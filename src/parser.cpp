@@ -35,12 +35,28 @@ AST Parser::parse_tokens() {
   return m_ast;
 }
 
+int Parser::check_current(TokenType token_type) {
+  return m_current.type == token_type;
+}
+
+int Parser::check_next(TokenType token_type) {
+  return m_next.type == token_type;
+}
+
+// Retuns 0 if matched, -1 if not
 int Parser::parse_target() {
   
 }
 
+// Retuns 0 if matched, -1 if not
 int Parser::parse_variable() {
 
+}
+
+Expression Parser::parse_replace() {
+  if (check_current(TokenType::Identifier) && check_next(TokenType::Modify)) {
+    // TODO
+  }
 }
 
 //
