@@ -5,15 +5,15 @@
 #include <vector>
 #include <variant>
 
-// TODO: We need to figure out how to parse [] properly
+// TODO: Parse precedence correctly []
 // == Grammar rules ==
-// var -> IDENTIFIER EQUALS expression ";"
-// expression -> (LITERAL | IDENTIFIER | replace)","+
-// expression -> ((LITERAL | IDENTIFIER | replace) CONCAT)+
-// replace -> IDENTIFIER COLON LITERAL ARROW LITERAL
+// field -> IDENTIFIER "=" expression ";"
+// expression -> (replace | LITERAL | IDENTIFIER)","+
+// expression -> ((replace | LITERAL | IDENTIFIER)CONCAT)+
+// replace -> IDENTIFIER ":" LITERAL "->" LITERAL
 //
-// target -> IDENTIFIER TARGETOPEN expression* TARGETCLOSE
-// target -> IDENTIFIER AS IDENTIFIER TARGETOPEN expression* TARGETCLOSE
+// target -> expression TARGETOPEN expression* TARGETCLOSE
+// target -> expression AS IDENTIFIER TARGETOPEN expression* TARGETCLOSE
 //
 
 // Logic: Expressions
@@ -39,7 +39,7 @@ struct Field {
 };
 struct Target {
   Expression identifier;
-  std::string public_name;
+  Variable public_name;
   std::vector<Field> fields;
 };
 struct AST {
@@ -58,11 +58,14 @@ private:
   Token m_next;
 
   Token advance_token();
-  int check_current(TokenType token_type);
-  int check_next(TokenType token_type);
-  int parse_variable();
-  int parse_target();
-  Expression parse_replace();
+  Token advance_token(int n);
+  bool check_current(TokenType token_type);
+  bool check_next(TokenType token_type);
+  std::optional<Field> parse_field();
+  std::optional<Target> parse_target();
+  std::optional<Replace> parse_replace();
+  std::optional<Expression> parse_expression();
+  std::optional<Concatenation> parse_concatenation();
 
 public:
   Parser(std::vector<Token> token_stream);

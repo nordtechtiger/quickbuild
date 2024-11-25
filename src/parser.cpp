@@ -2,6 +2,12 @@
 #include "lexer.hpp"
 #include <iostream>
 
+std::optional<Field> parse_field();
+std::optional<Target> parse_target();
+std::optional<Replace> parse_replace();
+std::optional<Expression> parse_expression();
+std::optional<Concatenation> parse_concatenation();
+
 Parser::Parser(std::vector<Token> token_stream) {
   m_token_stream = token_stream;
   m_index = 0;
@@ -14,7 +20,11 @@ Parser::Parser(std::vector<Token> token_stream) {
 }
 
 Token Parser::advance_token() {
-  m_index++;
+  return advance_token(1);
+}
+
+Token Parser::advance_token(int n) {
+  m_index += n;
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
                   : Token{TokenType::Invalid, "__invalid__"};
@@ -26,39 +36,84 @@ Token Parser::advance_token() {
 
 AST Parser::parse_tokens() {
   while (m_current.type != TokenType::Invalid) {
-    if (0 == parse_variable())
+    // Try to parse field
+    auto field = parse_field();
+    if (field) {
+      m_ast.fields.push_back(*field);
       continue;
-    if (0 == parse_target())
+    }
+    // Try to parse target
+    auto target = parse_target();
+    if (target) {
+      m_ast.targets.push_back(*target);
       continue;
-    throw new ParserException("[P001] Unknown statement encountered.");
+    }
+    // Unknown sequence of tokens
+    throw ParserException("[P001] Unknown statement encountered.");
   }
   return m_ast;
 }
 
-int Parser::check_current(TokenType token_type) {
+bool Parser::check_current(TokenType token_type) {
   return m_current.type == token_type;
 }
 
-int Parser::check_next(TokenType token_type) {
+bool Parser::check_next(TokenType token_type) {
   return m_next.type == token_type;
 }
 
-// Retuns 0 if matched, -1 if not
-int Parser::parse_target() {
-  std::cerr << "niy parse_target" << std::endl;
+// FIXME: Currently only identifiers and literals be used as targets
+std::optional<Target> Parser::parse_target() {
+  // Doesn't match
+  if (!check_next(TokenType::TargetOpen))
+    return std::nullopt;
+
+  // Fill in the metadata for the target
+  Target target = Target();
+  Expression identifier;
+  if (check_current(TokenType::Identifier))
+    identifier = Expression{Variable{*advance_token().context}};
+  else if (check_current(TokenType::Literal))
+    identifier = Expression{Literal{*advance_token().context}};
+  else
+    throw ParserException("[P003] Unsupported target");
+  advance_token(); // Consume the `{`
+
+  // Populates all the fields
+  std::optional<Field> field;
+  while ((field = parse_field())) {
+    target.fields.push_back(*field);
+  }
+
+  // Checks that the target is closed
+  if (!check_current(TokenType::TargetClose))
+    throw ParserException("[P002] Target not closed");
+
+  return target;
 }
 
-// Retuns 0 if matched, -1 if not
-int Parser::parse_variable() {
-  std::cerr << "niy parse_variable" << std::endl;
+std::optional<Field> Parser::parse_field() {
+
 }
 
-Expression Parser::parse_replace() {
+std::optional<Expression> parse_expression() {
+  auto concatenation = parse_concatenation();
+  if (concatenation)
+    return *concatenation;
+  if (
+}
+
+std::optional<Concatenation> parse_concatenation() {
+
+}
+
+std::optional<Replace> Parser::parse_replace() {
   if (check_current(TokenType::Identifier) && check_next(TokenType::Modify)) {
-
     // TODO
   }
 }
+
+
 
 //
 // int parse_field(vector<Token>, AST &);

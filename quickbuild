@@ -11,7 +11,7 @@ objects = sources: "src/*.c" -> "obj/*.o";
 binary = "bin/quickbuild";
 
 # Main target
-quickbuild {
+"quickbuild" {
   depends = objects, headers;
   run = "[compiler] [flags] [objects] -o [binary]";
 }
