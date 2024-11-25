@@ -17,29 +17,29 @@
 //
 
 // Logic: Expressions
-struct Variable {
+struct Identifier {
   std::string identifier;
 };
 struct Literal {
-  std::string content;
+  std::string literal;
 };
 struct Replace {
-  Variable variable;
+  Identifier variable;
   Literal original;
   Literal replacement;
 };
-typedef std::variant<Variable, Literal, Replace> _expression;
+typedef std::variant<Identifier, Literal, Replace> _expression;
 typedef std::vector<_expression> Concatenation;
-typedef std::variant<Variable, Literal, Replace, Concatenation> Expression;
+typedef std::variant<Identifier, Literal, Replace, Concatenation> Expression;
 
 // Config: Fields, targets, AST
 struct Field {
-  std::string identifier;
-  std::vector<Expression> value;
+  Identifier identifier;
+  std::vector<Expression> expression;
 };
 struct Target {
   Expression identifier;
-  Variable public_name;
+  Identifier public_name;
   std::vector<Field> fields;
 };
 struct AST {
@@ -64,7 +64,7 @@ private:
   std::optional<Field> parse_field();
   std::optional<Target> parse_target();
   std::optional<Replace> parse_replace();
-  std::optional<Expression> parse_expression();
+  std::optional<std::vector<Expression>> parse_expression();
   std::optional<Concatenation> parse_concatenation();
 
 public:

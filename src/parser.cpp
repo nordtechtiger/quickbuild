@@ -5,7 +5,7 @@
 std::optional<Field> parse_field();
 std::optional<Target> parse_target();
 std::optional<Replace> parse_replace();
-std::optional<Expression> parse_expression();
+std::optional<std::vector<Expression>> parse_expression();
 std::optional<Concatenation> parse_concatenation();
 
 Parser::Parser(std::vector<Token> token_stream) {
@@ -63,6 +63,7 @@ bool Parser::check_next(TokenType token_type) {
 }
 
 // FIXME: Currently only identifiers and literals be used as targets
+// FIXME: Also currently chokes on `objects as obj {` ...
 std::optional<Target> Parser::parse_target() {
   // Doesn't match
   if (!check_next(TokenType::TargetOpen))
@@ -72,7 +73,7 @@ std::optional<Target> Parser::parse_target() {
   Target target = Target();
   Expression identifier;
   if (check_current(TokenType::Identifier))
-    identifier = Expression{Variable{*advance_token().context}};
+    identifier = Expression{Identifier{*advance_token().context}};
   else if (check_current(TokenType::Literal))
     identifier = Expression{Literal{*advance_token().context}};
   else
@@ -88,19 +89,43 @@ std::optional<Target> Parser::parse_target() {
   // Checks that the target is closed
   if (!check_current(TokenType::TargetClose))
     throw ParserException("[P002] Target not closed");
+  advance_token(); // Consume the `}`
 
   return target;
 }
 
 std::optional<Field> Parser::parse_field() {
+  // Doesn't match
+  if (!check_current(TokenType::Identifier)
+      || !check_next(TokenType::Equals))
+      return std::nullopt;
 
+  // Get the identifier
+  Field field = Field();
+  field.identifier = Identifier{*advance_token().context};
+
+  // Parse the expression
+  auto expression = parse_expression();
+  if (!expression)
+    throw ParserException("[P004] Invalid expression");
+  field.expression = *expression;
+
+  // Check that there is a linestop
+  if (!check_current(TokenType::LineStop))
+    throw ParserException("[P005] Missing semicolon");
+  advance_token(); // Consume the ';'
+  
+  return field;
 }
 
-std::optional<Expression> parse_expression() {
+std::optional<std::vector<Expression>> parse_expression() {
+  // TODO: Implement this
+  /*
   auto concatenation = parse_concatenation();
   if (concatenation)
     return *concatenation;
   if (
+  */
 }
 
 std::optional<Concatenation> parse_concatenation() {
