@@ -24,7 +24,7 @@ struct Literal {
   std::string literal;
 };
 struct Replace {
-  Identifier variable;
+  Identifier identifier;
   Literal original;
   Literal replacement;
 };
