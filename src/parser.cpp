@@ -10,7 +10,7 @@ Parser::Parser(std::vector<Token> token_stream) {
                   ? m_token_stream[m_index]
                   : Token{TokenType::Invalid, "__invalid__"};
   m_next = (m_token_stream.size() >= m_index + 2)
-               ? m_token_stream[m_index]
+               ? m_token_stream[m_index + 1]
                : Token{TokenType::Invalid, "__invalid__"};
 }
 
@@ -20,13 +20,14 @@ Token Parser::consume_token() { return consume_token(1); }
 // Consume n tokens
 Token Parser::consume_token(int n) {
   m_index += n;
+  Token _previous = m_current;
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
                   : Token{TokenType::Invalid, "__invalid__"};
   m_next = (m_token_stream.size() >= m_index + 2)
-               ? m_token_stream[m_index]
+               ? m_token_stream[m_index + 1]
                : Token{TokenType::Invalid, "__invalid__"};
-  return m_current;
+  return _previous;
 }
 
 AST Parser::parse_tokens() {
@@ -102,7 +103,7 @@ std::optional<Field> Parser::parse_field() {
     return std::nullopt;
 
   // Get the identifier
-  Field field = Field();
+  Field field;
   field.identifier = Identifier{*consume_token().context};
   consume_token(); // Consume the '='
 
@@ -144,9 +145,18 @@ std::optional<std::vector<Expression>> Parser::parse_expression() {
       expression.push_back(Literal{*consume_token().context});
       continue;
     }
+
+    if (check_current(TokenType::Separator)) {
+      continue;
+    }
+
+    break; // FIXME: Not optimal?
+
     // TODO: Finish this
     throw ParserException("[P007] Invalid expression statement");
   }
+
+  return expression;
 }
 
 // FIXME: Currently only identifiers and literals can be escaped
