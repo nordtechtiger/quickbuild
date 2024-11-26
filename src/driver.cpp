@@ -62,7 +62,8 @@ int Driver::run() {
     AST ast = parser.parse_tokens();
   } catch (ParserException e) {
     // TODO: Handle properly
-    // cerr << e.what();
+    throw;
+    cerr << e.what();
     return -1;
   }
 
