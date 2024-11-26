@@ -117,6 +117,7 @@ std::optional<Field> Parser::parse_field() {
   return field;
 }
 
+// FIXME: Currently always returns an expressios, why std::optional
 // Attempts to parse a singular expression
 std::optional<std::vector<Expression>> Parser::parse_expression() {
   std::vector<Expression> expression;
@@ -149,7 +150,29 @@ std::optional<std::vector<Expression>> Parser::parse_expression() {
 std::optional<Concatenation> Parser::parse_concatenation() {
   if (!check_next(TokenType::ConcatLiteral))
     return std::nullopt;
+
   // TODO: Finish this
+  Concatenation concatenation;
+  do {
+    if (check_current(TokenType::Identifier)) {
+      concatenation.push_back(Identifier{*advance_token().context});
+      advance_token(); // Consume the concat token
+      continue;
+    } else if (check_current(TokenType::Literal)) {
+      concatenation.push_back(Literal{*advance_token().context});
+      advance_token(); // Consume the concat token
+      continue;
+    }
+  } while (check_next(TokenType::ConcatLiteral));
+
+  // There will still be a token left
+  if (check_current(TokenType::Identifier)) {
+    concatenation.push_back(Identifier{*advance_token().context});
+  } else if (check_current(TokenType::Literal)) {
+    concatenation.push_back(Literal{*advance_token().context});
+  }
+
+  return concatenation;
 }
 
 // Attempts to parse a replacement
