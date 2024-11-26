@@ -122,7 +122,7 @@ int Driver::run() {
     AST ast = parser.parse_tokens();
   } catch (ParserException e) {
     // TODO: Handle properly
-    throw;
+    // throw;
     std::cerr << e.what();
     return -1;
   }

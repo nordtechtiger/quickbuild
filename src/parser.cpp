@@ -15,10 +15,10 @@ Parser::Parser(std::vector<Token> token_stream) {
 }
 
 // Consume a token
-Token Parser::advance_token() { return advance_token(1); }
+Token Parser::consume_token() { return consume_token(1); }
 
 // Consume n tokens
-Token Parser::advance_token(int n) {
+Token Parser::consume_token(int n) {
   m_index += n;
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
@@ -31,16 +31,19 @@ Token Parser::advance_token(int n) {
 
 AST Parser::parse_tokens() {
   while (m_current.type != TokenType::Invalid) {
+    std::cout << "Parsing tokens..." << std::endl;
     // Try to parse field
     auto field = parse_field();
     if (field) {
       m_ast.fields.push_back(*field);
+      std::cout << "Parsed field." << std::endl;
       continue;
     }
     // Try to parse target
     auto target = parse_target();
     if (target) {
       m_ast.targets.push_back(*target);
+      std::cout << "Parsed target." << std::endl;
       continue;
     }
     // Unknown sequence of tokens
@@ -49,12 +52,12 @@ AST Parser::parse_tokens() {
   return m_ast;
 }
 
-// Token checking, no side-effects
+// Token checking, no side effects
 bool Parser::check_current(TokenType token_type) {
   return m_current.type == token_type;
 }
 
-// Token checking, no side-effects
+// Token checking, no side effects
 bool Parser::check_next(TokenType token_type) {
   return m_next.type == token_type;
 }
@@ -71,12 +74,12 @@ std::optional<Target> Parser::parse_target() {
   Target target;
   Expression identifier;
   if (check_current(TokenType::Identifier))
-    identifier = Expression{Identifier{*advance_token().context}};
+    identifier = Expression{Identifier{*consume_token().context}};
   else if (check_current(TokenType::Literal))
-    identifier = Expression{Literal{*advance_token().context}};
+    identifier = Expression{Literal{*consume_token().context}};
   else
     throw ParserException("[P003] Unsupported target");
-  advance_token(); // Consume the `{`
+  consume_token(); // Consume the `{`
 
   // Populates all the fields
   std::optional<Field> field;
@@ -87,7 +90,7 @@ std::optional<Target> Parser::parse_target() {
   // Checks that the target is closed
   if (!check_current(TokenType::TargetClose))
     throw ParserException("[P002] Target not closed");
-  advance_token(); // Consume the `}`
+  consume_token(); // Consume the `}`
 
   return target;
 }
@@ -100,8 +103,8 @@ std::optional<Field> Parser::parse_field() {
 
   // Get the identifier
   Field field = Field();
-  field.identifier = Identifier{*advance_token().context};
-  advance_token(); // Consume the '='
+  field.identifier = Identifier{*consume_token().context};
+  consume_token(); // Consume the '='
 
   // Parse the expression
   auto expression = parse_expression();
@@ -112,7 +115,7 @@ std::optional<Field> Parser::parse_field() {
   // Check that there is a linestop
   if (!check_current(TokenType::LineStop))
     throw ParserException("[P005] Missing semicolon");
-  advance_token(); // Consume the ';'
+  consume_token(); // Consume the ';'
 
   return field;
 }
@@ -134,14 +137,15 @@ std::optional<std::vector<Expression>> Parser::parse_expression() {
       continue;
     }
     if (check_current(TokenType::Identifier)) {
-      expression.push_back(Identifier{*advance_token().context});
+      expression.push_back(Identifier{*consume_token().context});
       continue;
     }
     if (check_current(TokenType::Literal)) {
-      expression.push_back(Literal{*advance_token().context});
+      expression.push_back(Literal{*consume_token().context});
       continue;
     }
     // TODO: Finish this
+    throw ParserException("[P007] Invalid expression statement");
   }
 }
 
@@ -155,21 +159,21 @@ std::optional<Concatenation> Parser::parse_concatenation() {
   Concatenation concatenation;
   do {
     if (check_current(TokenType::Identifier)) {
-      concatenation.push_back(Identifier{*advance_token().context});
-      advance_token(); // Consume the concat token
+      concatenation.push_back(Identifier{*consume_token().context});
+      consume_token(); // Consume the concat token
       continue;
     } else if (check_current(TokenType::Literal)) {
-      concatenation.push_back(Literal{*advance_token().context});
-      advance_token(); // Consume the concat token
+      concatenation.push_back(Literal{*consume_token().context});
+      consume_token(); // Consume the concat token
       continue;
     }
   } while (check_next(TokenType::ConcatLiteral));
 
   // There will still be a token left
   if (check_current(TokenType::Identifier)) {
-    concatenation.push_back(Identifier{*advance_token().context});
+    concatenation.push_back(Identifier{*consume_token().context});
   } else if (check_current(TokenType::Literal)) {
-    concatenation.push_back(Literal{*advance_token().context});
+    concatenation.push_back(Literal{*consume_token().context});
   }
 
   return concatenation;
@@ -183,13 +187,13 @@ std::optional<Replace> Parser::parse_replace() {
 
   // Construct replace type
   Replace replace;
-  replace.identifier = Identifier{*advance_token().context};
-  advance_token(); // Consume ':'
-  replace.original = Literal{*advance_token().context};
+  replace.identifier = Identifier{*consume_token().context};
+  consume_token(); // Consume ':'
+  replace.original = Literal{*consume_token().context};
   if (!check_current(TokenType::Arrow))
     throw ParserException("[P006] Missing iteration arrow");
-  advance_token(); // Consume '->'
-  replace.replacement = Literal{*advance_token().context};
+  consume_token(); // Consume '->'
+  replace.replacement = Literal{*consume_token().context};
 
   return replace;
 }

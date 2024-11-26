@@ -57,8 +57,8 @@ private:
   Token m_current;
   Token m_next;
 
-  Token advance_token();
-  Token advance_token(int n);
+  Token consume_token();
+  Token consume_token(int n);
   bool check_current(TokenType token_type);
   bool check_next(TokenType token_type);
   std::optional<Field> parse_field();
