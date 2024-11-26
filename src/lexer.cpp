@@ -140,8 +140,9 @@ int Lexer::match_expressionopen() {
 // match ]
 int Lexer::match_expressionclose() {
   if (m_current == ']') {
-    m_t_stream.push_back(Token{TokenType::ExpressionClose});
-    if (m_state == LexerState::EscapedLiteral) {
+    if (m_state != LexerState::EscapedLiteral) {
+      m_t_stream.push_back(Token{TokenType::ExpressionClose});
+    } else {
       m_t_stream.push_back(Token{TokenType::ConcatLiteral});
       // Boostrap the next part to be parsed as a string
       insert_next_byte('\"');
@@ -189,8 +190,6 @@ int Lexer::match_literal() {
     m_t_stream.push_back(Token{TokenType::Literal, literal});
     if (m_state == LexerState::EscapedLiteral) {
       m_t_stream.push_back(Token{TokenType::ConcatLiteral});
-      m_t_stream.push_back(
-          Token{TokenType::ExpressionOpen});
     }
     return 0;
   } else {
