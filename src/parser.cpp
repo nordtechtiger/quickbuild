@@ -32,19 +32,16 @@ Token Parser::consume_token(int n) {
 
 AST Parser::parse_tokens() {
   while (m_current.type != TokenType::Invalid) {
-    std::cout << "Parsing tokens..." << std::endl;
     // Try to parse field
     auto field = parse_field();
     if (field) {
       m_ast.fields.push_back(*field);
-      std::cout << "Parsed field." << std::endl;
       continue;
     }
     // Try to parse target
     auto target = parse_target();
     if (target) {
       m_ast.targets.push_back(*target);
-      std::cout << "Parsed target." << std::endl;
       continue;
     }
     // Unknown sequence of tokens
@@ -68,19 +65,14 @@ bool Parser::check_next(TokenType token_type) {
 // Attempts to parse a target
 std::optional<Target> Parser::parse_target() {
   // Doesn't match
-  if (!check_next(TokenType::TargetOpen))
+  std::optional<std::tuple<Expression, Identifier>> target_header = parse_target_header();
+  if (!target_header)
     return std::nullopt;
 
   // Fill in the metadata for the target
   Target target;
-  Expression identifier;
-  if (check_current(TokenType::Identifier))
-    identifier = Expression{Identifier{*consume_token().context}};
-  else if (check_current(TokenType::Literal))
-    identifier = Expression{Literal{*consume_token().context}};
-  else
-    throw ParserException("[P003] Unsupported target");
-  consume_token(); // Consume the `{`
+  target.identifier = std::get<0>(*target_header);
+  target.public_name = std::get<1>(*target_header);
 
   // Populates all the fields
   std::optional<Field> field;
@@ -94,6 +86,52 @@ std::optional<Target> Parser::parse_target() {
   consume_token(); // Consume the `}`
 
   return target;
+}
+
+// Returns identifier and public_name
+std::optional<std::tuple<Expression, Identifier>> Parser::parse_target_header() {
+  if (check_next(TokenType::TargetOpen)) {
+    // `object {`
+    Expression expression;
+    Identifier public_name;
+    if (check_current(TokenType::Identifier)) {
+      public_name = Identifier{*consume_token().context};
+      expression = Expression{public_name};
+    }
+    else if (check_current(TokenType::Literal)) {
+      public_name = Identifier{"__target__"};
+      expression = Expression{Literal{*consume_token().context}};
+    }
+    else {
+      throw ParserException("[P003] Unsupported target");
+    }
+    consume_token(); // Consume the `{`
+    return std::make_tuple(expression, public_name);
+  } else if (check_next(TokenType::IterateAs)) {
+    // `objects as obj {`
+    Expression expression;
+    Identifier public_name;
+    if (check_current(TokenType::Identifier)) {
+      expression = Identifier{*consume_token().context};
+    }
+    else if (check_current(TokenType::Literal)) {
+      expression = Expression{Literal{*consume_token().context}};
+    }
+    else {
+      throw ParserException("[P003] Unsupported target");
+    }
+    consume_token(); // Consume the `as`
+    if (check_current(TokenType::Identifier)) {
+      public_name = Identifier{*consume_token().context};
+    } else {
+      throw ParserException("[P008] Unsupported public name");
+    }
+    consume_token(); // Consume the `{`
+    return std::make_tuple(expression, public_name);
+
+  } else {
+    return std::nullopt;
+  }
 }
 
 // Attempts to parse a singular field
@@ -147,6 +185,7 @@ std::optional<std::vector<Expression>> Parser::parse_expression() {
     }
 
     if (check_current(TokenType::Separator)) {
+      consume_token(); // Consume the ','
       continue;
     }
 

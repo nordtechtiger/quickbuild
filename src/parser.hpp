@@ -63,6 +63,7 @@ private:
   bool check_next(TokenType token_type);
   std::optional<Field> parse_field();
   std::optional<Target> parse_target();
+  std::optional<std::tuple<Expression, Identifier>> parse_target_header();
   std::optional<Replace> parse_replace();
   std::optional<std::vector<Expression>> parse_expression();
   std::optional<Concatenation> parse_concatenation();

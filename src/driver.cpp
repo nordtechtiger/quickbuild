@@ -114,7 +114,7 @@ int Driver::run() {
   Lexer lexer(config);
   std::vector<Token> t_stream =
       lexer.get_token_stream(); // TODO: Handle properly
-  debug_print_tokens(t_stream);
+  // debug_print_tokens(t_stream);
 
   // Parse
   try {

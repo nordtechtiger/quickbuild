@@ -59,8 +59,6 @@ enum class LexerState {
   EscapedLiteral,
 };
 
-// Defines additional data depending on the token type
-
 // Defines a general token
 struct Token {
   TokenType type;
