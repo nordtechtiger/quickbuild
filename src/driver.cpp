@@ -117,9 +117,10 @@ int Driver::run() {
   // debug_print_tokens(t_stream);
 
   // Parse
+  AST ast;
   try {
     Parser parser = Parser(t_stream);
-    AST ast = parser.parse_tokens();
+    ast = parser.parse_tokens();
   } catch (ParserException e) {
     // TODO: Handle properly
     // throw;

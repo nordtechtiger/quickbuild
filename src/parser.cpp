@@ -128,7 +128,6 @@ std::optional<std::tuple<Expression, Identifier>> Parser::parse_target_header() 
     }
     consume_token(); // Consume the `{`
     return std::make_tuple(expression, public_name);
-
   } else {
     return std::nullopt;
   }
@@ -183,6 +182,18 @@ std::optional<std::vector<Expression>> Parser::parse_expression() {
       expression.push_back(Literal{*consume_token().context});
       continue;
     }
+    if (check_current(TokenType::ExpressionOpen)) {
+      consume_token(); // Consume the '['
+      std::optional<std::vector<Expression>> _expression = parse_expression();
+      if (_expression) {
+        expression.insert(expression.end(), _expression->begin(), _expression->end());
+      } else {
+        throw ParserException("[P009] Invalid expression statement");
+      }
+      if (!check_current(TokenType::ExpressionClose))
+        throw ParserException("[P010] Expected expression close");
+      consume_token(); // Consume the `]`
+    }
 
     if (check_current(TokenType::Separator)) {
       consume_token(); // Consume the ','
@@ -190,10 +201,10 @@ std::optional<std::vector<Expression>> Parser::parse_expression() {
     }
 
     break; // FIXME: Not optimal?
-
-    // TODO: Finish this
-    throw ParserException("[P007] Invalid expression statement");
   }
+
+  if (0 >= expression.size())
+    throw ParserException("[P007] Invalid expression statement");
 
   return expression;
 }

@@ -5,17 +5,6 @@
 #include <vector>
 #include <variant>
 
-// TODO: Parse precedence correctly []
-// == Grammar rules ==
-// field -> IDENTIFIER "=" expression ";"
-// expression -> (replace | LITERAL | IDENTIFIER)","+
-// expression -> ((replace | LITERAL | IDENTIFIER)CONCAT)+
-// replace -> IDENTIFIER ":" LITERAL "->" LITERAL
-//
-// target -> expression TARGETOPEN expression* TARGETCLOSE
-// target -> expression AS IDENTIFIER TARGETOPEN expression* TARGETCLOSE
-//
-
 // Logic: Expressions
 struct Identifier {
   std::string identifier;
