@@ -32,14 +32,14 @@
 #define STRINGIFY_MACRO(x) STRINGIFY(x)
 
 #include <functional>
-#include <string>
 #include <optional>
+#include <string>
 #include <vector>
 
 // Defines what type of token it is
 enum class TokenType {
-  Identifier, // any text without quotes
-  Literal,    // any text in quotes
+  Identifier,      // any text without quotes
+  Literal,         // any text in quotes
   Equals,          // `=`
   Modify,          // `:`
   LineStop,        // ';`
@@ -51,7 +51,7 @@ enum class TokenType {
   TargetOpen,      // `{`
   TargetClose,     // `}`
   ConcatLiteral,   // internal token for escaped expressions inside literals
-  Invalid,    // internal return type in parser
+  Invalid,         // internal return type in parser
 };
 
 enum class LexerState {

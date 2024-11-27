@@ -65,7 +65,8 @@ bool Parser::check_next(TokenType token_type) {
 // Attempts to parse a target
 std::optional<Target> Parser::parse_target() {
   // Doesn't match
-  std::optional<std::tuple<Expression, Identifier>> target_header = parse_target_header();
+  std::optional<std::tuple<Expression, Identifier>> target_header =
+      parse_target_header();
   if (!target_header)
     return std::nullopt;
 
@@ -89,7 +90,8 @@ std::optional<Target> Parser::parse_target() {
 }
 
 // Returns identifier and public_name
-std::optional<std::tuple<Expression, Identifier>> Parser::parse_target_header() {
+std::optional<std::tuple<Expression, Identifier>>
+Parser::parse_target_header() {
   if (check_next(TokenType::TargetOpen)) {
     // `object {`
     Expression expression;
@@ -97,12 +99,10 @@ std::optional<std::tuple<Expression, Identifier>> Parser::parse_target_header() 
     if (check_current(TokenType::Identifier)) {
       public_name = Identifier{*consume_token().context};
       expression = Expression{public_name};
-    }
-    else if (check_current(TokenType::Literal)) {
+    } else if (check_current(TokenType::Literal)) {
       public_name = Identifier{"__target__"};
       expression = Expression{Literal{*consume_token().context}};
-    }
-    else {
+    } else {
       throw ParserException("[P003] Unsupported target");
     }
     consume_token(); // Consume the `{`
@@ -113,11 +113,9 @@ std::optional<std::tuple<Expression, Identifier>> Parser::parse_target_header() 
     Identifier public_name;
     if (check_current(TokenType::Identifier)) {
       expression = Identifier{*consume_token().context};
-    }
-    else if (check_current(TokenType::Literal)) {
+    } else if (check_current(TokenType::Literal)) {
       expression = Expression{Literal{*consume_token().context}};
-    }
-    else {
+    } else {
       throw ParserException("[P003] Unsupported target");
     }
     consume_token(); // Consume the `as`
@@ -186,7 +184,8 @@ std::optional<std::vector<Expression>> Parser::parse_expression() {
       consume_token(); // Consume the '['
       std::optional<std::vector<Expression>> _expression = parse_expression();
       if (_expression) {
-        expression.insert(expression.end(), _expression->begin(), _expression->end());
+        expression.insert(expression.end(), _expression->begin(),
+                          _expression->end());
       } else {
         throw ParserException("[P009] Invalid expression statement");
       }
