@@ -2,6 +2,8 @@
 #define DRIVER_H
 
 #include <vector>
+#include <optional>
+#include <string>
 
 enum class InputMethod {
   ConfigFile,
@@ -15,6 +17,7 @@ enum class LoggingLevel {
 };
 
 struct Setup {
+  std::optional<std::string> target;
   InputMethod input_method;
   LoggingLevel logging_level;
   bool dry_run;

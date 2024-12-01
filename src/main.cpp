@@ -13,26 +13,34 @@ int main(int argc, char **argv) {
   for (const auto &arg : args) {
     if (arg == "--stdin")
       setup.input_method = InputMethod::Stdin;
-    if (arg == "--configfile")
+    else if (arg == "--configfile")
       setup.input_method = InputMethod::ConfigFile;
-    if (arg == "--log-quiet")
+    else if (arg == "--log-quiet")
       setup.logging_level = LoggingLevel::Quiet;
-    if (arg == "--log-standard")
+    else if (arg == "--log-standard")
       setup.logging_level = LoggingLevel::Standard;
-    if (arg == "--log-verbose")
+    else if (arg == "--log-verbose")
       setup.logging_level = LoggingLevel::Verbose;
-    if (arg == "--dry-run")
+    else if (arg == "--dry-run")
       setup.dry_run = true;
+    else if (!setup.target)
+      setup.target = arg;
+    else {
+      std::cerr << "Error: More than one target was selected. Cannot proceed."
+                << std::endl;
+      exit(EXIT_FAILURE);
+    }
   }
 
   // Run driver
   try {
     Driver driver = Driver(setup);
     return driver.run();
-  } catch (...) {
+  } catch (const std::exception &e) {
     std::cerr << "! <Fatal crash>\n! The Quickbuild driver threw an unhandled "
                  "exception. This is an internal bug and should be reported."
               << std::endl;
-    return -1;
+    std::cerr << "! Error data: " << e.what() << std::endl;
+    exit(EXIT_FAILURE);
   }
 }

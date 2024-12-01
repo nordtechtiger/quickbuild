@@ -48,7 +48,7 @@
 //     out += ":`" + *token.context + "`";
 //   return out;
 // }
-// 
+//
 // void debug_print_tokens(std::vector<Token> token_stream) {
 //   for (const auto &token : token_stream) {
 //     std::cout << "[" << debug_token_to_string(token) << "] ";
@@ -84,7 +84,7 @@
 Driver::Driver(Setup setup) { m_setup = setup; }
 
 Setup Driver::default_setup() {
-  return Setup{InputMethod::ConfigFile, LoggingLevel::Standard, false};
+  return Setup{std::nullopt, InputMethod::ConfigFile, LoggingLevel::Standard, false};
 }
 
 std::vector<unsigned char> Driver::get_config() {
@@ -106,8 +106,6 @@ std::vector<unsigned char> Driver::get_config() {
   }
   throw DriverException("Driver-D001: Failed to get config.");
 }
-
-
 
 int Driver::run() {
   // Out: Greeting
@@ -150,5 +148,5 @@ int Driver::run() {
     return EXIT_FAILURE;
   }
 
-  return EXIT_SUCCESS; // TODO: Replace this when driver is finished
+  return EXIT_SUCCESS;
 }
