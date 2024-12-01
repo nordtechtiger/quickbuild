@@ -62,6 +62,7 @@
 #include "builder.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "format.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -109,7 +110,7 @@ std::vector<unsigned char> Driver::get_config() {
 
 int Driver::run() {
   // Out: Greeting
-  LOG_STANDARD("[ Quickbuild Dev v0.1.0 ]");
+  LOG_STANDARD(BRIGHT "[ Quickbuild Dev v0.1.0 ]" RESET);
 
   // === Build the configuration ===
   // Out: Compiling config
@@ -138,7 +139,6 @@ int Driver::run() {
   }
 
   // === Build the project ===
-  // Build
   Builder builder(ast, m_setup);
   try {
     builder.build();
