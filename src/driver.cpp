@@ -60,9 +60,9 @@
 
 #include "driver.hpp"
 #include "builder.hpp"
+#include "format.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
-#include "format.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -85,7 +85,8 @@
 Driver::Driver(Setup setup) { m_setup = setup; }
 
 Setup Driver::default_setup() {
-  return Setup{std::nullopt, InputMethod::ConfigFile, LoggingLevel::Standard, false};
+  return Setup{std::nullopt, InputMethod::ConfigFile, LoggingLevel::Standard,
+               false};
 }
 
 std::vector<unsigned char> Driver::get_config() {

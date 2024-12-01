@@ -16,8 +16,8 @@ Builder::Builder(AST ast, Setup setup) {
   m_setup = setup;
 }
 
-std::vector<std::string>
-Builder::evaluate(std::vector<Expression> expressions, std::optional<Target> ctx) {
+std::vector<std::string> Builder::evaluate(std::vector<Expression> expressions,
+                                           std::optional<Target> ctx) {
   std::vector<std::string> out;
   for (const Expression &expression : expressions) {
     std::vector<std::string> _out = evaluate(expression, ctx);
@@ -26,11 +26,12 @@ Builder::evaluate(std::vector<Expression> expressions, std::optional<Target> ctx
   return out;
 }
 
-std::vector<std::string> Builder::evaluate(Expression expression, std::optional<Target> ctx) {
+std::vector<std::string> Builder::evaluate(Expression expression,
+                                           std::optional<Target> ctx) {
   if (std::holds_alternative<Literal>(expression))
-    return { std::get<Literal>(expression).literal };
+    return {std::get<Literal>(expression).literal};
   else if (std::holds_alternative<Identifier>(expression))
-    return { evaluate(*get_field(ctx, std::get<Identifier>(expression)), ctx) };
+    return {evaluate(*get_field(ctx, std::get<Identifier>(expression)), ctx)};
   // TODO: Implement all options
 }
 
@@ -78,9 +79,12 @@ void Builder::build_target(Literal literal) {
 
   // Build final target
   std::cout << "   -> Building " << literal.literal << "..." << std::endl;
-  std::vector<std::string> cmdlines = evaluate(*get_field(std::nullopt, FIELD_ID_EXECUTE), target);
+  std::vector<std::string> cmdlines =
+      evaluate(*get_field(std::nullopt, FIELD_ID_EXECUTE), target);
   for (const std::string cmdline : cmdlines) {
-    // Execute the command line with the appropriate output (verbose, quiet, etc)
+    std::cout << ">>>>>>>>>> " << cmdline << std::endl;
+    // Execute the command line with the appropriate output (verbose, quiet,
+    // etc)
   }
 }
 

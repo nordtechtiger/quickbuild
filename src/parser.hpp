@@ -2,8 +2,8 @@
 #define PARSER_H
 #include "lexer.hpp"
 #include <string>
-#include <vector>
 #include <variant>
+#include <vector>
 
 // Logic: Expressions
 struct Identifier {
