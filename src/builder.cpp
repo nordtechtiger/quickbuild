@@ -17,17 +17,21 @@ Builder::Builder(AST ast, Setup setup) {
 }
 
 std::vector<std::string>
-Builder::evaluate(std::vector<Expression> expressions) {
+Builder::evaluate(std::vector<Expression> expressions, std::optional<Target> ctx) {
   std::vector<std::string> out;
   for (const Expression &expression : expressions) {
-    std::vector<std::string> _out = evaluate(expression);
+    std::vector<std::string> _out = evaluate(expression, ctx);
     out.insert(out.end(), _out.begin(), _out.end());
   }
   return out;
 }
 
-std::vector<std::string> Builder::evaluate(Expression expression) {
-  // TODO: Implement
+std::vector<std::string> Builder::evaluate(Expression expression, std::optional<Target> ctx) {
+  if (std::holds_alternative<Literal>(expression))
+    return { std::get<Literal>(expression).literal };
+  else if (std::holds_alternative<Identifier>(expression))
+    return { evaluate(*get_field(ctx, std::get<Identifier>(expression)), ctx) };
+  // TODO: Implement all options
 }
 
 std::optional<std::vector<Expression>>
@@ -49,7 +53,7 @@ std::optional<Target> Builder::get_target(Literal literal) {
   // Iterate over all targets
   for (const auto &target : m_ast.targets) {
     // Iterate over all matching identifiers
-    for (const auto &identifier : evaluate(target.identifier)) {
+    for (const auto &identifier : evaluate(target.identifier, std::nullopt)) {
       if (identifier == literal.literal)
         return target;
     }
@@ -68,13 +72,13 @@ void Builder::build_target(Literal literal) {
       get_field(target, FIELD_ID_DEPENDENCIES);
   std::vector<std::string> dependencies;
   if (dependencies_expression)
-    dependencies = evaluate(*dependencies_expression);
+    dependencies = evaluate(*dependencies_expression, target);
   for (const auto &dependency : dependencies)
     build_target(Literal{dependency});
 
   // Build final target
   std::cout << "   -> Building " << literal.literal << "..." << std::endl;
-  std::vector<std::string> cmdlines = evaluate(*get_field(std::nullopt, FIELD_ID_EXECUTE));
+  std::vector<std::string> cmdlines = evaluate(*get_field(std::nullopt, FIELD_ID_EXECUTE), target);
   for (const std::string cmdline : cmdlines) {
     // Execute the command line with the appropriate output (verbose, quiet, etc)
   }
