@@ -17,6 +17,7 @@ private:
   // if std::nullopt, use global vars
   std::optional<std::vector<Expression>> get_field(std::optional<Target> target,
                                                    Identifier identifier);
+  std::vector<std::string> evaluate_literal(Literal literal);
   std::vector<std::string> evaluate(Expression expression,
                                     std::optional<Target> ctx);
   std::vector<std::string> evaluate(std::vector<Expression> expressions,

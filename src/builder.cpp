@@ -2,8 +2,10 @@
 #include "format.hpp"
 #include "parser.hpp"
 
+#include <filesystem>
 #include <iostream>
 #include <string>
+#include <variant>
 #include <vector>
 
 #define FIELD_ID_DEPENDENCIES                                                  \
@@ -16,6 +18,35 @@ Builder::Builder(AST ast, Setup setup) {
   m_setup = setup;
 }
 
+// Parses a string by matching against *
+// NOTE: Assumes that max one asterisk is present
+std::vector<std::string> Builder::evaluate_literal(Literal literal) {
+  std::vector<std::string> out;
+  unsigned long long asterisk_index = literal.literal.trim().find('*');
+  if (asterisk_index == std::string::npos)
+    // No processing needs to be done
+    return {literal.literal};
+
+  std::string prefix = literal.literal.substr(0, asterisk_index);
+  std::string suffix = literal.literal.substr(asterisk_index + 1);
+  std::cout << "prefix empty: " << prefix.empty() << std::endl;
+  std::cout << "suffix empty: " << prefix.empty() << std::endl;
+
+  // Attempt substitution with paths
+  for (const auto &dir : std::filesystem::recursive_directory_iterator(".")) {
+    std::string path = dir.path();
+    if ((prefix.empty() || path.find(prefix) != std::string::npos) &&
+        (suffix.empty() || path.find(suffix) != std::string::npos) &&
+        ((prefix.empty() && suffix.empty()) || path.find(prefix) < path.find(suffix))) {
+      out.push_back(path);
+    }
+  }
+
+  return out;
+}
+
+// Evaluates a vector of expressions within a certain context, yielding the
+// lowest-level string representation
 std::vector<std::string> Builder::evaluate(std::vector<Expression> expressions,
                                            std::optional<Target> ctx) {
   std::vector<std::string> out;
@@ -28,10 +59,19 @@ std::vector<std::string> Builder::evaluate(std::vector<Expression> expressions,
 
 std::vector<std::string> Builder::evaluate(Expression expression,
                                            std::optional<Target> ctx) {
-  if (std::holds_alternative<Literal>(expression))
-    return {std::get<Literal>(expression).literal};
-  else if (std::holds_alternative<Identifier>(expression))
-    return {evaluate(*get_field(ctx, std::get<Identifier>(expression)), ctx)};
+  if (Literal *literal = std::get_if<Literal>(&expression)) {
+    return evaluate_literal(*literal);
+  } else if (Identifier *identifier = std::get_if<Identifier>(&expression)) {
+    return {evaluate(*identifier, ctx)};
+  } else if (Concatenation *concatenation =
+                 std::get_if<Concatenation>(&expression)) {
+
+  } else if (Replace *replacement = std::get_if<Replace>(&expression)) {
+
+  } else {
+    throw BuilderException(
+        "Unable to evaluate expression - invalid expression variant");
+  }
   // TODO: Implement all options
 }
 
@@ -89,6 +129,11 @@ void Builder::build_target(Literal literal) {
 }
 
 void Builder::build() {
+  /* DEBUG */
+  std::cout << "DEBUG!" << std::endl;
+  for (const auto &i : evaluate_literal(Literal{"src/*"}))
+    std::cout << i << std::endl;
+  /* /DEBUG */
   Literal target;
   if (m_setup.target) {
     target = Literal{*m_setup.target};
