@@ -62,7 +62,7 @@ std::vector<std::string> Builder::evaluate(Expression expression,
   if (Literal *literal = std::get_if<Literal>(&expression)) {
     return evaluate_literal(*literal);
   } else if (Identifier *identifier = std::get_if<Identifier>(&expression)) {
-    return {evaluate(*identifier, ctx)};
+    return {evaluate(*get_field(ctx, *identifier), ctx)};
   } else if (Concatenation *concatenation =
                  std::get_if<Concatenation>(&expression)) {
 
