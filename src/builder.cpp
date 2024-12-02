@@ -22,22 +22,22 @@ Builder::Builder(AST ast, Setup setup) {
 // NOTE: Assumes that max one asterisk is present
 std::vector<std::string> Builder::evaluate_literal(Literal literal) {
   std::vector<std::string> out;
-  unsigned long long asterisk_index = literal.literal.trim().find('*');
+  unsigned long long asterisk_index = literal.literal.find('*');
   if (asterisk_index == std::string::npos)
     // No processing needs to be done
     return {literal.literal};
 
   std::string prefix = literal.literal.substr(0, asterisk_index);
   std::string suffix = literal.literal.substr(asterisk_index + 1);
-  std::cout << "prefix empty: " << prefix.empty() << std::endl;
-  std::cout << "suffix empty: " << prefix.empty() << std::endl;
 
   // Attempt substitution with paths
+  // TODO: This might not be an optimal solution
   for (const auto &dir : std::filesystem::recursive_directory_iterator(".")) {
     std::string path = dir.path();
     if ((prefix.empty() || path.find(prefix) != std::string::npos) &&
-        (suffix.empty() || path.find(suffix) != std::string::npos) &&
-        ((prefix.empty() && suffix.empty()) || path.find(prefix) < path.find(suffix))) {
+        (suffix[0] == '\0' || path.find(suffix) != std::string::npos) &&
+        (prefix.empty() || suffix[0] == '\0' ||
+         path.find(prefix) < path.find(suffix))) {
       out.push_back(path);
     }
   }
@@ -131,7 +131,7 @@ void Builder::build_target(Literal literal) {
 void Builder::build() {
   /* DEBUG */
   std::cout << "DEBUG!" << std::endl;
-  for (const auto &i : evaluate_literal(Literal{"src/*"}))
+  for (const auto &i : evaluate_literal(Literal{"*r."}))
     std::cout << i << std::endl;
   /* /DEBUG */
   Literal target;
