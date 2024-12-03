@@ -130,9 +130,9 @@ void Builder::build_target(Literal literal) {
 
 void Builder::build() {
   /* DEBUG */
-  std::cout << "DEBUG!" << std::endl;
-  for (const auto &i : evaluate_literal(Literal{"*r."}))
-    std::cout << i << std::endl;
+  // std::cout << "DEBUG!" << std::endl;
+  // for (const auto &i : evaluate_literal(Literal{"*r."}))
+  //   std::cout << i << std::endl;
   /* /DEBUG */
   Literal target;
   if (m_setup.target) {
