@@ -45,6 +45,18 @@ std::vector<std::string> Builder::evaluate_literal(Literal literal) {
   return out;
 }
 
+std::vector<std::string> Builder::evaluate_replace(Replace replace) {
+  
+}
+
+std::vector<std::string>
+Builder::evaluate_concatenation(Concatenation concatenation) {
+  for (const auto &expression : concatenation) {
+    // not good
+    evaluate(expression);
+  }
+}
+
 // Evaluates a vector of expressions within a certain context, yielding the
 // lowest-level string representation
 std::vector<std::string> Builder::evaluate(std::vector<Expression> expressions,
@@ -65,9 +77,9 @@ std::vector<std::string> Builder::evaluate(Expression expression,
     return {evaluate(*get_field(ctx, *identifier), ctx)};
   } else if (Concatenation *concatenation =
                  std::get_if<Concatenation>(&expression)) {
-
-  } else if (Replace *replacement = std::get_if<Replace>(&expression)) {
-
+    return evaluate_concatenation(*concatenation);
+  } else if (Replace *replace = std::get_if<Replace>(&expression)) {
+    return evaluate_replace(*replace);
   } else {
     throw BuilderException(
         "Unable to evaluate expression - invalid expression variant");
