@@ -113,7 +113,9 @@ int Driver::run() {
     t_stream = lexer.get_token_stream();
   } catch (LexerException e) {
     // TODO: Handle properly
-    std::cerr << e.what();
+    LOG_QUIET(RED "! Failed to lex configuration. Exiting..." RESET);
+    LOG_VERBOSE(RED "!   -> " + (std::string)e.what() + RESET);
+    return EXIT_FAILURE;
   }
   // Parse
   AST ast;
@@ -122,8 +124,8 @@ int Driver::run() {
     ast = parser.parse_tokens();
   } catch (ParserException e) {
     // TODO: Handle properly
-    // throw;
-    std::cerr << e.what();
+    LOG_QUIET(RED "! Failed to lex configuration. Exiting..." RESET);
+    LOG_VERBOSE(RED "!   -> " + (std::string)e.what() + RESET);
     return EXIT_FAILURE;
   }
 
@@ -133,7 +135,8 @@ int Driver::run() {
     builder.build();
   } catch (BuilderException e) {
     // TODO: Handle properly
-    std::cerr << e.what();
+    LOG_QUIET(RED "! Failed to lex configuration. Exiting..." RESET);
+    LOG_VERBOSE(RED "!   -> " + (std::string)e.what() + RESET);
     return EXIT_FAILURE;
   }
 
