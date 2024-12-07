@@ -45,16 +45,40 @@ std::vector<std::string> Builder::evaluate_literal(Literal literal) {
   return out;
 }
 
-std::vector<std::string> Builder::evaluate_replace(Replace replace) {
-  
+std::vector<std::string> Builder::evaluate_replace(Replace replace,
+                                                   std::optional<Target> ctx) {
+
+}
+
+Expression __upgrade_expression_type(_expression _expr) {
+  if (Identifier *identifier = std::get_if<Identifier>(&_expr)) {
+    return Identifier{*identifier};
+  } else if (Literal *literal = std::get_if<Literal>(&_expr)) {
+    return Literal{*literal};
+  } else if (Replace *replace = std::get_if<Replace>(&_expr)) {
+    return Replace{*replace};
+  } else {
+    throw BuilderException("[B004] Internal builder error: Failed to upgrade "
+                           "expression type. This is a bug.");
+  }
 }
 
 std::vector<std::string>
-Builder::evaluate_concatenation(Concatenation concatenation) {
+Builder::evaluate_concatenation(Concatenation concatenation,
+                                std::optional<Target> ctx) {
+  std::string out;
   for (const auto &expression : concatenation) {
-    // not good
-    evaluate(expression);
+    std::vector<std::string> _out = evaluate(__upgrade_expression_type(expression), ctx);
+    if (_out.size() == 1) {
+      out += _out[0];
+    }
+    if (_out.size() > 1) {
+      for (size_t i = 1; i < _out.size(); i++) {
+        out += _out[i];
+      }
+    }
   }
+  return {out};
 }
 
 // Evaluates a vector of expressions within a certain context, yielding the
@@ -77,14 +101,13 @@ std::vector<std::string> Builder::evaluate(Expression expression,
     return {evaluate(*get_field(ctx, *identifier), ctx)};
   } else if (Concatenation *concatenation =
                  std::get_if<Concatenation>(&expression)) {
-    return evaluate_concatenation(*concatenation);
+    return evaluate_concatenation(*concatenation, ctx);
   } else if (Replace *replace = std::get_if<Replace>(&expression)) {
-    return evaluate_replace(*replace);
+    return evaluate_replace(*replace, ctx);
   } else {
     throw BuilderException(
         "Unable to evaluate expression - invalid expression variant");
   }
-  // TODO: Implement all options
 }
 
 std::optional<std::vector<Expression>>
@@ -100,6 +123,7 @@ Builder::get_field(std::optional<Target> target, Identifier identifier) {
     if (field.identifier.identifier == identifier.identifier)
       return field.expression;
   }
+  return std::nullopt;
 }
 
 std::optional<Target> Builder::get_target(Literal literal) {
@@ -126,8 +150,12 @@ void Builder::build_target(Literal literal) {
   std::vector<std::string> dependencies;
   if (dependencies_expression)
     dependencies = evaluate(*dependencies_expression, target);
-  for (const auto &dependency : dependencies)
+  for (const auto &dependency : dependencies) {
+    if (!get_target(Literal{dependency}))
+      continue;
+    std::cerr << "DEBUG: Building the dependency " << dependency << std::endl;
     build_target(Literal{dependency});
+  }
 
   // Build final target
   std::cout << "   -> Building " << literal.literal << "..." << std::endl;

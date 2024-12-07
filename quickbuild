@@ -7,7 +7,8 @@ sources = "src/*.c";
 headers = "src/*.h";
 
 # Files to create
-objects = sources: "src/*.c" -> "obj/*.o";
+# objects = sources: "src/*.c" -> "obj/*.o";
+objects = "foo.o";
 binary = "bin/quickbuild";
 
 # Main target
@@ -18,7 +19,8 @@ binary = "bin/quickbuild";
 
 # Object files
 objects as obj {
-  depends = obj: "obj/*.o" -> "src/*.c";
+  depends = "foo.c";
+  # depends = obj: "obj/*.o" -> "src/*.c";
   run = "[compiler] [flags] -c [depends] -o [obj]";
 }
 
