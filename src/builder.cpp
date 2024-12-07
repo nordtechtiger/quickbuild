@@ -64,7 +64,8 @@ std::vector<std::string> Builder::evaluate_replace(Replace replace,
         str.find(old_prefix) < str.find(old_suffix)) {
       out.push_back(new_prefix +
                     str.substr(str.find(old_prefix) + old_prefix.size(),
-                               str.find(old_suffix)) +
+                               str.find(old_suffix) - old_prefix.size() -
+                                   str.find(old_prefix)) +
                     new_suffix);
     }
   }

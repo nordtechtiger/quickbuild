@@ -1,5 +1,6 @@
 #ifndef FORMAT_H
 #define FORMAT_H
+
 #define GREEN "\033[32m"
 #define CYAN "\033[36m"
 #define RESET "\033[0m"
@@ -16,4 +17,5 @@
   if (m_setup.logging_level >= LoggingLevel::Quiet) {                          \
     std::cout << msg << std::endl;                                             \
   }
+
 #endif

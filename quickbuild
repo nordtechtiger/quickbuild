@@ -3,11 +3,11 @@ compiler = "gcc";
 flags = "-g -o0";
 
 # Files to compile
-sources = "src/*.c";
-headers = "src/*.h";
+sources = "src/*.cpp";
+headers = "src/*.hpp";
 
 # Files to create
-objects = sources: "src/*.c" -> "obj/*.o";
+objects = sources: "src/*.cpp" -> "obj/*.o";
 binary = "bin/quickbuild";
 
 # Main target
@@ -18,7 +18,7 @@ binary = "bin/quickbuild";
 
 # Object files
 objects as obj {
-  depends = obj: "obj/*.o" -> "src/*.c";
+  depends = obj: "obj/*.o" -> "src/*.cpp";
   run = "[compiler] [flags] -c [depends] -o [obj]";
 }
 
