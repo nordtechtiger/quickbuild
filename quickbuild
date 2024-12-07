@@ -1,6 +1,6 @@
 # General compiler arguments
-compiler = "gcc";
-flags = "-g -o0";
+compiler = "clang++";
+flags = "-g -O0 -Wall -Wextra -pthread -pedantic-errors";
 
 # Files to compile
 sources = "src/*.cpp";

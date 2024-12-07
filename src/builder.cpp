@@ -92,7 +92,7 @@ Builder::evaluate_concatenation(Concatenation concatenation,
   for (const auto &expression : concatenation) {
     std::vector<std::string> _out =
         evaluate(__upgrade_expression_type(expression), ctx);
-    if (_out.size() == 1) {
+    if (_out.size() >= 1) {
       out += _out[0];
     }
     if (_out.size() > 1) {
@@ -197,13 +197,11 @@ void Builder::build_target(Literal literal) {
     LOG_VERBOSE("      > " + cmdline);
     // Execute the command line with the appropriate output (verbose, quiet,
     // etc)
+    system((cmdline + " > /dev/null 2>/dev/null").c_str());
   }
 }
 
 void Builder::build() {
-
-
-
   Literal target;
   if (m_setup.target) {
     target = Literal{*m_setup.target};
