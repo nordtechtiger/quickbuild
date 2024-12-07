@@ -1,10 +1,10 @@
 # Quickbuild
 > [!WARNING]
-> Quickbuild is currently in a very early beta and is undergoing frequent changes. Expect frequent crashes, segmentation faults, and undefined behaviour.
+> Quickbuild is currently in a very early beta and is undergoing major changes. Expect frequent crashes, segmentation faults, and undefined behaviour.
 
 ## "What is this?"
 
-Tired of looking up `$<` and `$@`? Say hello to `[depends]` and `[obj]`. Your build system shouldn't get in the way of your next big idea. Quickbuild is an intuitive way of writing simple build scripts for your projects without having to worry about googling the Make syntax anymore.
+Tired of looking up what `$<` and `$@` does? Say hello to `[depends]` and `[obj]`. Your build system shouldn't get in the way of your next big idea. Quickbuild is an intuitive way of writing simple build scripts for your projects without having to worry about googling the Make syntax anymore.
 
 ## Features
 - 🌱 Intuitive & pain-free setup
