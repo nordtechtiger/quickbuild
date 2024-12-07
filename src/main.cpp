@@ -23,6 +23,17 @@ int main(int argc, char **argv) {
       setup.logging_level = LoggingLevel::Verbose;
     else if (arg == "--dry-run")
       setup.dry_run = true;
+    else if (arg == "--help") {
+      std::cout << "Usage: quickbuild [arguments] <target>\n"
+        "  --stdin: reads config from stdin\n"
+        "  --configfile: reads config from file\n"
+        "  --log-quiet: sets logging level to quiet\n"
+        "  --log-standard: sets logging level to standard\n"
+        "  --log-verbose: sets logging level to verbose\n"
+        "  --dry-run: doesn't execute any commands\n"
+        "  --help: shows this message and exits\n";
+      exit(EXIT_SUCCESS);
+    }
     else if (!setup.target)
       setup.target = arg;
     else {

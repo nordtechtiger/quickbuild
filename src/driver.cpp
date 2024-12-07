@@ -124,7 +124,7 @@ int Driver::run() {
     ast = parser.parse_tokens();
   } catch (ParserException e) {
     // TODO: Handle properly
-    LOG_QUIET(RED "! Failed to lex configuration. Exiting..." RESET);
+    LOG_QUIET(RED "! Failed to parse configuration. Exiting..." RESET);
     LOG_VERBOSE(RED "!   -> " + (std::string)e.what() + RESET);
     return EXIT_FAILURE;
   }
@@ -135,7 +135,7 @@ int Driver::run() {
     builder.build();
   } catch (BuilderException e) {
     // TODO: Handle properly
-    LOG_QUIET(RED "! Failed to lex configuration. Exiting..." RESET);
+    LOG_QUIET(RED "! Failed to build project. Exiting..." RESET);
     LOG_VERBOSE(RED "!   -> " + (std::string)e.what() + RESET);
     return EXIT_FAILURE;
   }

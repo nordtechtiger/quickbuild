@@ -197,7 +197,8 @@ void Builder::build_target(Literal literal) {
     LOG_VERBOSE("      > " + cmdline);
     // Execute the command line with the appropriate output (verbose, quiet,
     // etc)
-    system((cmdline + " > /dev/null 2>/dev/null").c_str());
+    if(!m_setup.dry_run)
+      system((cmdline + " > /dev/null 2>/dev/null").c_str());
   }
 }
 
@@ -212,6 +213,11 @@ void Builder::build() {
   }
 
   LOG_STANDARD("=> Initiating build!");
-  LOG_STANDARD("=> " GREEN "Building " CYAN + target.literal + RESET);
+  if (m_setup.dry_run) {
+    LOG_STANDARD("=> " GREEN "Building " CYAN + target.literal + RED " [dry run]" RESET);
+  } else {
+    LOG_STANDARD("=> " GREEN "Building " CYAN + target.literal + RESET);
+  }
+
   build_target(target);
 }
