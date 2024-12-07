@@ -8,7 +8,7 @@ headers = "src/*.hpp";
 
 # Files to create
 objects = sources: "src/*.cpp" -> "obj/*.o";
-binary = "bin/quickbuild";
+binary = "./bin/quickbuild";
 
 # Main target
 "quickbuild" {
@@ -22,3 +22,14 @@ objects as obj {
   run = "[compiler] [flags] -c [depends] -o [obj]";
 }
 
+# Run
+"run" {
+  depends = "quickbuild";
+  run = "[binary]";
+}
+
+# Clean
+"clean" {
+  run = "rm [objects]",
+        "rm [binary]";
+}

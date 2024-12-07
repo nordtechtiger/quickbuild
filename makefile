@@ -1,28 +1,28 @@
+# General compiler arguments
 CXX = clang++
-# release
-# CXXFLAGS = -O3 -Wall -Wextra -pthread -pedantic-errors
-# debug
 CXXFLAGS = -g -O0 -Wall -Wextra -pthread -pedantic-errors
 
-SRC_DIR := src
-OBJ_DIR := obj
-BIN_DIR := bin
+# Files to compile
+sources := $(wildcard src/*.cpp)
+headers := $(wildcard src/*.hpp)
 
-SRC := $(wildcard $(SRC_DIR)/*.cpp)
-DEPS := $(wildcard $(SRC_DIR)/*.hpp)
-OBJ := $(SRC:$(SRC_DIR)%.cpp=$(OBJ_DIR)%.o)
+# Files to create
+objects := $(sources:src/%.cpp=obj/%.o)
+binary := ./bin/quickbuild
 
-.PHONY all: quickbuild
+# Main target
+quickbuild: $(objects) $(headers)
+	$(CXX) $(CXXFLAGS) -o $(binary) $(objects)
 
-quickbuild: $(OBJ) $(DEPS)
-	$(CXX) $(CXXFLAGS) -o $(BIN_DIR)/quickbuild $(OBJ)
-
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+# Object files
+obj/%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Run
 run: quickbuild
-	./$(BIN_DIR)/quickbuild
+	$(binary)
 
+# Clean
 clean:
-	rm $(wildcard ${OBJ_DIR}/*.o)
-	rm $(BIN_DIR)/quickbuild
+	rm $(objects)
+	rm $(binary)
