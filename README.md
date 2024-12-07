@@ -1,6 +1,6 @@
 # Quickbuild
 > [!WARNING]
-> Quickbuild is currently in a very early beta and is undergoing major changes. Expect frequent crashes, segmentation faults, and undefined behaviour. Please see [the roadmap](https://github.com/nordtechtiger/quickbuild/issues/1) for more information.
+> Quickbuild is currently in early beta and is undergoing major changes. Expect frequent crashes, segmentation faults, and undefined behaviour. Please see [the roadmap](https://github.com/nordtechtiger/quickbuild/issues/1) for more information.
 
 ## "What is this?"
 
