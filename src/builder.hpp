@@ -12,9 +12,11 @@ class Builder {
 private:
   AST m_ast;
   Setup m_setup;
+  // Refers to the identifier of the current target
+  std::string m_target_ref;
   void build_target(Literal target);
   std::optional<Target> get_target(Literal literal);
-  // if std::nullopt, use global vars
+  // if ctx is std::nullopt, use global vars
   std::optional<std::vector<Expression>> get_field(std::optional<Target> target,
                                                    Identifier identifier);
   std::vector<std::string> evaluate_literal(Literal literal);

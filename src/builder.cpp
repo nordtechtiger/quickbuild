@@ -140,16 +140,17 @@ Builder::get_field(std::optional<Target> target, Identifier identifier) {
       if (field.identifier.identifier == identifier.identifier)
         return field.expression;
     }
-    if (target->public_name.identifier == identifier.identifier) {
-      // This is a terrible hack but seems to satisfy the compiler for now
-      std::vector<Expression> __out = {target->identifier};
-      return __out;
-    }
   }
   // if no target was specified or field wasn't found, go to global scope
   for (const Field &field : m_ast.fields) {
     if (field.identifier.identifier == identifier.identifier)
       return field.expression;
+  }
+  // last effort: check for iterator name
+  if (target && target->public_name.identifier == identifier.identifier) {
+    // This is a terrible hack but seems to satisfy the compiler for now
+    std::vector<Expression> __out = {Literal{m_target_ref}};
+    return __out;
   }
   return std::nullopt;
 }
@@ -176,6 +177,7 @@ void Builder::build_target(Literal literal) {
   std::optional<std::vector<Expression>> dependencies_expression =
       get_field(target, FIELD_ID_DEPENDENCIES);
   std::vector<std::string> dependencies;
+  m_target_ref = literal.literal;
   if (dependencies_expression)
     dependencies = evaluate(*dependencies_expression, target);
   for (const auto &dependency : dependencies) {
@@ -186,6 +188,7 @@ void Builder::build_target(Literal literal) {
 
   // Build final target
   LOG_STANDARD("   -> Building " + literal.literal + "...");
+  m_target_ref = literal.literal;
   // TODO: This crashes the entire build if "run" isn't present. Proper error
   // recovery needed
   std::vector<std::string> cmdlines =
@@ -198,6 +201,9 @@ void Builder::build_target(Literal literal) {
 }
 
 void Builder::build() {
+
+
+
   Literal target;
   if (m_setup.target) {
     target = Literal{*m_setup.target};
