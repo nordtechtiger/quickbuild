@@ -22,7 +22,7 @@ Builder::Builder(AST ast, Setup setup) {
 // NOTE: Assumes that max one asterisk is present
 std::vector<std::string> Builder::evaluate_literal(Literal literal) {
   std::vector<std::string> out;
-  unsigned long long asterisk_index = literal.literal.find('*');
+  size_t asterisk_index = literal.literal.find('*');
   if (asterisk_index == std::string::npos)
     // No processing needs to be done
     return {literal.literal};
@@ -47,7 +47,28 @@ std::vector<std::string> Builder::evaluate_literal(Literal literal) {
 
 std::vector<std::string> Builder::evaluate_replace(Replace replace,
                                                    std::optional<Target> ctx) {
+  std::string original = replace.original.literal;
+  size_t old_asterisk_index = original.find('*');
+  std::string old_prefix = original.substr(0, old_asterisk_index);
+  std::string old_suffix = original.substr(old_asterisk_index + 1);
 
+  std::string replacement = replace.replacement.literal;
+  size_t new_asterisk_index = replacement.find('*');
+  std::string new_prefix = replacement.substr(0, new_asterisk_index);
+  std::string new_suffix = replacement.substr(new_asterisk_index + 1);
+
+  std::vector<std::string> out;
+  for (const std::string &str : evaluate(replace.identifier, ctx)) {
+    if (str.find(old_prefix) != std::string::npos &&
+        str.find(old_suffix) != std::string::npos &&
+        str.find(old_prefix) < str.find(old_suffix)) {
+      out.push_back(new_prefix +
+                    str.substr(str.find(old_prefix) + old_prefix.size(),
+                               str.find(old_suffix)) +
+                    new_suffix);
+    }
+  }
+  return out;
 }
 
 Expression __upgrade_expression_type(_expression _expr) {
@@ -68,13 +89,14 @@ Builder::evaluate_concatenation(Concatenation concatenation,
                                 std::optional<Target> ctx) {
   std::string out;
   for (const auto &expression : concatenation) {
-    std::vector<std::string> _out = evaluate(__upgrade_expression_type(expression), ctx);
+    std::vector<std::string> _out =
+        evaluate(__upgrade_expression_type(expression), ctx);
     if (_out.size() == 1) {
       out += _out[0];
     }
     if (_out.size() > 1) {
       for (size_t i = 1; i < _out.size(); i++) {
-        out += _out[i];
+        out += " " + _out[i];
       }
     }
   }
@@ -117,6 +139,11 @@ Builder::get_field(std::optional<Target> target, Identifier identifier) {
       if (field.identifier.identifier == identifier.identifier)
         return field.expression;
     }
+    if (target->public_name.identifier == identifier.identifier) {
+      // This is a terrible hack but seems to satisfy the compiler for now
+      std::vector<Expression> __out = {target->identifier};
+      return __out;
+    }
   }
   // if no target was specified or field wasn't found, go to global scope
   for (const Field &field : m_ast.fields) {
@@ -153,16 +180,17 @@ void Builder::build_target(Literal literal) {
   for (const auto &dependency : dependencies) {
     if (!get_target(Literal{dependency}))
       continue;
-    std::cerr << "DEBUG: Building the dependency " << dependency << std::endl;
     build_target(Literal{dependency});
   }
 
   // Build final target
-  std::cout << "   -> Building " << literal.literal << "..." << std::endl;
+  LOG_STANDARD("   -> Building " + literal.literal + "...");
+  // TODO: This crashes the entire build if "run" isn't present. Proper error
+  // recovery needed
   std::vector<std::string> cmdlines =
-      evaluate(*get_field(std::nullopt, FIELD_ID_EXECUTE), target);
+      evaluate(*get_field(target, FIELD_ID_EXECUTE), target);
   for (const std::string cmdline : cmdlines) {
-    std::cout << ">>>>>>>>>> " << cmdline << std::endl;
+    LOG_VERBOSE("      > " + cmdline);
     // Execute the command line with the appropriate output (verbose, quiet,
     // etc)
   }
@@ -178,8 +206,7 @@ void Builder::build() {
     throw BuilderException("B001 No targets found");
   }
 
-  std::cout << "=> Initiating build!" << std::endl;
-  std::cout << "=> " GREEN "Building " CYAN << target.literal << RESET
-            << std::endl;
+  LOG_STANDARD("=> Initiating build!");
+  LOG_STANDARD("=> " GREEN "Building " CYAN + target.literal + RESET);
   build_target(target);
 }

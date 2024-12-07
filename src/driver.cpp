@@ -68,18 +68,6 @@
 #include <iostream>
 #include <iterator>
 
-#define LOG_VERBOSE(msg)                                                       \
-  if (m_setup.logging_level >= LoggingLevel::Verbose) {                        \
-    std::cout << msg << std::endl;                                             \
-  }
-#define LOG_STANDARD(msg)                                                      \
-  if (m_setup.logging_level >= LoggingLevel::Standard) {                       \
-    std::cout << msg << std::endl;                                             \
-  }
-#define LOG_QUIET(msg)                                                         \
-  if (m_setup.logging_level >= LoggingLevel::Quiet) {                          \
-    std::cout << msg << std::endl;                                             \
-  }
 #define CONFIG_FILE "./quickbuild"
 
 Driver::Driver(Setup setup) { m_setup = setup; }
@@ -148,6 +136,8 @@ int Driver::run() {
     std::cerr << e.what();
     return EXIT_FAILURE;
   }
+
+  LOG_STANDARD("=> Build completed successfully.");
 
   return EXIT_SUCCESS;
 }
