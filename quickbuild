@@ -12,7 +12,7 @@ binary = "./bin/quickbuild";
 
 # Main target
 "quickbuild" {
-  depends = objects, headers;
+  depends = "setup", objects, headers;
   run = "[compiler] [flags] [objects] -o [binary]";
 }
 
@@ -20,6 +20,12 @@ binary = "./bin/quickbuild";
 objects as obj {
   depends = obj: "obj/*.o" -> "src/*.cpp";
   run = "[compiler] [flags] -c [depends] -o [obj]";
+}
+
+# Setup the build directories
+"setup" {
+  run = "mkdir obj",
+        "mkdir bin";
 }
 
 # Run

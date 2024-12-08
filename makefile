@@ -11,12 +11,16 @@ objects := $(sources:src/%.cpp=obj/%.o)
 binary := ./bin/quickbuild
 
 # Main target
-quickbuild: $(objects) $(headers)
+quickbuild: setup $(objects) $(headers)
 	$(CXX) $(CXXFLAGS) -o $(binary) $(objects)
 
 # Object files
 obj/%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Setup the build directories
+setup:
+	mkdir -p bin obj
 
 # Run
 run: quickbuild
