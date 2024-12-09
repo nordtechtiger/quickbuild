@@ -1,6 +1,9 @@
 #ifndef FORMAT_H
 #define FORMAT_H
 
+#include <iostream>
+#include <ostream>
+
 #define GREEN "\033[32m"
 #define RED "\033[31m"
 #define CYAN "\033[36m"
@@ -17,6 +20,18 @@
 #define LOG_QUIET(msg)                                                         \
   if (m_setup.logging_level >= LoggingLevel::Quiet) {                          \
     std::cout << msg << std::endl;                                             \
+  }
+#define LOG_VERBOSE_NO_NEWLINE(msg)                                            \
+  if (m_setup.logging_level >= LoggingLevel::Verbose) {                        \
+    std::cout << msg << std::flush;                                            \
+  }
+#define LOG_STANDARD_NO_NEWLINE(msg)                                           \
+  if (m_setup.logging_level >= LoggingLevel::Standard) {                       \
+    std::cout << msg << std::flush;                                            \
+  }
+#define LOG_QUIET_NO_NEWLINE(msg)                                              \
+  if (m_setup.logging_level >= LoggingLevel::Quiet) {                          \
+    std::cout << msg << std::flush;                                            \
   }
 
 #endif

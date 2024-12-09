@@ -1,17 +1,15 @@
 #include "builder.hpp"
 #include "format.hpp"
 #include "parser.hpp"
+#include "shell.hpp"
 
 #include <filesystem>
-#include <iostream>
 #include <string>
 #include <variant>
 #include <vector>
 
-#define FIELD_ID_DEPENDENCIES                                                  \
-  Identifier { "depends" }
-#define FIELD_ID_EXECUTE                                                       \
-  Identifier { "run" }
+#define FIELD_ID_DEPENDENCIES Identifier{"depends"}
+#define FIELD_ID_EXECUTE Identifier{"run"}
 
 Builder::Builder(AST ast, Setup setup) {
   m_ast = ast;
@@ -187,19 +185,28 @@ void Builder::build_target(Literal literal) {
   }
 
   // Build final target
-  LOG_STANDARD("   -> Building " + literal.literal + "...");
+  LOG_STANDARD_NO_NEWLINE("   -> Building " + literal.literal + "...");
   m_target_ref = literal.literal;
   // TODO: This crashes the entire build if "run" isn't present. Proper error
   // recovery needed
   std::vector<std::string> cmdlines =
       evaluate(*get_field(target, FIELD_ID_EXECUTE), target);
   for (const std::string cmdline : cmdlines) {
-    LOG_VERBOSE("      > " + cmdline);
     // Execute the command line with the appropriate output (verbose, quiet,
     // etc)
-    if(!m_setup.dry_run)
-      system((cmdline + " > /dev/null 2>/dev/null").c_str());
+    LOG_VERBOSE("\n      > " + cmdline);
+    if (m_setup.dry_run)
+      continue;
+
+    ShellResult result = Shell::execute(cmdline);
+    if (result.status) { // Error
+      LOG_STANDARD(RED " <failed>" RESET);
+      LOG_STANDARD(result.stdout);
+      throw BuilderException("One or more commands yielded a non-zero return.");
+    }
+    LOG_VERBOSE(result.stdout);
   }
+  LOG_STANDARD(GREEN " <ok>" RESET);
 }
 
 void Builder::build() {
@@ -214,7 +221,8 @@ void Builder::build() {
 
   LOG_STANDARD("=> Initiating build!");
   if (m_setup.dry_run) {
-    LOG_STANDARD("=> " GREEN "Building " CYAN + target.literal + RED " [dry run]" RESET);
+    LOG_STANDARD("=> " GREEN "Building " CYAN + target.literal +
+                 RED " [dry run]" RESET);
   } else {
     LOG_STANDARD("=> " GREEN "Building " CYAN + target.literal + RESET);
   }
