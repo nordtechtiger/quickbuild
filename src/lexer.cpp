@@ -66,7 +66,7 @@ int Lexer::skip_comments() {
 // match =
 int Lexer::match_equals() {
   if (m_current == '=') {
-    m_t_stream.push_back(Token{TokenType::Equals});
+    m_t_stream.push_back(Token{TokenType::Equals, std::nullopt, m_index});
     return 0;
   } else {
     return -1;
@@ -76,7 +76,7 @@ int Lexer::match_equals() {
 // match :
 int Lexer::match_modify() {
   if (m_current == ':') {
-    m_t_stream.push_back(Token{TokenType::Modify});
+    m_t_stream.push_back(Token{TokenType::Modify, std::nullopt, m_index});
     return 0;
   } else {
     return -1;
@@ -86,7 +86,7 @@ int Lexer::match_modify() {
 // match ;
 int Lexer::match_linestop() {
   if (m_current == ';') {
-    m_t_stream.push_back(Token{TokenType::LineStop});
+    m_t_stream.push_back(Token{TokenType::LineStop, std::nullopt, m_index});
     return 0;
   } else {
     return -1;
@@ -98,7 +98,7 @@ int Lexer::match_arrow() {
   if (m_current == '-' && m_next == '>') {
     // skip an extra byte due to 2-character token
     advance_input_byte();
-    m_t_stream.push_back(Token{TokenType::Arrow});
+    m_t_stream.push_back(Token{TokenType::Arrow, std::nullopt, m_index});
     return 0;
   } else {
     return -1;
@@ -110,7 +110,7 @@ int Lexer::match_iterateas() {
   if (m_current == 'a' && m_next == 's') {
     // skip an extra byte due to 2-character token
     advance_input_byte();
-    m_t_stream.push_back(Token{TokenType::IterateAs});
+    m_t_stream.push_back(Token{TokenType::IterateAs, std::nullopt, m_index});
     return 0;
   } else {
     return -1;
@@ -120,7 +120,7 @@ int Lexer::match_iterateas() {
 // match ,
 int Lexer::match_separator() {
   if (m_current == ',') {
-    m_t_stream.push_back(Token{TokenType::Separator});
+    m_t_stream.push_back(Token{TokenType::Separator, std::nullopt, m_index});
     return 0;
   } else {
     return -1;
@@ -130,7 +130,8 @@ int Lexer::match_separator() {
 // match [
 int Lexer::match_expressionopen() {
   if (m_current == '[') {
-    m_t_stream.push_back(Token{TokenType::ExpressionOpen});
+    m_t_stream.push_back(
+        Token{TokenType::ExpressionOpen, std::nullopt, m_index});
     return 0;
   } else {
     return -1;
@@ -141,9 +142,11 @@ int Lexer::match_expressionopen() {
 int Lexer::match_expressionclose() {
   if (m_current == ']') {
     if (m_state != LexerState::EscapedLiteral) {
-      m_t_stream.push_back(Token{TokenType::ExpressionClose});
+      m_t_stream.push_back(
+          Token{TokenType::ExpressionClose, std::nullopt, m_index});
     } else {
-      m_t_stream.push_back(Token{TokenType::ConcatLiteral});
+      m_t_stream.push_back(
+          Token{TokenType::ConcatLiteral, std::nullopt, m_index});
       // Boostrap the next part to be parsed as a string
       insert_next_byte('\"');
       m_state = LexerState::Normal;
@@ -157,7 +160,7 @@ int Lexer::match_expressionclose() {
 // match {
 int Lexer::match_targetopen() {
   if (m_current == '{') {
-    m_t_stream.push_back(Token{TokenType::TargetOpen});
+    m_t_stream.push_back(Token{TokenType::TargetOpen, std::nullopt, m_index});
     return 0;
   } else {
     return -1;
@@ -167,7 +170,7 @@ int Lexer::match_targetopen() {
 // match }
 int Lexer::match_targetclose() {
   if (m_current == '}') {
-    m_t_stream.push_back(Token{TokenType::TargetClose});
+    m_t_stream.push_back(Token{TokenType::TargetClose, std::nullopt, m_index});
     return 0;
   } else {
     return -1;
@@ -187,9 +190,10 @@ int Lexer::match_literal() {
       literal += m_current;
       advance_input_byte();
     }
-    m_t_stream.push_back(Token{TokenType::Literal, literal});
+    m_t_stream.push_back(Token{TokenType::Literal, literal, m_index});
     if (m_state == LexerState::EscapedLiteral) {
-      m_t_stream.push_back(Token{TokenType::ConcatLiteral});
+      m_t_stream.push_back(
+          Token{TokenType::ConcatLiteral, std::nullopt, m_index});
     }
     return 0;
   } else {
@@ -206,7 +210,7 @@ int Lexer::match_identifier() {
       identifier += m_next;
       advance_input_byte();
     }
-    m_t_stream.push_back(Token{TokenType::Identifier, identifier});
+    m_t_stream.push_back(Token{TokenType::Identifier, identifier, m_index});
     return 0;
   } else {
     return -1;

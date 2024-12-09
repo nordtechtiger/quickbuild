@@ -63,6 +63,7 @@ enum class LexerState {
 struct Token {
   TokenType type;
   std::optional<std::string> context;
+  size_t origin; // Index in original ascii stream
 };
 
 // Work class

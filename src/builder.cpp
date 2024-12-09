@@ -191,7 +191,7 @@ void Builder::build_target(Literal literal) {
   // recovery needed
   std::vector<std::string> cmdlines =
       evaluate(*get_field(target, FIELD_ID_EXECUTE), target);
-  for (const std::string cmdline : cmdlines) {
+  for (const std::string &cmdline : cmdlines) {
     // Execute the command line with the appropriate output (verbose, quiet,
     // etc)
     LOG_VERBOSE("\n      > " + cmdline);
