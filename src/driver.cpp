@@ -99,7 +99,7 @@ std::vector<unsigned char> Driver::get_config() {
 
 int Driver::run() {
   // Out: Greeting
-  LOG_STANDARD(BRIGHT "[ Quickbuild Dev v0.1.0 ]" RESET);
+  LOG_STANDARD(BRIGHT "[ Quickbuild Dev v0.2.0 ]" RESET);
 
   // === Build the configuration ===
   // Out: Compiling config
