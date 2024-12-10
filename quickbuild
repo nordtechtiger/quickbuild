@@ -24,8 +24,8 @@ objects as obj {
 
 # Setup the build directories
 "setup" {
-  run = "mkdir obj",
-        "mkdir bin";
+  run = "mkdir -p obj",
+        "mkdir -p bin";
 }
 
 # Run

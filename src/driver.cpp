@@ -99,7 +99,7 @@ std::vector<unsigned char> Driver::get_config() {
 
 int Driver::run() {
   // Out: Greeting
-  LOG_STANDARD(BRIGHT "[ Quickbuild Dev v0.1.0 ]" RESET);
+  LOG_STANDARD(BRIGHT "[ Quickbuild Dev v0.2.0 ]" RESET);
 
   // === Build the configuration ===
   // Out: Compiling config
@@ -113,7 +113,7 @@ int Driver::run() {
     t_stream = lexer.get_token_stream();
   } catch (LexerException e) {
     // TODO: Handle properly
-    LOG_QUIET(RED "! Failed to lex configuration. Exiting..." RESET);
+    LOG_QUIET(RED "! Failed to lex configuration." RESET);
     LOG_VERBOSE(RED "!   -> " + (std::string)e.what() + RESET);
     return EXIT_FAILURE;
   }
@@ -124,7 +124,7 @@ int Driver::run() {
     ast = parser.parse_tokens();
   } catch (ParserException e) {
     // TODO: Handle properly
-    LOG_QUIET(RED "! Failed to parse configuration. Exiting..." RESET);
+    LOG_QUIET(RED "! Failed to parse configuration." RESET);
     LOG_VERBOSE(RED "!   -> " + (std::string)e.what() + RESET);
     return EXIT_FAILURE;
   }
@@ -135,7 +135,7 @@ int Driver::run() {
     builder.build();
   } catch (BuilderException e) {
     // TODO: Handle properly
-    LOG_QUIET(RED "! Failed to build project. Exiting..." RESET);
+    LOG_QUIET(RED "! Failed to build project." RESET);
     LOG_VERBOSE(RED "!   -> " + (std::string)e.what() + RESET);
     return EXIT_FAILURE;
   }

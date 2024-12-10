@@ -25,15 +25,18 @@ typedef std::variant<Identifier, Literal, Replace, Concatenation> Expression;
 struct Field {
   Identifier identifier;
   std::vector<Expression> expression;
+  size_t origin;
 };
 struct Target {
   Expression identifier;
   Identifier public_name;
   std::vector<Field> fields;
+  size_t origin;
 };
 struct AST {
   std::vector<Field> fields;
   std::vector<Target> targets;
+  size_t origin;
 };
 
 // Work class
