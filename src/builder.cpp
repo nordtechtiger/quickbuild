@@ -2,6 +2,7 @@
 #include "format.hpp"
 #include "parser.hpp"
 #include "shell.hpp"
+#include "error.hpp"
 
 #include <filesystem>
 #include <string>
@@ -78,8 +79,7 @@ Expression __upgrade_expression_type(_expression _expr) {
   } else if (Replace *replace = std::get_if<Replace>(&_expr)) {
     return Replace{*replace};
   } else {
-    throw BuilderException("[B004] Internal builder error: Failed to upgrade "
-                           "expression type. This is a bug.");
+    ErrorHandler::push_error_throw(-1, _B_EXPR_UPGRADE);
   }
 }
 
@@ -126,8 +126,7 @@ std::vector<std::string> Builder::evaluate(Expression expression,
   } else if (Replace *replace = std::get_if<Replace>(&expression)) {
     return evaluate_replace(*replace, ctx);
   } else {
-    throw BuilderException(
-        "Unable to evaluate expression - invalid expression variant");
+    ErrorHandler::push_error_throw(-1, _B_INVALID_EXPR_VARIANT);
   }
 }
 
@@ -169,7 +168,7 @@ void Builder::build_target(Literal literal) {
   // Verify that it can be built
   std::optional<Target> target = get_target(literal);
   if (!target)
-    throw BuilderException("No data for building target");
+    ErrorHandler::push_error_throw(-1, B_MISSING_TARGET);
 
   // Resolve all dependencies
   std::optional<std::vector<Expression>> dependencies_expression =
@@ -202,7 +201,9 @@ void Builder::build_target(Literal literal) {
     if (result.status) { // Error
       LOG_STANDARD(RED " <failed>" RESET);
       LOG_STANDARD(result.stdout);
-      throw BuilderException("One or more commands yielded a non-zero return.");
+      // FIXME: This should ideally be able to point to the
+      // command that failed to execute.
+      ErrorHandler::push_error_throw(-1, B_NON_ZERO_PROCESS);
     }
     LOG_VERBOSE(result.stdout);
   }
@@ -216,7 +217,7 @@ void Builder::build() {
   } else if (m_ast.targets.size() >= 1) {
     target = std::get<1>(m_ast.targets[0].identifier);
   } else {
-    throw BuilderException("B001 No targets found");
+    ErrorHandler::push_error_throw(-1, B_NO_TARGETS_FOUND);
   }
 
   LOG_STANDARD("=> Initiating build!");

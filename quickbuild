@@ -28,10 +28,6 @@ objects as obj {
         "mkdir -p bin";
 }
 
-"test-term" {
-  run = "echo $TERM";
-}
-
 # Run
 "run" {
   depends = "quickbuild";

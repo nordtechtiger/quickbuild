@@ -5,26 +5,26 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <optional>
 
 enum ErrorCode {
   // Parser
-  P_NO_ITER_ARROW,
-  P_INVALID_ITER_STATEMENT,
+  P_EXPECTED_ITER_ARROW,
   P_EXPECTED_EXPR_CLOSE,
+  P_EXPECTED_TARGET_CLOSE,
+  P_EXPECTED_SEMICOLON,
   P_INVALID_EXPR_STATEMENT,
-  P_MISSING_SEMICOLON,
-  P_INVALID_EXPR,
-  P_BAD_PUBLIC_NAME, // This is only here because parser is incomplete
-  P_UNSUPPORTED_TARGET,
-  P_TARGET_NOT_CLOSED,
-  P_UNKNOWN_STATEMENT,
+  P_NO_MATCH,
+  P_BAD_PUBLIC_NAME,
+  P_BAD_TARGET, // This is only here beceause parser is incomplete
+  _P_NULLOPT_EXPR,
 
   // Builder
-  _B_EXPR_UPGRADE,         // Should *never* happen
-  _B_INVALID_EXPR_VARIANT, // Should *never* happen
-  B_TARGET_MISSING,
+  B_MISSING_TARGET,
   B_NON_ZERO_PROCESS,
   B_NO_TARGETS_FOUND,
+  _B_EXPR_UPGRADE,         // Should *never* happen
+  _B_INVALID_EXPR_VARIANT, // Should *never* happen
 };
 
 struct ErrorInfo {
@@ -34,42 +34,83 @@ struct ErrorInfo {
   std::string description;
 };
 
-const std::map<ErrorCode, std::tuple<std::string, std::string>> lookup_table = {
-    // Error code, message, description
-    {P_NO_ITER_ARROW,
+// Error code: <message, description>
+const std::map<ErrorCode, std::tuple<std::string, std::string>> _ERROR_LOOKUP_TABLE = {
+    {P_EXPECTED_ITER_ARROW,
      {"Missing replacement arrow",
-      "Incorrect expression: Detected replacement but no arrow found"}},
-    {P_INVALID_ITER_STATEMENT, {"Invalid iteration statement", ""}},
-    {P_EXPECTED_EXPR_CLOSE},
-    {P_INVALID_EXPR_STATEMENT},
-    {P_MISSING_SEMICOLON},
-    {P_INVALID_EXPR},
-    {P_BAD_PUBLIC_NAME},
-    {P_UNSUPPORTED_TARGET},
-    {P_TARGET_NOT_CLOSED},
-    {P_UNKNOWN_STATEMENT},
+      "Expected a replacement operator but no arrow was found."}},
 
-    {_B_EXPR_UPGRADE},
-    {_B_INVALID_EXPR_VARIANT},
-    {B_TARGET_MISSING},
-    {B_NON_ZERO_PROCESS},
-    {B_NO_TARGETS_FOUND},
+    {P_EXPECTED_EXPR_CLOSE,
+     {"Expected a closing bracket",
+      "A bracket was opened but not correctly closed."}},
+
+    {P_INVALID_EXPR_STATEMENT,
+     {"Expression malformed",
+      "An expression was expected but none was found."}},
+
+    {P_EXPECTED_SEMICOLON,
+     {"Missing semicolon", // line break here (clangformat is dumb)
+      "Expected a semicolon at the end of a field."}},
+
+    {P_BAD_PUBLIC_NAME,
+     {"Unsupported iteration variable",
+      "The iteration target is required to be stored in a variable."}},
+
+    {P_BAD_TARGET,
+      {"Unsupported target type",
+       "Only variables and literals are supported as targets."}},
+
+    {P_EXPECTED_TARGET_CLOSE,
+      {"Expected target to be closed",
+       "A target was opened but not closed."}},
+
+    {P_NO_MATCH,
+      {"Unknown operation",
+       "The expression failed to parse."}},
+
+    {_P_NULLOPT_EXPR,
+      {"<internal> expression returned std::nullopt",
+       "This is an internal bug in Quickbuild. Please submit an bug report."}},
+
+    {_B_EXPR_UPGRADE,
+      {"<internal> failed to upgrade expression type",
+       "This is an internal bug in Quickbuild. Please submit an bug report."}},
+
+    {_B_INVALID_EXPR_VARIANT,
+      {"<internal> invalid expression variant",
+       "This is an internal bug in Quickbuild. Please submit an bug report."}},
+
+    {B_MISSING_TARGET,
+      {"Missing target",
+       "A target was required but did not exist"}},
+
+    {B_NON_ZERO_PROCESS,
+      {"Non-zero process return",
+       "A command failed and the build was halted."}},
+
+    {B_NO_TARGETS_FOUND,
+      {"No targets found",
+       "Couldn't find a target to build."}},
 };
 
 class ErrorHandler {
 private:
   static std::vector<ErrorInfo> error_stack;
-  static std::map<ErrorCode, std::tuple<std::string, std::string>> lookup_table;
 
 public:
-  static void push_error(ErrorCode error_code);
-  static void push_error_throw(ErrorCode error_code);
-  static ErrorInfo pop_error();
+  static void push_error(size_t origin, ErrorCode error_code);
+  static void push_error_throw(size_t origin, ErrorCode error_code);
+  static std::optional<ErrorInfo> pop_error();
 };
 
-std::map<ErrorCode, std::tuple<std::string, std::string>>
-    ErrorHandler::lookup_table = {
 
-        {P_NO_ITER_ARROW, {"", ""}}};
+class BuildException : public std::exception {
+private:
+  const char *details;
+  
+public:
+  explicit BuildException(const char *details) : details(details) {}
+  const char *what() const noexcept override { return details; };
+};
 
 #endif

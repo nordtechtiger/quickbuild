@@ -34,13 +34,4 @@ public:
   void build();
 };
 
-class BuilderException : std::exception {
-private:
-  const char *details;
-
-public:
-  BuilderException(const char *details) : details(details){};
-  const char *what() { return details; }
-};
-
 #endif

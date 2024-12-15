@@ -87,14 +87,4 @@ public:
   std::vector<Token> get_token_stream();
 };
 
-// Exceptions thrown by the lexer
-class LexerException : public std::exception {
-private:
-  const char *details;
-
-public:
-  LexerException(const char *details) : details(details){};
-  const char *what() { return details; }
-};
-
 #endif
