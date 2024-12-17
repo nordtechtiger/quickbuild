@@ -6,8 +6,8 @@
 #include "parser.hpp"
 
 #include <fstream>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <iterator>
 
 #define CONFIG_FILE "./quickbuild"
@@ -38,7 +38,8 @@ std::vector<unsigned char> Driver::get_config() {
   }
 }
 
-std::tuple<int, std::string> get_line(size_t origin, std::vector<unsigned char> config) {
+std::tuple<int, std::string> get_line(size_t origin,
+                                      std::vector<unsigned char> config) {
   int line_num = 1;
   int line_start = 0;
   int line_end = 0;
@@ -50,7 +51,8 @@ std::tuple<int, std::string> get_line(size_t origin, std::vector<unsigned char> 
   }
   for (size_t i = line_start; config[i] != '\n' && i < config.size(); i++)
     line_end = i;
-  std::vector<unsigned char> line_vec(config.begin() + line_start, config.begin() + line_end + 1);
+  std::vector<unsigned char> line_vec(config.begin() + line_start,
+                                      config.begin() + line_end + 1);
   return {line_num, std::string(line_vec.begin(), line_vec.end())};
 }
 

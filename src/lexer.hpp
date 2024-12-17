@@ -75,8 +75,11 @@ private:
 
   unsigned char m_current;
   unsigned char m_next;
-  unsigned long long m_index;
+  size_t m_index;
+  size_t m_offset; // When bytes are added to input, append this so that the
+                   // origin can be correctly calculated
   unsigned char advance_input_byte();
+  size_t get_real_offset();
   void insert_next_byte(unsigned char);
 
   FUNCTION_DECLARE_ALL
