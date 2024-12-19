@@ -28,6 +28,7 @@ size_t Lexer::get_real_offset() {
 }
 
 void Lexer::insert_next_byte(unsigned char byte) {
+  m_offset += 1; // Keep track of original position
   m_input.insert(m_input.begin() + m_index + 1, byte);
 }
 
@@ -153,7 +154,6 @@ int Lexer::match_expressionclose() {
       m_t_stream.push_back(
           Token{TokenType::ConcatLiteral, std::nullopt, get_real_offset()});
       // Boostrap the next part to be parsed as a string
-      m_offset += 1; // Keep track of original position
       insert_next_byte('\"');
       m_state = LexerState::Normal;
     }
