@@ -11,7 +11,7 @@ ShellResult Shell::execute(std::string cmdline) {
   char buffer[128];
   std::string stdout;
 
-  FILE* process = popen((cmdline + __SHELL_SUFFIX).c_str(), "r");
+  FILE *process = popen((cmdline + __SHELL_SUFFIX).c_str(), "r");
   if (!process)
     throw ShellException("Unable to execute command");
 
@@ -21,8 +21,8 @@ ShellResult Shell::execute(std::string cmdline) {
 
   int status = pclose(process);
   return {
-    stdout,
-    status,
+      stdout,
+        status,
   };
 }
 #elif __WIN32

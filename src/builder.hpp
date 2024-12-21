@@ -15,6 +15,8 @@ private:
   // Refers to the identifier of the current target
   std::string m_target_ref;
   void build_target(Literal target);
+  int get_file_date(std::string path);
+  bool is_dirty(Literal literal, std::string dependant);
   std::optional<Target> get_target(Literal literal);
   // if ctx is std::nullopt, use global vars
   std::optional<std::vector<Expression>> get_field(std::optional<Target> target,
