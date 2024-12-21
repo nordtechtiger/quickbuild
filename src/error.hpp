@@ -23,12 +23,14 @@ enum ErrorCode {
   B_MISSING_TARGET,
   B_NON_ZERO_PROCESS,
   B_NO_TARGETS_FOUND,
+  B_INVALID_FIELD,
   _B_EXPR_UPGRADE,         // Should *never* happen
   _B_INVALID_EXPR_VARIANT, // Should *never* happen
 };
 
 struct ErrorInfo {
-  size_t origin;
+  // size_t origin;
+  int origin;
   ErrorCode error_code;
   std::string message;
   std::string description;
@@ -91,6 +93,10 @@ const std::map<ErrorCode, std::tuple<std::string, std::string>> _ERROR_LOOKUP_TA
     {B_NO_TARGETS_FOUND,
       {"No targets found",
        "Couldn't find a target to build."}},
+
+    {B_INVALID_FIELD,
+      {"Invalid field referenced",
+       "No field exists with this identifier. Are you sure you spelled it correctly?"}},
 };
 
 class ErrorHandler {
@@ -98,8 +104,8 @@ private:
   static std::vector<ErrorInfo> error_stack;
 
 public:
-  static void push_error(size_t origin, ErrorCode error_code);
-  static void push_error_throw(size_t origin, ErrorCode error_code);
+  static void push_error(int origin, ErrorCode error_code);
+  static void push_error_throw(int origin, ErrorCode error_code);
   static std::optional<ErrorInfo> pop_error();
 };
 

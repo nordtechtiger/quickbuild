@@ -119,7 +119,11 @@ std::vector<std::string> Builder::evaluate(Expression expression,
   if (Literal *literal = std::get_if<Literal>(&expression)) {
     return evaluate_literal(*literal);
   } else if (Identifier *identifier = std::get_if<Identifier>(&expression)) {
-    return {evaluate(*get_field(ctx, *identifier), ctx)};
+    // need to verify that the field exists...
+    std::optional<std::vector<Expression>> field = get_field(ctx, *identifier);
+    if (!field)
+      ErrorHandler::push_error_throw(-1, B_INVALID_FIELD); // TODO: TRACKING!
+    return {evaluate(*field, ctx)};
   } else if (Concatenation *concatenation =
                  std::get_if<Concatenation>(&expression)) {
     return evaluate_concatenation(*concatenation, ctx);
@@ -149,6 +153,7 @@ Builder::get_field(std::optional<Target> target, Identifier identifier) {
     std::vector<Expression> __out = {Literal{m_target_ref}};
     return __out;
   }
+  // ErrorHandler::push_error_throw(-1, B_INVALID_FIELD);
   return std::nullopt;
 }
 

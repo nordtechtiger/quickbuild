@@ -2,7 +2,7 @@
 
 std::vector<ErrorInfo> ErrorHandler::error_stack = {};
 
-void ErrorHandler::push_error(size_t origin, ErrorCode error_code) {
+void ErrorHandler::push_error(int origin, ErrorCode error_code) {
   auto [message, description] = _ERROR_LOOKUP_TABLE.at(error_code);
   ErrorInfo error_info = {
       origin,
@@ -13,7 +13,7 @@ void ErrorHandler::push_error(size_t origin, ErrorCode error_code) {
   error_stack.push_back(error_info);
 }
 
-void ErrorHandler::push_error_throw(size_t origin, ErrorCode error_code) {
+void ErrorHandler::push_error_throw(int origin, ErrorCode error_code) {
   auto [message, description] = _ERROR_LOOKUP_TABLE.at(error_code);
   ErrorInfo error_info = {
       origin,

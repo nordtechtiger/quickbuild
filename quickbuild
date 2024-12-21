@@ -13,7 +13,7 @@ binary = "./bin/quickbuild";
 # Main target
 "quickbuild" {
   depends = "setup", objects, headers;
-  run = "[compiler] [flags] [objects] -o [binary]";
+  run = "[compilerr] [flags] [objects] -o [binary]";
 }
 
 # Object files
@@ -26,7 +26,6 @@ objects as obj {
 "setup" {
   run = "mkdir -p obj",
         "mkdir -p bin";
-  foo = ""
 }
 
 # Run
