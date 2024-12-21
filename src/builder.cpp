@@ -1,13 +1,18 @@
 #include "builder.hpp"
+#include "error.hpp"
 #include "format.hpp"
 #include "parser.hpp"
 #include "shell.hpp"
-#include "error.hpp"
 
 #include <filesystem>
 #include <string>
 #include <variant>
 #include <vector>
+
+#include <sys/stat.h>
+#ifdef WIN32
+#define stat _stat
+#endif
 
 #define FIELD_ID_DEPENDENCIES Identifier{"depends"}
 #define FIELD_ID_EXECUTE Identifier{"run"}
@@ -81,6 +86,7 @@ Expression __upgrade_expression_type(_expression _expr) {
   } else {
     ErrorHandler::push_error_throw(-1, _B_EXPR_UPGRADE);
   }
+  __builtin_unreachable();
 }
 
 std::vector<std::string>
@@ -132,6 +138,7 @@ std::vector<std::string> Builder::evaluate(Expression expression,
   } else {
     ErrorHandler::push_error_throw(-1, _B_INVALID_EXPR_VARIANT);
   }
+  __builtin_unreachable();
 }
 
 std::optional<std::vector<Expression>>
@@ -169,6 +176,38 @@ std::optional<Target> Builder::get_target(Literal literal) {
   return std::nullopt;
 }
 
+// Returns timestamp of latest file modification
+// TODO: Verify error handling
+int Builder::get_file_date(std::string path) {
+  struct stat t_stat;
+  stat(path.c_str(), &t_stat);
+  time_t t = t_stat.st_ctim.tv_sec;
+  return t;
+}
+
+bool Builder::is_dirty(Literal literal, std::string dependant) {
+  std::optional<Target> target = get_target(literal);
+  // If the target is defined, scan the dependencies...
+  if (target) {
+    std::optional<std::vector<Expression>> dependencies_expression =
+        get_field(target, FIELD_ID_DEPENDENCIES);
+    std::vector<std::string> dependencies;
+    m_target_ref = literal.literal;
+    if (dependencies_expression)
+      dependencies = evaluate(*dependencies_expression, target);
+    else
+      return true; // If a custom target has no dependencies, it should always
+                   // be triggered
+    for (const std::string dependency : dependencies) {
+      if (is_dirty(Literal{dependency}, literal.literal))
+        return true;
+    }
+    return false;
+  }
+  // If not, compare the file dates - target vs depdencies...
+  return get_file_date(literal.literal) >= get_file_date(dependant);
+}
+
 void Builder::build_target(Literal literal) {
   // Verify that it can be built
   std::optional<Target> target = get_target(literal);
@@ -190,6 +229,10 @@ void Builder::build_target(Literal literal) {
 
   // Build final target
   LOG_STANDARD_NO_NEWLINE("   -> Building " + literal.literal + "...");
+  if (!is_dirty(literal, "__root__")) {
+    LOG_STANDARD(ITALIC " <no change>" RESET);
+    return;
+  }
   m_target_ref = literal.literal;
   // TODO: This crashes the entire build if "run" isn't present. Proper error
   // recovery needed

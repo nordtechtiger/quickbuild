@@ -13,7 +13,7 @@ binary = "./bin/quickbuild";
 # Main target
 "quickbuild" {
   depends = "setup", objects, headers;
-  run = "[compilerr] [flags] [objects] -o [binary]";
+  run = "[compiler] [flags] [objects] -o [binary]";
 }
 
 # Object files
