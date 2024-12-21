@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include "error.hpp"
 #include "lexer.hpp"
 #include <iostream>
 
@@ -6,6 +7,7 @@
 Parser::Parser(std::vector<Token> token_stream) {
   m_token_stream = token_stream;
   m_index = 0;
+  m_previous = Token{TokenType::Invalid, "__invalid", 0};
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
                   : Token{TokenType::Invalid, "__invalid__"};
@@ -20,14 +22,14 @@ Token Parser::consume_token() { return consume_token(1); }
 // Consume n tokens
 Token Parser::consume_token(int n) {
   m_index += n;
-  Token _previous = m_current;
+  m_previous = m_current;
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
                   : Token{TokenType::Invalid, "__invalid__"};
   m_next = (m_token_stream.size() >= m_index + 2)
                ? m_token_stream[m_index + 1]
                : Token{TokenType::Invalid, "__invalid__"};
-  return _previous;
+  return m_previous;
 }
 
 AST Parser::parse_tokens() {
@@ -45,7 +47,7 @@ AST Parser::parse_tokens() {
       continue;
     }
     // Unknown sequence of tokens
-    throw ParserException("[P001] Unknown statement encountered.");
+    ErrorHandler::push_error_throw(m_current.origin, P_NO_MATCH);
   }
   return m_ast;
 }
@@ -65,7 +67,7 @@ bool Parser::check_next(TokenType token_type) {
 // Attempts to parse a target
 std::optional<Target> Parser::parse_target() {
   // Doesn't match
-  std::optional<std::tuple<Expression, Identifier>> target_header =
+  std::optional<std::tuple<Expression, Identifier, size_t>> target_header =
       parse_target_header();
   if (!target_header)
     return std::nullopt;
@@ -74,6 +76,7 @@ std::optional<Target> Parser::parse_target() {
   Target target;
   target.identifier = std::get<0>(*target_header);
   target.public_name = std::get<1>(*target_header);
+  target.origin = std::get<2>(*target_header);
 
   // Populates all the fields
   std::optional<Field> field;
@@ -83,19 +86,21 @@ std::optional<Target> Parser::parse_target() {
 
   // Checks that the target is closed
   if (!check_current(TokenType::TargetClose))
-    throw ParserException("[P002] Target not closed");
+    ErrorHandler::push_error_throw(m_current.origin, P_EXPECTED_TARGET_CLOSE);
   consume_token(); // Consume the `}`
 
   return target;
 }
 
 // Returns identifier and public_name
-std::optional<std::tuple<Expression, Identifier>>
+std::optional<std::tuple<Expression, Identifier, size_t>>
 Parser::parse_target_header() {
+  Expression expression;
+  Identifier public_name;
+  size_t origin;
   if (check_next(TokenType::TargetOpen)) {
     // `object {`
-    Expression expression;
-    Identifier public_name;
+    origin = m_current.origin;
     if (check_current(TokenType::Identifier)) {
       public_name = Identifier{*consume_token().context};
       expression = Expression{public_name};
@@ -103,29 +108,28 @@ Parser::parse_target_header() {
       public_name = Identifier{"__target__"};
       expression = Expression{Literal{*consume_token().context}};
     } else {
-      throw ParserException("[P003] Unsupported target");
+      ErrorHandler::push_error_throw(m_current.origin, P_BAD_TARGET);
     }
     consume_token(); // Consume the `{`
-    return std::make_tuple(expression, public_name);
+    return std::make_tuple(expression, public_name, origin);
   } else if (check_next(TokenType::IterateAs)) {
     // `objects as obj {`
-    Expression expression;
-    Identifier public_name;
+    origin = m_current.origin;
     if (check_current(TokenType::Identifier)) {
       expression = Identifier{*consume_token().context};
     } else if (check_current(TokenType::Literal)) {
       expression = Expression{Literal{*consume_token().context}};
     } else {
-      throw ParserException("[P003] Unsupported target");
+      ErrorHandler::push_error_throw(m_current.origin, P_BAD_TARGET);
     }
     consume_token(); // Consume the `as`
     if (check_current(TokenType::Identifier)) {
       public_name = Identifier{*consume_token().context};
     } else {
-      throw ParserException("[P008] Unsupported public name");
+      ErrorHandler::push_error_throw(m_current.origin, P_BAD_PUBLIC_NAME);
     }
     consume_token(); // Consume the `{`
-    return std::make_tuple(expression, public_name);
+    return std::make_tuple(expression, public_name, origin);
   } else {
     return std::nullopt;
   }
@@ -139,24 +143,26 @@ std::optional<Field> Parser::parse_field() {
 
   // Get the identifier
   Field field;
+  field.origin = m_current.origin;
   field.identifier = Identifier{*consume_token().context};
   consume_token(); // Consume the '='
 
   // Parse the expression
   auto expression = parse_expression();
   if (!expression)
-    throw ParserException("[P004] Invalid expression");
+    // unreachable as long as parse_expression() doesn't return a nullopt
+    ErrorHandler::push_error_throw(m_current.origin, _P_NULLOPT_EXPR);
   field.expression = *expression;
 
   // Check that there is a linestop
   if (!check_current(TokenType::LineStop))
-    throw ParserException("[P005] Missing semicolon");
+    ErrorHandler::push_error_throw(field.origin, P_EXPECTED_SEMICOLON);
   consume_token(); // Consume the ';'
 
   return field;
 }
 
-// FIXME: Currently always returns an expressios, why std::optional
+// FIXME: Currently always returns an expression, why std::optional
 // Attempts to parse a singular expression
 std::optional<std::vector<Expression>> Parser::parse_expression() {
   std::vector<Expression> expression;
@@ -173,11 +179,13 @@ std::optional<std::vector<Expression>> Parser::parse_expression() {
       continue;
     }
     if (check_current(TokenType::Identifier)) {
-      expression.push_back(Identifier{*consume_token().context});
+      expression.push_back(Identifier{*m_current.context, m_current.origin});
+      consume_token();
       continue;
     }
     if (check_current(TokenType::Literal)) {
-      expression.push_back(Literal{*consume_token().context});
+      expression.push_back(Literal{*m_current.context, m_current.origin});
+      consume_token();
       continue;
     }
     if (check_current(TokenType::ExpressionOpen)) {
@@ -187,10 +195,11 @@ std::optional<std::vector<Expression>> Parser::parse_expression() {
         expression.insert(expression.end(), _expression->begin(),
                           _expression->end());
       } else {
-        throw ParserException("[P009] Invalid expression statement");
+        // unreachable as long as parse_expression() doesn't return a nullopt
+        ErrorHandler::push_error_throw(m_current.origin, _P_NULLOPT_EXPR);
       }
       if (!check_current(TokenType::ExpressionClose))
-        throw ParserException("[P010] Expected expression close");
+        ErrorHandler::push_error_throw(m_current.origin, P_EXPECTED_EXPR_CLOSE);
       consume_token(); // Consume the `]`
     }
 
@@ -203,7 +212,7 @@ std::optional<std::vector<Expression>> Parser::parse_expression() {
   }
 
   if (0 >= expression.size())
-    throw ParserException("[P007] Invalid expression statement");
+    ErrorHandler::push_error_throw(m_current.origin, P_INVALID_EXPR_STATEMENT);
 
   return expression;
 }
@@ -246,11 +255,12 @@ std::optional<Replace> Parser::parse_replace() {
 
   // Construct replace type
   Replace replace;
+  replace.origin = m_current.origin;
   replace.identifier = Identifier{*consume_token().context};
   consume_token(); // Consume ':'
   replace.original = Literal{*consume_token().context};
   if (!check_current(TokenType::Arrow))
-    throw ParserException("[P006] Missing iteration arrow");
+    ErrorHandler::push_error_throw(m_current.origin, P_EXPECTED_ITER_ARROW);
   consume_token(); // Consume '->'
   replace.replacement = Literal{*consume_token().context};
 

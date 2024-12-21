@@ -8,14 +8,17 @@
 // Logic: Expressions
 struct Identifier {
   std::string identifier;
+  size_t origin;
 };
 struct Literal {
   std::string literal;
+  size_t origin;
 };
 struct Replace {
   Identifier identifier;
   Literal original;
   Literal replacement;
+  size_t origin;
 };
 typedef std::variant<Identifier, Literal, Replace> _expression;
 typedef std::vector<_expression> Concatenation;
@@ -36,7 +39,6 @@ struct Target {
 struct AST {
   std::vector<Field> fields;
   std::vector<Target> targets;
-  size_t origin;
 };
 
 // Work class
@@ -46,6 +48,7 @@ private:
   AST m_ast;
 
   unsigned long long m_index;
+  Token m_previous;
   Token m_current;
   Token m_next;
 
@@ -55,7 +58,7 @@ private:
   bool check_next(TokenType token_type);
   std::optional<Field> parse_field();
   std::optional<Target> parse_target();
-  std::optional<std::tuple<Expression, Identifier>> parse_target_header();
+  std::optional<std::tuple<Expression, Identifier, size_t>> parse_target_header();
   std::optional<Replace> parse_replace();
   std::optional<std::vector<Expression>> parse_expression();
   std::optional<Concatenation> parse_concatenation();
@@ -63,16 +66,6 @@ private:
 public:
   Parser(std::vector<Token> token_stream);
   AST parse_tokens();
-};
-
-// Exceptions thrown by parser
-class ParserException : public std::exception {
-private:
-  const char *details;
-
-public:
-  ParserException(const char *details) : details(details){};
-  const char *what() { return details; }
 };
 
 #endif

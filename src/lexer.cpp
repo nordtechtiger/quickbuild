@@ -10,6 +10,7 @@ using namespace std;
 // initializes new lexer
 Lexer::Lexer(vector<unsigned char> input_bytes) {
   m_index = 0;
+  m_offset = 0;
   m_input = input_bytes;
   m_current = (m_input.size() >= m_index + 1) ? m_input[m_index] : '\0';
   m_next = (m_input.size() >= m_index + 2) ? m_input[m_index + 1] : '\0';
@@ -22,7 +23,12 @@ unsigned char Lexer::advance_input_byte() {
   return m_current;
 }
 
+size_t Lexer::get_real_offset() {
+  return m_index - m_offset;
+}
+
 void Lexer::insert_next_byte(unsigned char byte) {
+  m_offset += 1; // Keep track of original position
   m_input.insert(m_input.begin() + m_index + 1, byte);
 }
 
@@ -66,7 +72,7 @@ int Lexer::skip_comments() {
 // match =
 int Lexer::match_equals() {
   if (m_current == '=') {
-    m_t_stream.push_back(Token{TokenType::Equals, std::nullopt, m_index});
+    m_t_stream.push_back(Token{TokenType::Equals, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -76,7 +82,7 @@ int Lexer::match_equals() {
 // match :
 int Lexer::match_modify() {
   if (m_current == ':') {
-    m_t_stream.push_back(Token{TokenType::Modify, std::nullopt, m_index});
+    m_t_stream.push_back(Token{TokenType::Modify, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -86,7 +92,7 @@ int Lexer::match_modify() {
 // match ;
 int Lexer::match_linestop() {
   if (m_current == ';') {
-    m_t_stream.push_back(Token{TokenType::LineStop, std::nullopt, m_index});
+    m_t_stream.push_back(Token{TokenType::LineStop, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -98,7 +104,7 @@ int Lexer::match_arrow() {
   if (m_current == '-' && m_next == '>') {
     // skip an extra byte due to 2-character token
     advance_input_byte();
-    m_t_stream.push_back(Token{TokenType::Arrow, std::nullopt, m_index});
+    m_t_stream.push_back(Token{TokenType::Arrow, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -110,7 +116,7 @@ int Lexer::match_iterateas() {
   if (m_current == 'a' && m_next == 's') {
     // skip an extra byte due to 2-character token
     advance_input_byte();
-    m_t_stream.push_back(Token{TokenType::IterateAs, std::nullopt, m_index});
+    m_t_stream.push_back(Token{TokenType::IterateAs, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -120,7 +126,7 @@ int Lexer::match_iterateas() {
 // match ,
 int Lexer::match_separator() {
   if (m_current == ',') {
-    m_t_stream.push_back(Token{TokenType::Separator, std::nullopt, m_index});
+    m_t_stream.push_back(Token{TokenType::Separator, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -131,7 +137,7 @@ int Lexer::match_separator() {
 int Lexer::match_expressionopen() {
   if (m_current == '[') {
     m_t_stream.push_back(
-        Token{TokenType::ExpressionOpen, std::nullopt, m_index});
+        Token{TokenType::ExpressionOpen, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -143,10 +149,10 @@ int Lexer::match_expressionclose() {
   if (m_current == ']') {
     if (m_state != LexerState::EscapedLiteral) {
       m_t_stream.push_back(
-          Token{TokenType::ExpressionClose, std::nullopt, m_index});
+          Token{TokenType::ExpressionClose, std::nullopt, get_real_offset()});
     } else {
       m_t_stream.push_back(
-          Token{TokenType::ConcatLiteral, std::nullopt, m_index});
+          Token{TokenType::ConcatLiteral, std::nullopt, get_real_offset()});
       // Boostrap the next part to be parsed as a string
       insert_next_byte('\"');
       m_state = LexerState::Normal;
@@ -160,7 +166,7 @@ int Lexer::match_expressionclose() {
 // match {
 int Lexer::match_targetopen() {
   if (m_current == '{') {
-    m_t_stream.push_back(Token{TokenType::TargetOpen, std::nullopt, m_index});
+    m_t_stream.push_back(Token{TokenType::TargetOpen, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -170,7 +176,7 @@ int Lexer::match_targetopen() {
 // match }
 int Lexer::match_targetclose() {
   if (m_current == '}') {
-    m_t_stream.push_back(Token{TokenType::TargetClose, std::nullopt, m_index});
+    m_t_stream.push_back(Token{TokenType::TargetClose, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -190,10 +196,10 @@ int Lexer::match_literal() {
       literal += m_current;
       advance_input_byte();
     }
-    m_t_stream.push_back(Token{TokenType::Literal, literal, m_index});
+    m_t_stream.push_back(Token{TokenType::Literal, literal, get_real_offset()});
     if (m_state == LexerState::EscapedLiteral) {
       m_t_stream.push_back(
-          Token{TokenType::ConcatLiteral, std::nullopt, m_index});
+          Token{TokenType::ConcatLiteral, std::nullopt, get_real_offset()});
     }
     return 0;
   } else {
@@ -210,7 +216,7 @@ int Lexer::match_identifier() {
       identifier += m_next;
       advance_input_byte();
     }
-    m_t_stream.push_back(Token{TokenType::Identifier, identifier, m_index});
+    m_t_stream.push_back(Token{TokenType::Identifier, identifier, get_real_offset()});
     return 0;
   } else {
     return -1;

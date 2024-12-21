@@ -1,9 +1,11 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
-#include <vector>
+#include "error.hpp"
+
 #include <optional>
 #include <string>
+#include <vector>
 
 enum class InputMethod {
   ConfigFile,
@@ -26,6 +28,7 @@ struct Setup {
 class Driver {
 private:
   Setup m_setup;
+  void display_error_stack(std::vector<unsigned char> config);
   std::vector<unsigned char> get_config();
 
 public:
@@ -39,7 +42,7 @@ private:
   const char *details;
 
 public:
-  DriverException(const char *details) : details(details){};
+  DriverException(const char *details) : details(details) {};
   const char *what() { return details; }
 };
 

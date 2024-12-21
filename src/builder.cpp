@@ -2,6 +2,7 @@
 #include "format.hpp"
 #include "parser.hpp"
 #include "shell.hpp"
+#include "error.hpp"
 
 #include <filesystem>
 #include <string>
@@ -78,8 +79,7 @@ Expression __upgrade_expression_type(_expression _expr) {
   } else if (Replace *replace = std::get_if<Replace>(&_expr)) {
     return Replace{*replace};
   } else {
-    throw BuilderException("[B004] Internal builder error: Failed to upgrade "
-                           "expression type. This is a bug.");
+    ErrorHandler::push_error_throw(-1, _B_EXPR_UPGRADE);
   }
 }
 
@@ -119,15 +119,18 @@ std::vector<std::string> Builder::evaluate(Expression expression,
   if (Literal *literal = std::get_if<Literal>(&expression)) {
     return evaluate_literal(*literal);
   } else if (Identifier *identifier = std::get_if<Identifier>(&expression)) {
-    return {evaluate(*get_field(ctx, *identifier), ctx)};
+    // need to verify that the field exists...
+    std::optional<std::vector<Expression>> field = get_field(ctx, *identifier);
+    if (!field)
+      ErrorHandler::push_error_throw(-1, B_INVALID_FIELD); // TODO: TRACKING!
+    return {evaluate(*field, ctx)};
   } else if (Concatenation *concatenation =
                  std::get_if<Concatenation>(&expression)) {
     return evaluate_concatenation(*concatenation, ctx);
   } else if (Replace *replace = std::get_if<Replace>(&expression)) {
     return evaluate_replace(*replace, ctx);
   } else {
-    throw BuilderException(
-        "Unable to evaluate expression - invalid expression variant");
+    ErrorHandler::push_error_throw(-1, _B_INVALID_EXPR_VARIANT);
   }
 }
 
@@ -150,6 +153,7 @@ Builder::get_field(std::optional<Target> target, Identifier identifier) {
     std::vector<Expression> __out = {Literal{m_target_ref}};
     return __out;
   }
+  // ErrorHandler::push_error_throw(-1, B_INVALID_FIELD);
   return std::nullopt;
 }
 
@@ -169,7 +173,7 @@ void Builder::build_target(Literal literal) {
   // Verify that it can be built
   std::optional<Target> target = get_target(literal);
   if (!target)
-    throw BuilderException("No data for building target");
+    ErrorHandler::push_error_throw(-1, B_MISSING_TARGET);
 
   // Resolve all dependencies
   std::optional<std::vector<Expression>> dependencies_expression =
@@ -202,7 +206,9 @@ void Builder::build_target(Literal literal) {
     if (result.status) { // Error
       LOG_STANDARD(RED " <failed>" RESET);
       LOG_STANDARD(result.stdout);
-      throw BuilderException("One or more commands yielded a non-zero return.");
+      // FIXME: This should ideally be able to point to the
+      // command that failed to execute.
+      ErrorHandler::push_error_throw(-1, B_NON_ZERO_PROCESS);
     }
     LOG_VERBOSE(result.stdout);
   }
@@ -216,7 +222,7 @@ void Builder::build() {
   } else if (m_ast.targets.size() >= 1) {
     target = std::get<1>(m_ast.targets[0].identifier);
   } else {
-    throw BuilderException("B001 No targets found");
+    ErrorHandler::push_error_throw(-1, B_NO_TARGETS_FOUND);
   }
 
   LOG_STANDARD("=> Initiating build!");
