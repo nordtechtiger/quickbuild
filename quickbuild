@@ -9,6 +9,7 @@ headers = "src/*.hpp";
 # Files to create
 objects = sources: "src/*.cpp" -> "obj/*.o";
 binary = "./bin/quickbuild";
+install_dir = "/usr/bin";
 
 # Main target
 "quickbuild" {
@@ -26,6 +27,11 @@ objects as obj {
 "setup" {
   run = "mkdir -p obj",
         "mkdir -p bin";
+}
+
+# Install binary
+"install" {
+  run = "install -m 755 [binary] [install_dir]";
 }
 
 # Run
