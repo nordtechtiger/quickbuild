@@ -5,6 +5,7 @@ CXXFLAGS = -g -O0 -Wall -Wextra -pthread -pedantic-errors
 # Files to compile
 sources := $(wildcard src/*.cpp)
 headers := $(wildcard src/*.hpp)
+install_dir := /usr/bin
 
 # Files to create
 objects := $(sources:src/%.cpp=obj/%.o)
@@ -21,6 +22,9 @@ obj/%.o: src/%.cpp
 # Setup the build directories
 setup:
 	mkdir -p bin obj
+
+install:
+	install -m 755 $(binary) $(install_dir)
 
 # Run
 run: quickbuild
