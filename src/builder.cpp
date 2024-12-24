@@ -20,6 +20,7 @@
 Builder::Builder(AST ast, Setup setup) {
   m_ast = ast;
   m_setup = setup;
+  // m_cache = {};
 }
 
 // Parses a string by matching against *
@@ -27,9 +28,10 @@ Builder::Builder(AST ast, Setup setup) {
 std::vector<std::string> Builder::evaluate_literal(Literal literal) {
   std::vector<std::string> out;
   size_t asterisk_index = literal.literal.find('*');
-  if (asterisk_index == std::string::npos)
+  if (asterisk_index == std::string::npos) {
     // No processing needs to be done
     return {literal.literal};
+  }
 
   std::string prefix = literal.literal.substr(0, asterisk_index);
   std::string suffix = literal.literal.substr(asterisk_index + 1);
@@ -108,33 +110,66 @@ Builder::evaluate_concatenation(Concatenation concatenation,
   return {out};
 }
 
+std::optional<std::vector<std::string>>
+Builder::get_cached_expression(Expression expression,
+                               std::optional<Target> ctx) {
+  for (const auto &i_expression : m_cache) {
+    if (std::get<0>(i_expression) == expression &&
+        std::get<1>(i_expression) == ctx)
+      return std::get<2>(i_expression);
+  }
+  return std::nullopt;
+}
+
 // Evaluates a vector of expressions within a certain context, yielding the
 // lowest-level string representation
 std::vector<std::string> Builder::evaluate(std::vector<Expression> expressions,
-                                           std::optional<Target> ctx) {
+                                           std::optional<Target> ctx,
+                                           bool use_cache) {
   std::vector<std::string> out;
   for (const Expression &expression : expressions) {
-    std::vector<std::string> _out = evaluate(expression, ctx);
+    std::vector<std::string> _out = evaluate(expression, ctx, use_cache);
     out.insert(out.end(), _out.begin(), _out.end());
   }
   return out;
 }
 
 std::vector<std::string> Builder::evaluate(Expression expression,
-                                           std::optional<Target> ctx) {
+                                           std::optional<Target> ctx,
+                                           bool use_cache) {
+  if (use_cache) {
+    std::optional<std::vector<std::string>> result =
+        get_cached_expression(expression, ctx);
+    if (result)
+      return *result;
+  }
+
   if (Literal *literal = std::get_if<Literal>(&expression)) {
-    return evaluate_literal(*literal);
+    // -- literal
+    std::vector<std::string> result = evaluate_literal(*literal);
+    m_cache.push_back({expression, ctx, result});
+    return result;
   } else if (Identifier *identifier = std::get_if<Identifier>(&expression)) {
+    // -- identifier
     // need to verify that the field exists...
     std::optional<std::vector<Expression>> field = get_field(ctx, *identifier);
     if (!field)
       ErrorHandler::push_error_throw(-1, B_INVALID_FIELD); // TODO: TRACKING!
-    return {evaluate(*field, ctx)};
+    std::vector<std::string> result = evaluate(*field, ctx);
+    m_cache.push_back({expression, ctx, result});
+    return result;
   } else if (Concatenation *concatenation =
                  std::get_if<Concatenation>(&expression)) {
-    return evaluate_concatenation(*concatenation, ctx);
+    // -- concatenation
+    std::vector<std::string> result =
+        evaluate_concatenation(*concatenation, ctx);
+    m_cache.push_back({expression, ctx, result});
+    return result;
   } else if (Replace *replace = std::get_if<Replace>(&expression)) {
-    return evaluate_replace(*replace, ctx);
+    // -- replace
+    std::vector<std::string> result = evaluate_replace(*replace, ctx);
+    m_cache.push_back({expression, ctx, result});
+    return result;
   } else {
     ErrorHandler::push_error_throw(-1, _B_INVALID_EXPR_VARIANT);
   }
@@ -208,32 +243,28 @@ bool Builder::is_dirty(Literal literal, std::string dependant) {
   return get_file_date(literal.literal) >= get_file_date(dependant);
 }
 
-void Builder::build_target(Literal literal) {
-  // Verify that it can be built
-  std::optional<Target> target = get_target(literal);
-  if (!target)
-    ErrorHandler::push_error_throw(-1, B_MISSING_TARGET);
-
+void Builder::build_target(Target target, Literal ctx_literal) {
   // Resolve all dependencies
   std::optional<std::vector<Expression>> dependencies_expression =
       get_field(target, FIELD_ID_DEPENDENCIES);
   std::vector<std::string> dependencies;
-  m_target_ref = literal.literal;
+  m_target_ref = ctx_literal.literal;
   if (dependencies_expression)
     dependencies = evaluate(*dependencies_expression, target);
   for (const auto &dependency : dependencies) {
-    if (!get_target(Literal{dependency}))
+    std::optional<Target> dep_target = get_target(Literal{dependency});
+    if (!dep_target)
       continue;
-    build_target(Literal{dependency});
+    build_target(*dep_target, Literal{dependency});
   }
 
   // Build final target
-  LOG_STANDARD_NO_NEWLINE("   -> Building " + literal.literal + "...");
-  if (!is_dirty(literal, "__root__")) {
+  LOG_STANDARD_NO_NEWLINE("   -> Building " + ctx_literal.literal + "...");
+  if (!is_dirty(ctx_literal, "__root__")) {
     LOG_STANDARD(ITALIC " <no change>" RESET);
     return;
   }
-  m_target_ref = literal.literal;
+  m_target_ref = ctx_literal.literal;
   // TODO: This crashes the entire build if "run" isn't present. Proper error
   // recovery needed
   std::vector<std::string> cmdlines =
@@ -259,22 +290,25 @@ void Builder::build_target(Literal literal) {
 }
 
 void Builder::build() {
-  Literal target;
+  Literal literal;
   if (m_setup.target) {
-    target = Literal{*m_setup.target};
+    literal = Literal{*m_setup.target};
   } else if (m_ast.targets.size() >= 1) {
-    target = std::get<1>(m_ast.targets[0].identifier);
+    literal = std::get<1>(m_ast.targets[0].identifier);
   } else {
     ErrorHandler::push_error_throw(-1, B_NO_TARGETS_FOUND);
   }
 
   LOG_STANDARD("=> Initiating build!");
   if (m_setup.dry_run) {
-    LOG_STANDARD("=> " GREEN "Building " CYAN + target.literal +
+    LOG_STANDARD("=> " GREEN "Building " CYAN + literal.literal +
                  RED " [dry run]" RESET);
   } else {
-    LOG_STANDARD("=> " GREEN "Building " CYAN + target.literal + RESET);
+    LOG_STANDARD("=> " GREEN "Building " CYAN + literal.literal + RESET);
   }
 
-  build_target(target);
+  std::optional<Target> target = get_target(literal);
+  if (!target)
+    ErrorHandler::push_error_throw(-1, B_MISSING_TARGET);
+  build_target(*target, literal);
 }
