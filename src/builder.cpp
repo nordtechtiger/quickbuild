@@ -101,7 +101,7 @@ Builder::evaluate_concatenation(Concatenation concatenation,
     if (_out.size() >= 1) {
       out += _out[0];
     }
-    if (_out.size() > 1) {
+  if (_out.size() > 1) {
       for (size_t i = 1; i < _out.size(); i++) {
         out += " " + _out[i];
       }
@@ -137,37 +137,41 @@ std::vector<std::string> Builder::evaluate(std::vector<Expression> expressions,
 std::vector<std::string> Builder::evaluate(Expression expression,
                                            std::optional<Target> ctx,
                                            bool use_cache) {
-  if (use_cache) {
-    std::optional<std::vector<std::string>> result =
-        get_cached_expression(expression, ctx);
-    if (result)
-      return *result;
-  }
 
-  if (Literal *literal = std::get_if<Literal>(&expression)) {
-    // -- literal
-    std::vector<std::string> result = evaluate_literal(*literal);
-    m_cache.push_back({expression, ctx, result});
-    return result;
-  } else if (Identifier *identifier = std::get_if<Identifier>(&expression)) {
+  // this is checked *before* the cache because otherwise iteration
+  // variables are going to be incorrectly cached
+  if (Identifier *identifier = std::get_if<Identifier>(&expression)) {
     // -- identifier
     // need to verify that the field exists...
     std::optional<std::vector<Expression>> field = get_field(ctx, *identifier);
     if (!field)
       ErrorHandler::push_error_throw(-1, B_INVALID_FIELD); // TODO: TRACKING!
     std::vector<std::string> result = evaluate(*field, ctx);
-    m_cache.push_back({expression, ctx, result});
     return result;
   } else if (Concatenation *concatenation =
                  std::get_if<Concatenation>(&expression)) {
     // -- concatenation
     std::vector<std::string> result =
         evaluate_concatenation(*concatenation, ctx);
-    m_cache.push_back({expression, ctx, result});
     return result;
   } else if (Replace *replace = std::get_if<Replace>(&expression)) {
     // -- replace
     std::vector<std::string> result = evaluate_replace(*replace, ctx);
+    return result;
+  }
+  
+  if (use_cache) {
+    std::optional<std::vector<std::string>> result =
+        get_cached_expression(expression, ctx);
+    if (result) {
+      // std::cerr << "cache hit for " << ctx->public_name.identifier << std::endl;
+      return *result;
+    }
+  }
+
+  if (Literal *literal = std::get_if<Literal>(&expression)) {
+    // -- literal
+    std::vector<std::string> result = evaluate_literal(*literal);
     m_cache.push_back({expression, ctx, result});
     return result;
   } else {

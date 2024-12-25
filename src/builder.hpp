@@ -4,7 +4,6 @@
 #include "driver.hpp"
 #include "parser.hpp"
 
-#include <map>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -22,7 +21,8 @@ private:
   std::vector<
       std::tuple<Expression, std::optional<Target>, std::vector<std::string>>>
       m_cache;
-  std::optional<std::vector<std::string>> get_cached_expression(Expression, std::optional<Target>);
+  std::optional<std::vector<std::string>>
+      get_cached_expression(Expression, std::optional<Target>);
 
   void build_target(Target target, Literal ctx_literal);
   int get_file_date(std::string path);
