@@ -20,13 +20,21 @@ There are currently no official packages of Quickbuild available, however, suppo
 > - make _or_ quickbuild
 > - clang >= 18
 
+Normal installation using Make:
 ```
 $ git clone https://github.com/nordtechtiger/quickbuild
 $ cd quickbuild
 $ make
+# make install
 ```
 
-You should then copy or symlink the resultant binary (./bin/quickbuild) in order to use it from your terminal.
+Alternatively, you can use a previous version of Quickbuild to build a newer one from source:
+```
+$ git clone https://github.com/nordtechtiger/quickbuild
+$ cd quickbuild
+$ quickbuild
+# quickbuild install
+```
 
 ## Syntax
 All configuration is to be stored at project root in a file named "quickbuild". Here's the config used to compile (and boostrap!) Quickbuild:
