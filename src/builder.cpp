@@ -274,24 +274,27 @@ void Builder::build_target(Target target, Literal ctx_literal) {
   // recovery needed
   std::vector<std::string> cmdlines =
       evaluate(*get_field(target, FIELD_ID_EXECUTE), target);
+  std::string stdout;
   for (const std::string &cmdline : cmdlines) {
     // Execute the command line with the appropriate output (verbose, quiet,
     // etc)
-    LOG_VERBOSE("\n      > " + cmdline);
+    LOG_VERBOSE_NO_NEWLINE("\n  > " + cmdline);
     if (m_setup.dry_run)
       continue;
 
     ShellResult result = Shell::execute(cmdline);
+    stdout += result.stdout;
     if (result.status) { // Error
       LOG_STANDARD(RED " <failed>" RESET);
-      LOG_STANDARD(result.stdout);
+      LOG_STANDARD(stdout);
       // FIXME: This should ideally be able to point to the
       // command that failed to execute.
       ErrorHandler::push_error_throw(-1, B_NON_ZERO_PROCESS);
     }
-    LOG_VERBOSE(result.stdout);
   }
   LOG_STANDARD(GREEN " <ok>" RESET);
+  if (!stdout.empty())
+    LOG_STANDARD(stdout);
 }
 
 void Builder::build() {
