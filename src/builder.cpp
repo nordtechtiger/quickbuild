@@ -14,8 +14,8 @@
 #define stat _stat
 #endif
 
-#define FIELD_ID_DEPENDENCIES Identifier{"depends"}
-#define FIELD_ID_EXECUTE Identifier{"run"}
+#define FIELD_ID_DEPENDENCIES Identifier{"depends", 0}
+#define FIELD_ID_EXECUTE Identifier{"run", 0}
 
 Builder::Builder(AST ast, Setup setup) {
   m_ast = ast;
@@ -197,7 +197,8 @@ Builder::get_field(std::optional<Target> target, Identifier identifier) {
   // last effort: check for iterator name
   if (target && target->public_name.identifier == identifier.identifier) {
     // This is a terrible hack but seems to satisfy the compiler for now
-    std::vector<Expression> __out = {Literal{m_target_ref}};
+    // Also, the origin=0 isn't optimal but works for now
+    std::vector<Expression> __out = {Literal{m_target_ref, 0}};
     return __out;
   }
   // ErrorHandler::push_error_throw(-1, B_INVALID_FIELD);
@@ -238,8 +239,8 @@ bool Builder::is_dirty(Literal literal, std::string dependant) {
     else
       return true; // If a custom target has no dependencies, it should always
                    // be triggered
-    for (const std::string dependency : dependencies) {
-      if (is_dirty(Literal{dependency}, literal.literal))
+    for (const std::string &dependency : dependencies) {
+      if (is_dirty(Literal{dependency, 0}, literal.literal))
         return true;
     }
     return false;
@@ -257,10 +258,10 @@ void Builder::build_target(Target target, Literal ctx_literal) {
   if (dependencies_expression)
     dependencies = evaluate(*dependencies_expression, target);
   for (const auto &dependency : dependencies) {
-    std::optional<Target> dep_target = get_target(Literal{dependency});
+    std::optional<Target> dep_target = get_target(Literal{dependency, target.origin});
     if (!dep_target)
       continue;
-    build_target(*dep_target, Literal{dependency});
+    build_target(*dep_target, Literal{dependency, target.origin});
   }
 
   // Build final target
@@ -300,7 +301,7 @@ void Builder::build_target(Target target, Literal ctx_literal) {
 void Builder::build() {
   Literal literal;
   if (m_setup.target) {
-    literal = Literal{*m_setup.target};
+    literal = Literal{*m_setup.target, 0};
   } else if (m_ast.targets.size() >= 1) {
     literal = std::get<1>(m_ast.targets[0].identifier);
   } else {

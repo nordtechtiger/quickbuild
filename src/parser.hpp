@@ -10,7 +10,7 @@ struct Identifier {
   std::string identifier;
   size_t origin;
 
-  const auto operator==(const Identifier &other) const {
+  auto operator==(const Identifier &other) const {
     return this->identifier == other.identifier && this->origin == other.origin;
   }
 };
@@ -18,7 +18,7 @@ struct Literal {
   std::string literal;
   size_t origin;
 
-  const auto operator==(const Literal &other) const {
+  auto operator==(const Literal &other) const {
     return this->literal == other.literal && this->origin == other.origin;
   }
 };
@@ -28,7 +28,7 @@ struct Replace {
   Literal replacement;
   size_t origin;
 
-  const auto operator==(const Replace &other) const {
+  auto operator==(const Replace &other) const {
     return this->identifier == other.identifier &&
            this->original == other.original &&
            this->replacement == other.replacement &&
@@ -45,7 +45,7 @@ struct Field {
   std::vector<Expression> expression;
   size_t origin;
 
-  const auto operator==(const Field &other) const {
+  auto operator==(const Field &other) const {
     return this->identifier == other.identifier &&
            this->expression == other.expression && this->origin == other.origin;
   }
@@ -56,7 +56,7 @@ struct Target {
   std::vector<Field> fields;
   size_t origin;
 
-  const auto operator==(const Target &other) const {
+  auto operator==(const Target &other) const {
     return this->identifier == other.identifier &&
            this->public_name == other.public_name &&
            this->fields == other.fields && this->origin == other.origin;

@@ -7,13 +7,14 @@
 Parser::Parser(std::vector<Token> token_stream) {
   m_token_stream = token_stream;
   m_index = 0;
+  // the origin should never be read, so we can keep it as 0
   m_previous = Token{TokenType::Invalid, "__invalid", 0};
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
-                  : Token{TokenType::Invalid, "__invalid__"};
+                  : Token{TokenType::Invalid, "__invalid__", 0};
   m_next = (m_token_stream.size() >= m_index + 2)
                ? m_token_stream[m_index + 1]
-               : Token{TokenType::Invalid, "__invalid__"};
+               : Token{TokenType::Invalid, "__invalid__", 0};
 }
 
 // Consume a token
@@ -23,12 +24,13 @@ Token Parser::consume_token() { return consume_token(1); }
 Token Parser::consume_token(int n) {
   m_index += n;
   m_previous = m_current;
+  // the origin should never be read, so we can keep it as 0
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
-                  : Token{TokenType::Invalid, "__invalid__"};
+                  : Token{TokenType::Invalid, "__invalid__", 0};
   m_next = (m_token_stream.size() >= m_index + 2)
                ? m_token_stream[m_index + 1]
-               : Token{TokenType::Invalid, "__invalid__"};
+               : Token{TokenType::Invalid, "__invalid__", 0};
   return m_previous;
 }
 
@@ -102,11 +104,13 @@ Parser::parse_target_header() {
     // `object {`
     origin = m_current.origin;
     if (check_current(TokenType::Identifier)) {
-      public_name = Identifier{*consume_token().context};
+      Token identifier_t = consume_token();
+      public_name = Identifier{*identifier_t.context, identifier_t.origin};
       expression = Expression{public_name};
     } else if (check_current(TokenType::Literal)) {
-      public_name = Identifier{"__target__"};
-      expression = Expression{Literal{*consume_token().context}};
+      public_name = Identifier{"__target__", m_current.origin};
+      Token literal_t = consume_token();
+      expression = Expression{Literal{*literal_t.context, literal_t.origin}};
     } else {
       ErrorHandler::push_error_throw(m_current.origin, P_BAD_TARGET);
     }
@@ -116,15 +120,18 @@ Parser::parse_target_header() {
     // `objects as obj {`
     origin = m_current.origin;
     if (check_current(TokenType::Identifier)) {
-      expression = Identifier{*consume_token().context};
+      Token identifier_t = consume_token();
+      expression = Identifier{*identifier_t.context, identifier_t.origin};
     } else if (check_current(TokenType::Literal)) {
-      expression = Expression{Literal{*consume_token().context}};
+      Token literal_t = consume_token();
+      expression = Expression{Literal{*literal_t.context, literal_t.origin}};
     } else {
       ErrorHandler::push_error_throw(m_current.origin, P_BAD_TARGET);
     }
     consume_token(); // Consume the `as`
     if (check_current(TokenType::Identifier)) {
-      public_name = Identifier{*consume_token().context};
+      Token identifier_t = consume_token();
+      public_name = Identifier{*identifier_t.context, identifier_t.origin};
     } else {
       ErrorHandler::push_error_throw(m_current.origin, P_BAD_PUBLIC_NAME);
     }
@@ -144,7 +151,8 @@ std::optional<Field> Parser::parse_field() {
   // Get the identifier
   Field field;
   field.origin = m_current.origin;
-  field.identifier = Identifier{*consume_token().context};
+  Token identifier_t = consume_token();
+  field.identifier = Identifier{*identifier_t.context, identifier_t.origin};
   consume_token(); // Consume the '='
 
   // Parse the expression
@@ -227,11 +235,14 @@ std::optional<Concatenation> Parser::parse_concatenation() {
   Concatenation concatenation;
   do {
     if (check_current(TokenType::Identifier)) {
-      concatenation.push_back(Identifier{*consume_token().context});
+      Token identifier_t = consume_token();
+      concatenation.push_back(
+          Identifier{*identifier_t.context, identifier_t.origin});
       consume_token(); // Consume the concat token
       continue;
     } else if (check_current(TokenType::Literal)) {
-      concatenation.push_back(Literal{*consume_token().context});
+      Token literal_t = consume_token();
+      concatenation.push_back(Literal{*literal_t.context, literal_t.origin});
       consume_token(); // Consume the concat token
       continue;
     }
@@ -239,9 +250,12 @@ std::optional<Concatenation> Parser::parse_concatenation() {
 
   // There will still be a token left
   if (check_current(TokenType::Identifier)) {
-    concatenation.push_back(Identifier{*consume_token().context});
+    Token identifier_t = consume_token();
+    concatenation.push_back(
+        Identifier{*identifier_t.context, identifier_t.origin});
   } else if (check_current(TokenType::Literal)) {
-    concatenation.push_back(Literal{*consume_token().context});
+    Token literal_t = consume_token();
+    concatenation.push_back(Literal{*literal_t.context, literal_t.origin});
   }
 
   return concatenation;
@@ -256,13 +270,18 @@ std::optional<Replace> Parser::parse_replace() {
   // Construct replace type
   Replace replace;
   replace.origin = m_current.origin;
-  replace.identifier = Identifier{*consume_token().context};
+  Token identifier_t = consume_token();
+  replace.identifier = Identifier{*identifier_t.context, identifier_t.origin};
   consume_token(); // Consume ':'
-  replace.original = Literal{*consume_token().context};
+  Token literal_t_original = consume_token();
+  replace.original =
+      Literal{*literal_t_original.context, literal_t_original.origin};
   if (!check_current(TokenType::Arrow))
     ErrorHandler::push_error_throw(m_current.origin, P_EXPECTED_ITER_ARROW);
   consume_token(); // Consume '->'
-  replace.replacement = Literal{*consume_token().context};
+  Token literal_t_replacement = consume_token();
+  replace.replacement =
+      Literal{*literal_t_replacement.context, literal_t_replacement.origin};
 
   return replace;
 }

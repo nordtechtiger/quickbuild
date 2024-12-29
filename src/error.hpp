@@ -115,7 +115,7 @@ private:
   const char *details;
 
 public:
-  explicit BuildException(const char *details) : details(details) {}
+  BuildException(const char *details) : details(details) {}
   const char *what() const noexcept override { return details; };
 };
 

@@ -43,7 +43,7 @@ private:
 
 public:
   DriverException(const char *details) : details(details) {};
-  const char *what() { return details; }
+  const char *what() const noexcept override { return details; }
 };
 
 #endif
