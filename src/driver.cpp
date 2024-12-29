@@ -82,7 +82,7 @@ int Driver::run() {
 
   // === Build the configuration ===
   // Out: Compiling config
-  LOG_STANDARD("=> Building configuration...");
+  LOG_STANDARD("= Compiling quickbuild...");
   // Get config
   std::vector<unsigned char> config = get_config();
   // Lex
@@ -108,7 +108,7 @@ int Driver::run() {
     return EXIT_FAILURE;
   }
 
-  LOG_STANDARD("=> Build completed successfully.");
+  LOG_STANDARD("= Build completed successfully.");
 
   return EXIT_SUCCESS;
 }

@@ -263,7 +263,7 @@ void Builder::build_target(Target target, Literal ctx_literal) {
   }
 
   // Build final target
-  LOG_STANDARD_NO_NEWLINE("   -> Building " + ctx_literal.literal + "...");
+  LOG_STANDARD_NO_NEWLINE("  - Building " + ctx_literal.literal + "...");
   if (!is_dirty(ctx_literal, "__root__")) {
     LOG_STANDARD(ITALIC " <no change>" RESET);
     return;
@@ -303,12 +303,11 @@ void Builder::build() {
     ErrorHandler::push_error_throw(-1, B_NO_TARGETS_FOUND);
   }
 
-  LOG_STANDARD("=> Initiating build!");
   if (m_setup.dry_run) {
-    LOG_STANDARD("=> " GREEN "Building " CYAN + literal.literal +
-                 RED " [dry run]" RESET);
+    LOG_STANDARD("= " GREEN "Building " CYAN + literal.literal +
+                 ITALIC " [dry run]" RESET);
   } else {
-    LOG_STANDARD("=> " GREEN "Building " CYAN + literal.literal + RESET);
+    LOG_STANDARD("= " GREEN "Building " CYAN + literal.literal + RESET);
   }
 
   std::optional<Target> target = get_target(literal);
