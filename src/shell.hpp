@@ -18,7 +18,7 @@ private:
   const char *details;
 
 public:
-  ShellException(const char *details) : details(details){};
+  ShellException(const char *details) : details(details) {};
   const char *what() { return details; }
 };
 

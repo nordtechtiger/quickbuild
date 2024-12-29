@@ -2,10 +2,10 @@
 #define ERROR_H
 
 #include <map>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <optional>
 
 enum ErrorCode {
   // Parser
@@ -37,66 +37,67 @@ struct ErrorInfo {
 };
 
 // Error code: <message, description>
-const std::map<ErrorCode, std::tuple<std::string, std::string>> _ERROR_LOOKUP_TABLE = {
-    {P_EXPECTED_ITER_ARROW,
-     {"Missing replacement arrow",
-      "Expected a replacement operator but no arrow was found."}},
+const std::map<ErrorCode, std::tuple<std::string, std::string>>
+    _ERROR_LOOKUP_TABLE = {
+        {P_EXPECTED_ITER_ARROW,
+         {"Missing replacement arrow",
+          "Expected a replacement operator but no arrow was found."}},
 
-    {P_EXPECTED_EXPR_CLOSE,
-     {"Expected a closing bracket",
-      "A bracket was opened but not correctly closed."}},
+        {P_EXPECTED_EXPR_CLOSE,
+         {"Expected a closing bracket",
+          "A bracket was opened but not correctly closed."}},
 
-    {P_INVALID_EXPR_STATEMENT,
-     {"Expression malformed",
-      "An expression was expected but none was found."}},
+        {P_INVALID_EXPR_STATEMENT,
+         {"Expression malformed",
+          "An expression was expected but none was found."}},
 
-    {P_EXPECTED_SEMICOLON,
-     {"Missing semicolon", // line break here (clangformat is dumb)
-      "Expected a semicolon at the end of a field."}},
+        {P_EXPECTED_SEMICOLON,
+         {"Missing semicolon", // line break here (clangformat is dumb)
+          "Expected a semicolon at the end of a field."}},
 
-    {P_BAD_PUBLIC_NAME,
-     {"Unsupported iteration variable",
-      "The iteration target is required to be stored in a variable."}},
+        {P_BAD_PUBLIC_NAME,
+         {"Unsupported iteration variable",
+          "The iteration target is required to be stored in a variable."}},
 
-    {P_BAD_TARGET,
-      {"Unsupported target type",
-       "Only variables and literals are supported as targets."}},
+        {P_BAD_TARGET,
+         {"Unsupported target type",
+          "Only variables and literals are supported as targets."}},
 
-    {P_EXPECTED_TARGET_CLOSE,
-      {"Expected target to be closed",
-       "A target was opened but not closed."}},
+        {P_EXPECTED_TARGET_CLOSE,
+         {"Expected target to be closed",
+          "A target was opened but not closed."}},
 
-    {P_NO_MATCH,
-      {"Unknown operation",
-       "The expression failed to parse."}},
+        {P_NO_MATCH, {"Unknown operation", "The expression failed to parse."}},
 
-    {_P_NULLOPT_EXPR,
-      {"<internal> expression returned std::nullopt",
-       "This is an internal bug in Quickbuild. Please submit an bug report."}},
+        {_P_NULLOPT_EXPR,
+         {"<internal> expression returned std::nullopt",
+          "This is an internal bug in Quickbuild. Please submit an bug "
+          "report."}},
 
-    {_B_EXPR_UPGRADE,
-      {"<internal> failed to upgrade expression type",
-       "This is an internal bug in Quickbuild. Please submit an bug report."}},
+        {_B_EXPR_UPGRADE,
+         {"<internal> failed to upgrade expression type",
+          "This is an internal bug in Quickbuild. Please submit an bug "
+          "report."}},
 
-    {_B_INVALID_EXPR_VARIANT,
-      {"<internal> invalid expression variant",
-       "This is an internal bug in Quickbuild. Please submit an bug report."}},
+        {_B_INVALID_EXPR_VARIANT,
+         {"<internal> invalid expression variant",
+          "This is an internal bug in Quickbuild. Please submit an bug "
+          "report."}},
 
-    {B_MISSING_TARGET,
-      {"Missing target",
-       "A target was required but did not exist"}},
+        {B_MISSING_TARGET,
+         {"Missing target", "A target was required but did not exist"}},
 
-    {B_NON_ZERO_PROCESS,
-      {"Non-zero process return",
-       "A command failed and the build was halted."}},
+        {B_NON_ZERO_PROCESS,
+         {"Non-zero process return",
+          "A command failed and the build was halted."}},
 
-    {B_NO_TARGETS_FOUND,
-      {"No targets found",
-       "Couldn't find a target to build."}},
+        {B_NO_TARGETS_FOUND,
+         {"No targets found", "Couldn't find a target to build."}},
 
-    {B_INVALID_FIELD,
-      {"Invalid field referenced",
-       "No field exists with this identifier. Are you sure you spelled it correctly?"}},
+        {B_INVALID_FIELD,
+         {"Invalid field referenced",
+          "No field exists with this identifier. Are you sure you spelled it "
+          "correctly?"}},
 };
 
 class ErrorHandler {
@@ -109,11 +110,10 @@ public:
   static std::optional<ErrorInfo> pop_error();
 };
 
-
 class BuildException : public std::exception {
 private:
   const char *details;
-  
+
 public:
   explicit BuildException(const char *details) : details(details) {}
   const char *what() const noexcept override { return details; };

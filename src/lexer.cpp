@@ -23,9 +23,7 @@ unsigned char Lexer::advance_input_byte() {
   return m_current;
 }
 
-size_t Lexer::get_real_offset() {
-  return m_index - m_offset;
-}
+size_t Lexer::get_real_offset() { return m_index - m_offset; }
 
 void Lexer::insert_next_byte(unsigned char byte) {
   m_offset += 1; // Keep track of original position
@@ -72,7 +70,8 @@ int Lexer::skip_comments() {
 // match =
 int Lexer::match_equals() {
   if (m_current == '=') {
-    m_t_stream.push_back(Token{TokenType::Equals, std::nullopt, get_real_offset()});
+    m_t_stream.push_back(
+        Token{TokenType::Equals, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -82,7 +81,8 @@ int Lexer::match_equals() {
 // match :
 int Lexer::match_modify() {
   if (m_current == ':') {
-    m_t_stream.push_back(Token{TokenType::Modify, std::nullopt, get_real_offset()});
+    m_t_stream.push_back(
+        Token{TokenType::Modify, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -92,7 +92,8 @@ int Lexer::match_modify() {
 // match ;
 int Lexer::match_linestop() {
   if (m_current == ';') {
-    m_t_stream.push_back(Token{TokenType::LineStop, std::nullopt, get_real_offset()});
+    m_t_stream.push_back(
+        Token{TokenType::LineStop, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -104,7 +105,8 @@ int Lexer::match_arrow() {
   if (m_current == '-' && m_next == '>') {
     // skip an extra byte due to 2-character token
     advance_input_byte();
-    m_t_stream.push_back(Token{TokenType::Arrow, std::nullopt, get_real_offset()});
+    m_t_stream.push_back(
+        Token{TokenType::Arrow, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -116,7 +118,8 @@ int Lexer::match_iterateas() {
   if (m_current == 'a' && m_next == 's') {
     // skip an extra byte due to 2-character token
     advance_input_byte();
-    m_t_stream.push_back(Token{TokenType::IterateAs, std::nullopt, get_real_offset()});
+    m_t_stream.push_back(
+        Token{TokenType::IterateAs, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -126,7 +129,8 @@ int Lexer::match_iterateas() {
 // match ,
 int Lexer::match_separator() {
   if (m_current == ',') {
-    m_t_stream.push_back(Token{TokenType::Separator, std::nullopt, get_real_offset()});
+    m_t_stream.push_back(
+        Token{TokenType::Separator, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -166,7 +170,8 @@ int Lexer::match_expressionclose() {
 // match {
 int Lexer::match_targetopen() {
   if (m_current == '{') {
-    m_t_stream.push_back(Token{TokenType::TargetOpen, std::nullopt, get_real_offset()});
+    m_t_stream.push_back(
+        Token{TokenType::TargetOpen, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -176,7 +181,8 @@ int Lexer::match_targetopen() {
 // match }
 int Lexer::match_targetclose() {
   if (m_current == '}') {
-    m_t_stream.push_back(Token{TokenType::TargetClose, std::nullopt, get_real_offset()});
+    m_t_stream.push_back(
+        Token{TokenType::TargetClose, std::nullopt, get_real_offset()});
     return 0;
   } else {
     return -1;
@@ -216,7 +222,8 @@ int Lexer::match_identifier() {
       identifier += m_next;
       advance_input_byte();
     }
-    m_t_stream.push_back(Token{TokenType::Identifier, identifier, get_real_offset()});
+    m_t_stream.push_back(
+        Token{TokenType::Identifier, identifier, get_real_offset()});
     return 0;
   } else {
     return -1;

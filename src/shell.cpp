@@ -22,7 +22,7 @@ ShellResult Shell::execute(std::string cmdline) {
   int status = pclose(process);
   return {
       stdout,
-        status,
+      status,
   };
 }
 #elif __WIN32

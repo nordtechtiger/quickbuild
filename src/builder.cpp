@@ -101,7 +101,7 @@ Builder::evaluate_concatenation(Concatenation concatenation,
     if (_out.size() >= 1) {
       out += _out[0];
     }
-  if (_out.size() > 1) {
+    if (_out.size() > 1) {
       for (size_t i = 1; i < _out.size(); i++) {
         out += " " + _out[i];
       }
@@ -159,12 +159,13 @@ std::vector<std::string> Builder::evaluate(Expression expression,
     std::vector<std::string> result = evaluate_replace(*replace, ctx);
     return result;
   }
-  
+
   if (use_cache) {
     std::optional<std::vector<std::string>> result =
         get_cached_expression(expression, ctx);
     if (result) {
-      // std::cerr << "cache hit for " << ctx->public_name.identifier << std::endl;
+      // std::cerr << "cache hit for " << ctx->public_name.identifier <<
+      // std::endl;
       return *result;
     }
   }

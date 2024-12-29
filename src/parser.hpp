@@ -59,8 +59,7 @@ struct Target {
   const auto operator==(const Target &other) const {
     return this->identifier == other.identifier &&
            this->public_name == other.public_name &&
-           this->fields == other.fields &&
-           this->origin == other.origin;
+           this->fields == other.fields && this->origin == other.origin;
   }
 };
 struct AST {
