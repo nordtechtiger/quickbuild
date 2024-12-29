@@ -272,7 +272,7 @@ void Builder::build_target(Target target, Literal ctx_literal) {
   }
   m_target_ref = ctx_literal.literal;
   std::optional<std::vector<Expression>> cmdline_expression = get_field(target, FIELD_ID_EXECUTE);
-  if (cmdline_expression)
+  if (!cmdline_expression)
     ErrorHandler::push_error_throw(target.origin, B_NO_CMDLINE);
   std::vector<std::string> cmdlines =
       evaluate(*cmdline_expression, target);
