@@ -31,6 +31,10 @@ objects as obj {
         "mkdir -p bin";
 }
 
+"test" {
+  run = "";
+}
+
 # Install binary
 "install" {
   run = "install -m 755 [binary] [install_dir]";

@@ -283,7 +283,7 @@ void Builder::build_target(Target target, Literal ctx_literal) {
     // Execute the command line with the appropriate output (verbose, quiet,
     // etc)
     LOG_VERBOSE_NO_NEWLINE("\n  > " + cmdline);
-    if (m_setup.dry_run)
+    if (m_setup.dry_run || cmdline.empty())
       continue;
 
     ShellResult result = Shell::execute(cmdline);
