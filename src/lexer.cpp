@@ -14,6 +14,7 @@ Lexer::Lexer(vector<unsigned char> input_bytes) {
   m_input = input_bytes;
   m_current = (m_input.size() >= m_index + 1) ? m_input[m_index] : '\0';
   m_next = (m_input.size() >= m_index + 2) ? m_input[m_index + 1] : '\0';
+  m_state = LexerState::Normal;
 }
 
 unsigned char Lexer::advance_input_byte() {

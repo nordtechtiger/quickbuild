@@ -19,8 +19,10 @@ install_dir = "/usr/bin";
 
 # Object files
 objects as obj {
-  depends = obj: "obj/*.o" -> "src/*.cpp";
-  run = "[compiler] [flags] -c [depends] -o [obj]";
+  obj_source = obj: "obj/*.o" -> "src/*.cpp";
+  # If a header is changed, everything needs to be rebuilt
+  depends = obj_source, headers;
+  run = "[compiler] [flags] -c [obj_source] -o [obj]";
 }
 
 # Setup the build directories

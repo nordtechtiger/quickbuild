@@ -24,6 +24,7 @@ enum ErrorCode {
   B_NON_ZERO_PROCESS,
   B_NO_TARGETS_FOUND,
   B_INVALID_FIELD,
+  B_NO_CMDLINE,
   _B_EXPR_UPGRADE,         // Should *never* happen
   _B_INVALID_EXPR_VARIANT, // Should *never* happen
 };
@@ -85,7 +86,7 @@ const std::map<ErrorCode, std::tuple<std::string, std::string>>
           "report."}},
 
         {B_MISSING_TARGET,
-         {"Missing target", "A target was required but did not exist"}},
+         {"Missing target", "A target was required but did not exist."}},
 
         {B_NON_ZERO_PROCESS,
          {"Non-zero process return",
@@ -98,6 +99,11 @@ const std::map<ErrorCode, std::tuple<std::string, std::string>>
          {"Invalid field referenced",
           "No field exists with this identifier. Are you sure you spelled it "
           "correctly?"}},
+
+        {B_NO_CMDLINE,
+         {"No `run` field found",
+          "A declared target must have a `run` field. Consider using an empty "
+          "field to explicitly not execute anything."}},
 };
 
 class ErrorHandler {

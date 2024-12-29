@@ -271,10 +271,11 @@ void Builder::build_target(Target target, Literal ctx_literal) {
     return;
   }
   m_target_ref = ctx_literal.literal;
-  // TODO: This crashes the entire build if "run" isn't present. Proper error
-  // recovery needed
+  std::optional<std::vector<Expression>> cmdline_expression = get_field(target, FIELD_ID_EXECUTE);
+  if (cmdline_expression)
+    ErrorHandler::push_error_throw(target.origin, B_NO_CMDLINE);
   std::vector<std::string> cmdlines =
-      evaluate(*get_field(target, FIELD_ID_EXECUTE), target);
+      evaluate(*cmdline_expression, target);
   std::string stdout;
   for (const std::string &cmdline : cmdlines) {
     // Execute the command line with the appropriate output (verbose, quiet,

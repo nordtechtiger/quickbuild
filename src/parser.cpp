@@ -276,8 +276,10 @@ std::optional<Replace> Parser::parse_replace() {
   Token literal_t_original = consume_token();
   replace.original =
       Literal{*literal_t_original.context, literal_t_original.origin};
-  if (!check_current(TokenType::Arrow))
+  if (!check_current(TokenType::Arrow)) {
+    std::cerr << "foo" << std::endl;
     ErrorHandler::push_error_throw(m_current.origin, P_EXPECTED_ITER_ARROW);
+  }
   consume_token(); // Consume '->'
   Token literal_t_replacement = consume_token();
   replace.replacement =
