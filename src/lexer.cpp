@@ -1,14 +1,12 @@
 #include "lexer.hpp"
 #include <functional>
 
-using namespace std;
-
 #define IS_ALPHABETIC(x)                                                       \
   (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')) || x == '_' ||     \
    x == '-')
 
 // initializes new lexer
-Lexer::Lexer(vector<unsigned char> input_bytes) {
+Lexer::Lexer(std::vector<unsigned char> input_bytes) {
   m_index = 0;
   m_offset = 0;
   m_input = input_bytes;
@@ -32,7 +30,7 @@ void Lexer::insert_next_byte(unsigned char byte) {
 }
 
 // gets next token from stream
-vector<Token> Lexer::get_token_stream() {
+std::vector<Token> Lexer::get_token_stream() {
   while (m_current != '\0') {
     for (const auto &fn : matching_rules) {
       int result = fn();
@@ -193,7 +191,7 @@ int Lexer::match_targetclose() {
 // match literals
 int Lexer::match_literal() {
   if (m_current == '\"') {
-    string literal;
+    std::string literal;
     advance_input_byte();
     while (m_current != '\"' && m_current != '\0') {
       if (m_current == '[') {
@@ -217,7 +215,7 @@ int Lexer::match_literal() {
 // match identifiers
 int Lexer::match_identifier() {
   if (IS_ALPHABETIC(m_current)) {
-    string identifier;
+    std::string identifier;
     identifier += m_current;
     while (IS_ALPHABETIC(m_next)) {
       identifier += m_next;

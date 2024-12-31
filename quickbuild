@@ -1,6 +1,6 @@
 # General compiler arguments
 compiler = "clang++";
-flags = "-g -O0 -Wall -Wextra -pthread -pedantic-errors";
+flags = "-g -O0 -Wall -Wextra -pthread -pedantic-errors -fcolor-diagnostics";
 
 # Files to compile
 sources = "src/*.cpp";
@@ -19,8 +19,8 @@ install_dir = "/usr/bin";
 
 # Object files
 objects as obj {
-  obj_source = obj: "obj/*.o" -> "src/*.cpp";
   # If a header is changed, everything needs to be rebuilt
+  obj_source = obj: "obj/*.o" -> "src/*.cpp";
   depends = obj_source, headers;
   run = "[compiler] [flags] -c [obj_source] -o [obj]";
 }

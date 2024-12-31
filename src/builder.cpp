@@ -267,13 +267,13 @@ void Builder::build_target(Target target, Literal ctx_literal) {
   // Build final target
   LOG_STANDARD_NO_NEWLINE("  - Building " + ctx_literal.literal + "...");
   if (!is_dirty(ctx_literal, "__root__")) {
-    LOG_STANDARD(ITALIC " <no change>" RESET);
+    LOG_STANDARD(ITALIC << " <no change>" << RESET);
     return;
   }
   m_target_ref = ctx_literal.literal;
   std::optional<std::vector<Expression>> cmdline_expression = get_field(target, FIELD_ID_EXECUTE);
   if (!cmdline_expression) {
-    LOG_STANDARD(RED " <invalid>" RESET);
+    LOG_STANDARD(RED << " <invalid>" << RESET);
     ErrorHandler::push_error_throw(target.origin, B_NO_CMDLINE);
   }
   std::vector<std::string> cmdlines =
@@ -289,14 +289,14 @@ void Builder::build_target(Target target, Literal ctx_literal) {
     ShellResult result = Shell::execute(cmdline);
     stdout += result.stdout;
     if (result.status) { // Error
-      LOG_STANDARD(RED " <failed>" RESET);
+      LOG_STANDARD(RED << " <failed>" << RESET);
       LOG_STANDARD(stdout);
       // FIXME: This should ideally be able to point to the
       // command that failed to execute.
       ErrorHandler::push_error_throw(-1, B_NON_ZERO_PROCESS);
     }
   }
-  LOG_STANDARD(GREEN " <ok>" RESET);
+  LOG_STANDARD(GREEN << " <ok>" << RESET);
   if (!stdout.empty())
     LOG_STANDARD(stdout);
 }
@@ -312,10 +312,10 @@ void Builder::build() {
   }
 
   if (m_setup.dry_run) {
-    LOG_STANDARD("= " GREEN "Building " CYAN + literal.literal +
-                 ITALIC " [dry run]" RESET);
+    LOG_STANDARD("= " << GREEN << "Building " << CYAN << literal.literal <<
+                 ITALIC << " [dry run]" << RESET);
   } else {
-    LOG_STANDARD("= " GREEN "Building " CYAN + literal.literal + RESET);
+    LOG_STANDARD("= " << GREEN << "Building " << CYAN << literal.literal << RESET);
   }
 
   std::optional<Target> target = get_target(literal);

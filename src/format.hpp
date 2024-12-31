@@ -3,13 +3,16 @@
 
 #include <iostream>
 #include <ostream>
+#include <unistd.h>
 
-#define GREEN "\033[32m"
-#define RED "\033[31m"
-#define CYAN "\033[36m"
-#define BRIGHT "\033[97m"
-#define RESET "\033[0m"
-#define ITALIC "\033[3m"
+// Disable coloured output if no interactive terminal is found
+#define GREEN (isatty(STDOUT_FILENO) ? "\033[32m" : "")
+#define RED (isatty(STDOUT_FILENO) ? "\033[31m" : "")
+#define CYAN (isatty(STDOUT_FILENO) ? "\033[36m" : "")
+#define BOLD (isatty(STDOUT_FILENO) ? "\033[1m" : "")
+#define RESET (isatty(STDOUT_FILENO) ? "\033[0m" : "")
+#define ITALIC (isatty(STDOUT_FILENO) ? "\033[3m" : "")
+
 #define LOG_VERBOSE(msg)                                                       \
   if (m_setup.logging_level >= LoggingLevel::Verbose) {                        \
     std::cout << msg << std::endl;                                             \
