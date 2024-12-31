@@ -57,7 +57,7 @@ my_header_files = "src/*.hpp";
 There is also an in-built operator for a simple search-and-replace.
 ```
 sources = "src/thing.cpp", "src/another.cpp";
-objects = sources: "src/*.cpp" -> "obj/*.o"; # expands into "obj/thing.o", "obj/another.p"
+objects = sources: "src/*.cpp" -> "obj/*.o"; # expands into "obj/thing.o", "obj/another.o"
 ```
 
 String interpolation is also implemented, and requires the use of brackets.
