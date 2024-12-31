@@ -4,7 +4,7 @@
 
 ## "What is this?"
 
-Tired of looking up what `$<` and `$@` does? Say hello to `[depends]` and `[obj]`. Your build system shouldn't get in the way of your next big idea. Quickbuild is an intuitive way of writing simple build scripts for your projects without having to worry about googling the Make syntax anymore.
+Tired of looking up what `$<` and `$@` does? Say hello to `[depends]` and `[whatever-you-fancy]`. Your build system shouldn't get in the way of your next big idea. Quickbuild is an intuitive way of writing simple build scripts for your projects without having to worry about googling the Make syntax anymore.
 
 ## Features
 - 🌱 Intuitive & pain-free setup
@@ -37,7 +37,96 @@ $ quickbuild
 ```
 
 ## Syntax
-All configuration is to be stored at project root in a file named "quickbuild". Here's the config used to compile (and boostrap!) Quickbuild:
+All configuration is to be stored at project root in a file named "quickbuild". The structure of a Quickbuild config is very similar to that of a Makefile, but with slightly more verbose syntax.
+
+
+### Variables
+Variables are declared using the following syntax.
+```
+# this is a comment!
+my_variable = "foo-bar";
+another-var = "buz";
+```
+
+If an asterisk (wildcard) is present in a string, it is automatically expended into all matching filepaths.
+```
+my_source_files = "src/*.cpp"; # expands into "src/foo.cpp", "src/bar.cpp", ...
+my_header_files = "src/*.hpp";
+```
+
+There is also an in-built operator for a simple search-and-replace.
+```
+sources = "src/thing.cpp", "src/another.cpp";
+objects = sources: "src/*.cpp" -> "obj/*.o"; # expands into "obj/thing.o", "obj/another.p"
+```
+
+String interpolation is also implemented, and requires the use of brackets.
+```
+foo = "World";
+bar = "Hello, [foo]!";
+```
+
+### Targets
+Every target has to have a name and a `run` field. Targets can be declared as follows.
+```
+# this will always execute when quickbuild is run
+"my-project" {
+    run = "gcc foo.c";
+}
+```
+
+If you don't want a target to execute a command, you can leave the `run` field blank.
+```
+"a-phony-target" {
+    depends = some-other-stuff;
+    run = "";
+}
+```
+
+Dependencies can be specified using the `depends` field.
+```
+# this will only execute if the dependencies have changed
+"another-project" {
+    depends = "foo.c", "bar.c";
+    run = "gcc foo.c bar.c";
+}
+```
+
+Targets can also be specified from variables.
+```
+my_deps = "foo.c";
+
+"my_main_project" {
+    depends = my_deps;
+    run = "./my_output_binary"
+}
+
+my_deps {
+    run = "gcc [my_deps]";
+}
+```
+
+Finally, for targets that can apply to multiple values, iterators can be used. This is essentially the equivalent to $@ in Make.
+```
+my_files = "a.c", "b.c", "c.c";
+
+"project" {
+    depends = my_files;
+    run = "./output";
+}
+
+my_files as current_source_file {
+    run = "echo Hello, [current_source_file]";
+}
+
+# this would print:
+# Hello, a.c
+# Hello, b.c
+# Hello, c.c
+```
+
+### Example
+All of these features are usually combined to create more powerful build scripts. Check out a comprehensive config that can compile (and boostrap!) Quickbuild:
 ```
 # General compiler arguments
 compiler = "clang++";
