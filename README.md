@@ -116,13 +116,13 @@ my_files = "a.c", "b.c", "c.c";
 }
 
 my_files as current_source_file {
-    run = "echo Hello, [current_source_file]";
+    run = "gcc -c [current_source_file]";
 }
 
-# this would print:
-# Hello, a.c
-# Hello, b.c
-# Hello, c.c
+# this would execute:
+# gcc -c a.c
+# gcc -c b.c
+# gcc -c c.c
 ```
 
 ### Example
