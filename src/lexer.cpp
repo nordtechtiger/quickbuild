@@ -1,6 +1,7 @@
 #include "lexer.hpp"
 #include <functional>
 
+// Used for determining e.g. variable names
 #define IS_ALPHABETIC(x)                                                       \
   (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')) || x == '_' ||     \
    x == '-')
@@ -24,6 +25,8 @@ unsigned char Lexer::advance_input_byte() {
 
 size_t Lexer::get_real_offset() { return m_index - m_offset; }
 
+// TODO: I've been told that this solution is unholy and a disgrace to mankind.
+// Consider alternative solutions
 void Lexer::insert_next_byte(unsigned char byte) {
   m_offset += 1; // Keep track of original position
   m_input.insert(m_input.begin() + m_index + 1, byte);
@@ -39,6 +42,8 @@ std::vector<Token> Lexer::get_token_stream() {
       }
       break; // Token matches, advance input byte
     }
+    // TODO: Ideally we need to check whether a rule successfully matched or
+    // not, and gracefully error out if an unrecognized character is found
     advance_input_byte();
   }
   return m_t_stream;
@@ -157,6 +162,7 @@ int Lexer::match_expressionclose() {
       m_t_stream.push_back(
           Token{TokenType::ConcatLiteral, std::nullopt, get_real_offset()});
       // Boostrap the next part to be parsed as a string
+      // NOTE: Again, this is apparantly unorthodox. Consider alternatives.
       insert_next_byte('\"');
       m_state = LexerState::Normal;
     }
@@ -189,6 +195,7 @@ int Lexer::match_targetclose() {
 }
 
 // match literals
+// TODO: This is such a mess. Might be able to refactor this
 int Lexer::match_literal() {
   if (m_current == '\"') {
     std::string literal;

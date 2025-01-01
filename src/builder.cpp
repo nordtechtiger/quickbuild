@@ -37,7 +37,7 @@ std::vector<std::string> Builder::evaluate_literal(Literal literal) {
   std::string suffix = literal.literal.substr(asterisk_index + 1);
 
   // Attempt substitution with paths
-  // TODO: This might not be an optimal solution
+  // TODO: This might not be an optimal solution. Consider regex or similar
   for (const auto &dir : std::filesystem::recursive_directory_iterator(".")) {
     std::string path = dir.path();
     if ((prefix.empty() || path.find(prefix) != std::string::npos) &&
@@ -51,6 +51,8 @@ std::vector<std::string> Builder::evaluate_literal(Literal literal) {
   return out;
 }
 
+// TODO: This is too crude. Consider using a proper regex engine or an otherwise
+// more powerful find-and-replace
 std::vector<std::string> Builder::evaluate_replace(Replace replace,
                                                    std::optional<Target> ctx) {
   std::string original = replace.original.literal;
@@ -78,6 +80,8 @@ std::vector<std::string> Builder::evaluate_replace(Replace replace,
   return out;
 }
 
+// TODO: This is the result of some poor deisgn choices regarding the types
+// returned by the parser. Redesign.
 Expression __upgrade_expression_type(_expression _expr) {
   if (Identifier *identifier = std::get_if<Identifier>(&_expr)) {
     return Identifier{*identifier};
@@ -94,20 +98,20 @@ Expression __upgrade_expression_type(_expression _expr) {
 std::vector<std::string>
 Builder::evaluate_concatenation(Concatenation concatenation,
                                 std::optional<Target> ctx) {
-  std::string out;
+  std::string final_out;
   for (const auto &expression : concatenation) {
-    std::vector<std::string> _out =
+    std::vector<std::string> current_concatenation =
         evaluate(__upgrade_expression_type(expression), ctx);
-    if (_out.size() >= 1) {
-      out += _out[0];
+    if (current_concatenation.size() >= 1) {
+      final_out += current_concatenation[0];
     }
-    if (_out.size() > 1) {
-      for (size_t i = 1; i < _out.size(); i++) {
-        out += " " + _out[i];
+    if (current_concatenation.size() > 1) {
+      for (size_t i = 1; i < current_concatenation.size(); i++) {
+        final_out += " " + current_concatenation[i];
       }
     }
   }
-  return {out};
+  return {final_out};
 }
 
 std::optional<std::vector<std::string>>
@@ -164,8 +168,6 @@ std::vector<std::string> Builder::evaluate(Expression expression,
     std::optional<std::vector<std::string>> result =
         get_cached_expression(expression, ctx);
     if (result) {
-      // std::cerr << "cache hit for " << ctx->public_name.identifier <<
-      // std::endl;
       return *result;
     }
   }
@@ -226,6 +228,7 @@ int Builder::get_file_date(std::string path) {
   return t;
 }
 
+// TODO: Add option to force (or ignore) recompilation
 bool Builder::is_dirty(Literal literal, std::string dependant) {
   std::optional<Target> target = get_target(literal);
   // If the target is defined, scan the dependencies...
@@ -258,7 +261,8 @@ void Builder::build_target(Target target, Literal ctx_literal) {
   if (dependencies_expression)
     dependencies = evaluate(*dependencies_expression, target);
   for (const auto &dependency : dependencies) {
-    std::optional<Target> dep_target = get_target(Literal{dependency, target.origin});
+    std::optional<Target> dep_target =
+        get_target(Literal{dependency, target.origin});
     if (!dep_target)
       continue;
     build_target(*dep_target, Literal{dependency, target.origin});
@@ -271,17 +275,17 @@ void Builder::build_target(Target target, Literal ctx_literal) {
     return;
   }
   m_target_ref = ctx_literal.literal;
-  std::optional<std::vector<Expression>> cmdline_expression = get_field(target, FIELD_ID_EXECUTE);
+  std::optional<std::vector<Expression>> cmdline_expression =
+      get_field(target, FIELD_ID_EXECUTE);
   if (!cmdline_expression) {
     LOG_STANDARD(RED << " <invalid>" << RESET);
     ErrorHandler::push_error_throw(target.origin, B_NO_CMDLINE);
   }
-  std::vector<std::string> cmdlines =
-      evaluate(*cmdline_expression, target);
+  std::vector<std::string> cmdlines = evaluate(*cmdline_expression, target);
   std::string stdout;
   for (const std::string &cmdline : cmdlines) {
-    // Execute the command line with the appropriate output (verbose, quiet,
-    // etc)
+    // TODO: Execute the command line with the appropriate output (verbose,
+    // quiet, etc)
     LOG_VERBOSE_NO_NEWLINE("\n  > " + cmdline);
     if (m_setup.dry_run || cmdline.empty())
       continue;
@@ -312,10 +316,11 @@ void Builder::build() {
   }
 
   if (m_setup.dry_run) {
-    LOG_STANDARD("= " << GREEN << "Building " << CYAN << literal.literal <<
-                 ITALIC << " [dry run]" << RESET);
+    LOG_STANDARD("= " << GREEN << "Building " << CYAN << literal.literal
+                      << ITALIC << " [dry run]" << RESET);
   } else {
-    LOG_STANDARD("= " << GREEN << "Building " << CYAN << literal.literal << RESET);
+    LOG_STANDARD("= " << GREEN << "Building " << CYAN << literal.literal
+                      << RESET);
   }
 
   std::optional<Target> target = get_target(literal);

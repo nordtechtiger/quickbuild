@@ -17,7 +17,7 @@ private:
   // Refers to the identifier of the current target
   std::string m_target_ref;
   // Current field cache to speed up build
-  // TODO - Consider using a hashmap
+  // TODO - Consider using a hashmap?
   std::vector<
       std::tuple<Expression, std::optional<Target>, std::vector<std::string>>>
       m_cache;

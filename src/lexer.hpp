@@ -5,6 +5,8 @@
 #define CTX_SYMBOL 0
 #define CTX_STRING 1
 
+// Macro madness - this just generates the appropriate function signatures,
+// along with a vector of lambda functions calling every rule
 #define LEXING_RULES(_MACRO)                                                   \
   _MACRO(skip_whitespace)                                                      \
   _MACRO(skip_comments)                                                        \
@@ -28,6 +30,7 @@
 #define _LAMBDA_DECLARE_LIST(x) _LAMBDA_DECLARE(x),
 #define LAMBDA_DECLARE_ALL LEXING_RULES(_LAMBDA_DECLARE_LIST)
 
+// Pretty sure these can be deleted, but they also don't do any harm
 #define STRINGIFY(x) #x
 #define STRINGIFY_MACRO(x) STRINGIFY(x)
 
@@ -55,8 +58,8 @@ enum class TokenType {
 };
 
 enum class LexerState {
-  Normal,
-  EscapedLiteral,
+  Normal,         // It's, uh, normal.
+  EscapedLiteral, // Inside of an escaped literal expression
 };
 
 // Defines a general token
@@ -82,6 +85,7 @@ private:
   size_t get_real_offset();
   void insert_next_byte(unsigned char);
 
+  // Here's the crazy macro magic
   FUNCTION_DECLARE_ALL
   std::vector<std::function<int(void)>> matching_rules{LAMBDA_DECLARE_ALL};
 

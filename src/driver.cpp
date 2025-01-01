@@ -38,6 +38,7 @@ std::vector<unsigned char> Driver::get_config() {
   }
 }
 
+// TODO: Perhaps also slightly messy. Refactor?
 std::tuple<int, std::string> get_line(size_t origin,
                                       std::vector<unsigned char> config) {
   int line_num = 1;
@@ -56,6 +57,7 @@ std::tuple<int, std::string> get_line(size_t origin,
   return {line_num, std::string(line_vec.begin(), line_vec.end())};
 }
 
+// TODO: Not too bad, but consider a refactor
 void Driver::display_error_stack(std::vector<unsigned char> config) {
   std::optional<ErrorInfo> error_info;
   LOG_STANDARD(RED << "! Build stopped." << RESET);
@@ -77,19 +79,16 @@ void Driver::display_error_stack(std::vector<unsigned char> config) {
 }
 
 int Driver::run() {
-  // Out: Greeting
   LOG_STANDARD(BOLD << "[ Quickbuild Dev v0.6.0 ]" << RESET);
 
   // === Build the configuration ===
-  // Out: Compiling config
   LOG_STANDARD("= Compiling quickbuild...");
-  // Get config
   std::vector<unsigned char> config = get_config();
-  // Lex
+
   Lexer lexer(config);
   std::vector<Token> t_stream;
-  t_stream = lexer.get_token_stream();
-  // Parse
+  // TODO: This doesn't throw yet, but when it does, add error handling
+  t_stream = lexer.get_token_stream(); 
   AST ast;
   try {
     Parser parser = Parser(t_stream);
@@ -109,66 +108,6 @@ int Driver::run() {
   }
 
   LOG_STANDARD("= Build completed successfully.");
-
   return EXIT_SUCCESS;
 }
 
-// std::string debug_token_to_string(Token token) {
-//   std::string out;
-//   switch (token.type) {
-//   case TokenType::Identifier:
-//     out = "Identifier";
-//     break;
-//   case TokenType::Literal:
-//     out = "Literal";
-//     break;
-//   case TokenType::Equals:
-//     out = "Equals";
-//     break;
-//   case TokenType::Modify:
-//     out = "Modify";
-//     break;
-//   case TokenType::LineStop:
-//     out = "LineStop";
-//     break;
-//   case TokenType::Arrow:
-//     out = "Arrow";
-//     break;
-//   case TokenType::IterateAs:
-//     out = "IterateAs";
-//     break;
-//   case TokenType::Separator:
-//     out = "Separator";
-//     break;
-//   case TokenType::ExpressionOpen:
-//     out = "ExpressionOpen";
-//     break;
-//   case TokenType::ExpressionClose:
-//     out = "ExpressionClose";
-//     break;
-//   case TokenType::TargetOpen:
-//     out = "TargetOpen";
-//     break;
-//   case TokenType::TargetClose:
-//     out = "TargetClose";
-//     break;
-//   case TokenType::ConcatLiteral:
-//     out = "ConcatLiteral";
-//     break;
-//   case TokenType::Invalid:
-//     out = "Invalid";
-//     break;
-//   }
-//   if (token.context)
-//     out += ":`" + *token.context + "`";
-//   return out;
-// }
-//
-// void debug_print_tokens(std::vector<Token> token_stream) {
-//   for (const auto &token : token_stream) {
-//     std::cout << "[" << debug_token_to_string(token) << "] ";
-//     if (token.type == TokenType::LineStop)
-//       std::cout << std::endl;
-//   }
-//   std::cout << std::endl;
-// }

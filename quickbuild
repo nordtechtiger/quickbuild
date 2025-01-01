@@ -1,6 +1,6 @@
 # General compiler arguments
 compiler = "clang++";
-flags = "-g -O0 -Wall -Wextra -pthread -pedantic-errors -fcolor-diagnostics";
+flags = "-g -O0 -Wall -Wextra -pedantic-errors -fcolor-diagnostics";
 
 # Files to compile
 sources = "src/*.cpp";

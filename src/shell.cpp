@@ -2,8 +2,7 @@
 
 #define __SHELL_SUFFIX " 2>&1"
 
-// Executes a shell command and returns the output. Note: This throws if the
-// executed command returns a -1
+// Executes a shell command and returns the output.
 #ifdef __GNUC__
 #include <unistd.h>
 ShellResult Shell::execute(std::string cmdline) {

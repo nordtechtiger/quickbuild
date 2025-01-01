@@ -35,6 +35,8 @@ struct Replace {
            this->origin == other.origin;
   }
 };
+// TODO: A lot of this mess could be cleaned up by just making a Concatenation
+// it's own struct
 typedef std::variant<Identifier, Literal, Replace> _expression;
 typedef std::vector<_expression> Concatenation;
 typedef std::variant<Identifier, Literal, Replace, Concatenation> Expression;
