@@ -79,7 +79,7 @@ void Driver::display_error_stack(std::vector<unsigned char> config) {
 }
 
 int Driver::run() {
-  LOG_STANDARD(BOLD << "[ Quickbuild Dev v0.6.0 ]" << RESET);
+  LOG_STANDARD(BOLD << "[ Quickbuild Dev v0.6.1 ]" << RESET);
 
   // === Build the configuration ===
   LOG_STANDARD("= Compiling quickbuild...");
