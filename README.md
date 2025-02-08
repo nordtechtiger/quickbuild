@@ -14,7 +14,9 @@ Tired of looking up what `$<` and `$@` does? Say hello to `[depends]` and `[what
 Quickbuild trades a slightly more verbose configuration with intuitive and simpler syntax that takes the pain out of writing makefiles. This makes it suitable for small to medium sized projects and for those who are starting out with low level development. However, this is *not* a replacement for Make - Quickbuild does not have, and will never achieve, feature parity with other build systems such as Make or CMake.
 
 ## Installation
-There are currently no official packages of Quickbuild available, however, support for Arch is planned. In the meantime, the only supported way of running Quickbuild is by building from source.
+Quickbuild is available from the AUR as `quickbuild-git`. If you aren't running Arch, you can also build it from source.
+
+### Building from source
 
 > Dependencies:
 > - make _or_ quickbuild
