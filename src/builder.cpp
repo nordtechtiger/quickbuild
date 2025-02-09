@@ -219,13 +219,27 @@ std::optional<Target> Builder::get_target(Literal literal) {
   return std::nullopt;
 }
 
+// unsure if st_ctim exists for Windows but it dosen't exist for FreeBSD and Macos
+// gets file creation time for linux and macOS
+struct timespec get_ctime(const struct stat &st)
+{
+#ifdef __linux__
+    return st.st_ctim; // Linux
+#elif defined(__APPLE__) || defined(__FreeBSD__)
+    return st.st_ctimespec; // macOS and BSD
+#else
+#error "Unsupported platform"
+#endif
+}
+
 // Returns timestamp of latest file modification
 // TODO: Verify error handling
-int Builder::get_file_date(std::string path) {
-  struct stat t_stat;
-  stat(path.c_str(), &t_stat);
-  time_t t = t_stat.st_ctim.tv_sec;
-  return t;
+int Builder::get_file_date(std::string path)
+{
+    struct stat t_stat;
+    stat(path.c_str(), &t_stat);
+    time_t t = get_ctime(t_stat).tv_sec;
+    return t;
 }
 
 // TODO: Add option to force (or ignore) recompilation
