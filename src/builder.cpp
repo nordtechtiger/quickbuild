@@ -219,12 +219,19 @@ std::optional<Target> Builder::get_target(Literal literal) {
   return std::nullopt;
 }
 
+// Apple decided to rename this struct for no reason
+#ifdef __APPLE__
+#define ST_CTIME st_ctimespec.tv_sec;
+#else
+#define ST_CTIME st_ctime
+#endif
+
 // Returns timestamp of latest file modification
 // TODO: Verify error handling
 int Builder::get_file_date(std::string path) {
   struct stat t_stat;
   stat(path.c_str(), &t_stat);
-  time_t t = t_stat.st_ctim.tv_sec;
+  time_t t = t_stat.ST_CTIME;
   return t;
 }
 
