@@ -1,5 +1,8 @@
 #include "lexer.hpp"
+#include "error.hpp"
 #include <functional>
+#include <variant>
+#include <iostream>
 
 // Used for determining e.g. variable names
 #define IS_ALPHABETIC(x)                                                       \
@@ -9,229 +12,203 @@
 // initializes new lexer
 Lexer::Lexer(std::vector<unsigned char> input_bytes) {
   m_index = 0;
-  m_offset = 0;
+  _m_line = 1;
   m_input = input_bytes;
   m_current = (m_input.size() >= m_index + 1) ? m_input[m_index] : '\0';
   m_next = (m_input.size() >= m_index + 2) ? m_input[m_index + 1] : '\0';
-  m_state = LexerState::Normal;
 }
 
-unsigned char Lexer::advance_input_byte() {
-  m_index++;
-  m_current = (m_input.size() >= m_index + 1) ? m_input[m_index] : '\0';
-  m_next = (m_input.size() >= m_index + 2) ? m_input[m_index + 1] : '\0';
+unsigned char Lexer::consume_byte() { return consume_byte(1); }
+
+unsigned char Lexer::consume_byte(int n) {
+  size_t original_index = m_index;
+  // loop to scan for newlines
+  for (; m_index < original_index + n; m_index++) {
+    m_current = (m_input.size() >= m_index + 1) ? m_input[m_index] : '\0';
+    m_next = (m_input.size() >= m_index + 2) ? m_input[m_index + 1] : '\0';
+    if (m_current == '\n')
+      _m_line++;
+  }
   return m_current;
 }
 
-size_t Lexer::get_real_offset() { return m_index - m_offset; }
-
-// TODO: I've been told that this solution is unholy and a disgrace to mankind.
-// Consider alternative solutions
-void Lexer::insert_next_byte(unsigned char byte) {
-  m_offset += 1; // Keep track of original position
-  m_input.insert(m_input.begin() + m_index + 1, byte);
-}
+// turn the current state into an origin
+Origin Lexer::get_local_origin() { return Origin{m_index, _m_line}; }
 
 // gets next token from stream
 std::vector<Token> Lexer::get_token_stream() {
   while (m_current != '\0') {
+    bool match = false;
     for (const auto &fn : matching_rules) {
-      int result = fn();
-      if (0 > result) {
-        continue; // Token doesn't match, keep trying
+      std::optional<Token> token = fn();
+      if (token) {
+        m_token_stream.push_back(*token);
+        match = true;
+        break;
       }
-      break; // Token matches, advance input byte
     }
-    // TODO: Ideally we need to check whether a rule successfully matched or
-    // not, and gracefully error out if an unrecognized character is found
-    advance_input_byte();
+    if (m_current == '\0')
+      break;
+    if (!match) {
+      // break here please
+      ErrorHandler::push_error_throw(get_local_origin(), L_INVALID_SYMBOL);
+    }
   }
-  return m_t_stream;
+  return m_token_stream;
 }
 
-// == all functions for validating/checking tokens below ==
-
-// skip whitespace
-int Lexer::skip_whitespace() {
-  // always return false - we just want to increase the iterator until we hit a
-  // non-whitespace
-  while (m_current == ' ' || m_current == '\n' || m_current == '\t')
-    advance_input_byte();
-  return -1;
-}
-
-// skip any comments (#)
-int Lexer::skip_comments() {
-  if (m_current != '#') {
-    return -1; // No comments
+// skip all whitespace characters and comments
+std::optional<Token> Lexer::skip_whitespace_comments() {
+  while (m_current == ' ' || m_current == '\n' || m_current == '\t' ||
+         m_current == '#') {
+    while (m_current == ' ' || m_current == '\n' || m_current == '\t')
+      consume_byte();
+    if (m_current != '#')
+      return std::nullopt; // not a comment
+    while (m_current != '\n') {
+      consume_byte(); // currently in a comment
+    }
   }
-  while (m_current != '\n') {
-    advance_input_byte(); // Currently in a comment
-  }
-  return -1;
+
+  return std::nullopt;
 }
 
 // match =
-int Lexer::match_equals() {
-  if (m_current == '=') {
-    m_t_stream.push_back(
-        Token{TokenType::Equals, std::nullopt, get_real_offset()});
-    return 0;
-  } else {
-    return -1;
-  }
+std::optional<Token> Lexer::match_equals() {
+  if (m_current != '=')
+    return std::nullopt;
+  consume_byte();
+  return Token{TokenType::Equals, std::nullopt, get_local_origin()};
 }
 
 // match :
-int Lexer::match_modify() {
-  if (m_current == ':') {
-    m_t_stream.push_back(
-        Token{TokenType::Modify, std::nullopt, get_real_offset()});
-    return 0;
-  } else {
-    return -1;
-  }
+std::optional<Token> Lexer::match_modify() {
+  if (m_current != ':')
+    return std::nullopt;
+  consume_byte();
+  return Token{TokenType::Modify, std::nullopt, get_local_origin()};
 }
 
 // match ;
-int Lexer::match_linestop() {
-  if (m_current == ';') {
-    m_t_stream.push_back(
-        Token{TokenType::LineStop, std::nullopt, get_real_offset()});
-    return 0;
-  } else {
-    return -1;
-  }
+std::optional<Token> Lexer::match_linestop() {
+  if (m_current != ';')
+    return std::nullopt;
+  consume_byte();
+  return Token{TokenType::LineStop, std::nullopt, get_local_origin()};
 }
 
 // match ->
-int Lexer::match_arrow() {
-  if (m_current == '-' && m_next == '>') {
-    // skip an extra byte due to 2-character token
-    advance_input_byte();
-    m_t_stream.push_back(
-        Token{TokenType::Arrow, std::nullopt, get_real_offset()});
-    return 0;
-  } else {
-    return -1;
-  }
-}
-
-// match as
-int Lexer::match_iterateas() {
-  if (m_current == 'a' && m_next == 's') {
-    // skip an extra byte due to 2-character token
-    advance_input_byte();
-    m_t_stream.push_back(
-        Token{TokenType::IterateAs, std::nullopt, get_real_offset()});
-    return 0;
-  } else {
-    return -1;
-  }
+std::optional<Token> Lexer::match_arrow() {
+  if (!(m_current == '-' && m_next == '>'))
+    return std::nullopt;
+  consume_byte(2);
+  return Token{TokenType::Arrow, std::nullopt, get_local_origin()};
 }
 
 // match ,
-int Lexer::match_separator() {
-  if (m_current == ',') {
-    m_t_stream.push_back(
-        Token{TokenType::Separator, std::nullopt, get_real_offset()});
-    return 0;
-  } else {
-    return -1;
-  }
+std::optional<Token> Lexer::match_separator() {
+  if (m_current != ',')
+    return std::nullopt;
+  consume_byte();
+  return Token{TokenType::Separator, std::nullopt, get_local_origin()};
 }
 
 // match [
-int Lexer::match_expressionopen() {
-  if (m_current == '[') {
-    m_t_stream.push_back(
-        Token{TokenType::ExpressionOpen, std::nullopt, get_real_offset()});
-    return 0;
-  } else {
-    return -1;
-  }
+std::optional<Token> Lexer::match_expressionopen() {
+  if (m_current != '[')
+    return std::nullopt;
+  consume_byte();
+  return Token{TokenType::ExpressionOpen, std::nullopt, get_local_origin()};
 }
 
 // match ]
-int Lexer::match_expressionclose() {
-  if (m_current == ']') {
-    if (m_state != LexerState::EscapedLiteral) {
-      m_t_stream.push_back(
-          Token{TokenType::ExpressionClose, std::nullopt, get_real_offset()});
-    } else {
-      m_t_stream.push_back(
-          Token{TokenType::ConcatLiteral, std::nullopt, get_real_offset()});
-      // Boostrap the next part to be parsed as a string
-      // NOTE: Again, this is apparantly unorthodox. Consider alternatives.
-      insert_next_byte('\"');
-      m_state = LexerState::Normal;
-    }
-    return 0;
-  } else {
-    return -1;
-  }
+std::optional<Token> Lexer::match_expressionclose() {
+  if (m_current != ']')
+    return std::nullopt;
+  consume_byte();
+  return Token{TokenType::ExpressionClose, std::nullopt, get_local_origin()};
 }
 
 // match {
-int Lexer::match_targetopen() {
-  if (m_current == '{') {
-    m_t_stream.push_back(
-        Token{TokenType::TargetOpen, std::nullopt, get_real_offset()});
-    return 0;
-  } else {
-    return -1;
-  }
+std::optional<Token> Lexer::match_targetopen() {
+  if (m_current != '{')
+    return std::nullopt;
+  consume_byte();
+  return Token{TokenType::TargetOpen, std::nullopt, get_local_origin()};
 }
 
 // match }
-int Lexer::match_targetclose() {
-  if (m_current == '}') {
-    m_t_stream.push_back(
-        Token{TokenType::TargetClose, std::nullopt, get_real_offset()});
-    return 0;
-  } else {
-    return -1;
-  }
+std::optional<Token> Lexer::match_targetclose() {
+  if (m_current != '}')
+    return std::nullopt;
+  consume_byte();
+  return Token{TokenType::TargetClose, std::nullopt, get_local_origin()};
 }
 
 // match literals
-// TODO: This is such a mess. Might be able to refactor this
-int Lexer::match_literal() {
-  if (m_current == '\"') {
-    std::string literal;
-    advance_input_byte();
-    while (m_current != '\"' && m_current != '\0') {
-      if (m_current == '[') {
-        m_state = LexerState::EscapedLiteral;
-        break;
+std::optional<Token> Lexer::match_literal() {
+  if (m_current != '\"')
+    return std::nullopt;
+  consume_byte();
+  Token formatted_literal = Token{
+      TokenType::FormattedLiteral,
+      std::vector<Token>{},
+      get_local_origin(),
+  };
+  std::string substr;
+  while (m_current != '\"') {
+    if (m_current == '[') {
+      consume_byte(); // consume the `[`.
+      std::get<CTX_VEC>(*formatted_literal.context)
+          .push_back(Token{TokenType::Literal, substr, get_local_origin()});
+      substr = "";
+      // lex escaped expression.
+      while (m_current != ']') {
+
+        std::optional<Token> inner_token;
+        skip_whitespace_comments();
+        // note: the parser only supports escaped identifiers
+        if ((inner_token = match_modify())) {
+        } else if ((inner_token = match_arrow())) {
+        } else if ((inner_token = match_separator())) {
+        } else if ((inner_token = match_identifier())) {
+        }
+
+        if (!inner_token)
+          ErrorHandler::push_error_throw(get_local_origin(), L_INVALID_LITERAL);
+
+        std::get<CTX_VEC>(*formatted_literal.context).push_back(*inner_token);
       }
-      literal += m_current;
-      advance_input_byte();
+      consume_byte(); // consume the `]`
+      continue;
     }
-    m_t_stream.push_back(Token{TokenType::Literal, literal, get_real_offset()});
-    if (m_state == LexerState::EscapedLiteral) {
-      m_t_stream.push_back(
-          Token{TokenType::ConcatLiteral, std::nullopt, get_real_offset()});
-    }
-    return 0;
-  } else {
-    return -1;
+
+    // lex "pure" literal:
+    substr += m_current;
+    consume_byte();
   }
+  consume_byte(); // consume the `"`
+  std::get<CTX_VEC>(*formatted_literal.context)
+      .push_back(Token{TokenType::Literal, substr, get_local_origin()});
+  return formatted_literal;
 }
 
 // match identifiers
-int Lexer::match_identifier() {
-  if (IS_ALPHABETIC(m_current)) {
-    std::string identifier;
+std::optional<Token> Lexer::match_identifier() {
+  if (!IS_ALPHABETIC(m_current))
+    return std::nullopt;
+  std::string identifier;
+  while (IS_ALPHABETIC(m_current)) {
     identifier += m_current;
-    while (IS_ALPHABETIC(m_next)) {
-      identifier += m_next;
-      advance_input_byte();
-    }
-    m_t_stream.push_back(
-        Token{TokenType::Identifier, identifier, get_real_offset()});
-    return 0;
-  } else {
-    return -1;
+    consume_byte();
   }
+
+  if (identifier == "as")
+    return Token{TokenType::IterateAs, std::nullopt, get_local_origin()};
+  else if (identifier == "true")
+    return Token{TokenType::True, std::nullopt, get_local_origin()};
+  else if (identifier == "false")
+    return Token{TokenType::False, std::nullopt, get_local_origin()};
+  else
+    return Token{TokenType::Identifier, identifier, get_local_origin()};
 }

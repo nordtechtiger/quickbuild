@@ -43,14 +43,14 @@ int main(int argc, char **argv) {
   }
 
   // Run driver
-  try {
+  // try {
     Driver driver = Driver(setup);
     return driver.run();
-  } catch (const std::exception &e) {
-    std::cerr << "! <Fatal crash>\n! The Quickbuild driver threw an unhandled "
-                 "exception. This is an internal bug and should be reported."
-              << std::endl;
-    std::cerr << "! Error data: " << e.what() << std::endl;
-    exit(EXIT_FAILURE);
-  }
+  // } catch (const std::exception &e) {
+  //   std::cerr << "! <Fatal crash>\n! The Quickbuild driver threw an unhandled "
+  //                "exception. This is an internal bug and should be reported."
+  //             << std::endl;
+  //   std::cerr << "! Error data: " << e.what() << std::endl;
+  //   exit(EXIT_FAILURE);
+  // }
 }

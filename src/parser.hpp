@@ -1,67 +1,81 @@
 #ifndef PARSER_H
 #define PARSER_H
 #include "lexer.hpp"
+#include <memory>
 #include <string>
 #include <variant>
 #include <vector>
 
+struct Identifier;
+struct Literal;
+struct FormattedLiteral;
+struct List;
+struct Boolean;
+struct Replace;
+using ASTObject = std::variant<Identifier, Literal, FormattedLiteral, List, Boolean,
+                               Replace>;
+
 // Logic: Expressions
 struct Identifier {
-  std::string identifier;
-  size_t origin;
+  std::string content;
+  Origin origin;
 
-  auto operator==(const Identifier &other) const {
-    return this->identifier == other.identifier && this->origin == other.origin;
-  }
+  bool operator==(Identifier const &other) const;
 };
 struct Literal {
-  std::string literal;
-  size_t origin;
+  std::string content;
+  Origin origin;
 
-  auto operator==(const Literal &other) const {
-    return this->literal == other.literal && this->origin == other.origin;
-  }
+  bool operator==(Literal const &other) const;
+};
+struct FormattedLiteral {
+  std::vector<ASTObject> contents;
+  Origin origin;
+
+  bool operator==(FormattedLiteral const &other) const;
+};
+struct Boolean {
+  bool content;
+  Origin origin;
+
+  bool operator==(Boolean const &other) const;
+};
+struct List {
+  std::vector<ASTObject> contents;
+  Origin origin;
+  
+  bool operator==(List const &other) const;
 };
 struct Replace {
-  Identifier identifier;
-  Literal original;
-  Literal replacement;
-  size_t origin;
+  std::shared_ptr<ASTObject> identifier;
+  std::shared_ptr<ASTObject> original;
+  std::shared_ptr<ASTObject> replacement;
+  Origin origin;
 
-  auto operator==(const Replace &other) const {
-    return this->identifier == other.identifier &&
-           this->original == other.original &&
-           this->replacement == other.replacement &&
-           this->origin == other.origin;
-  }
+  bool operator==(Replace const &other) const;
 };
-// TODO: A lot of this mess could be cleaned up by just making a Concatenation
-// it's own struct
-typedef std::variant<Identifier, Literal, Replace> _expression;
-typedef std::vector<_expression> Concatenation;
-typedef std::variant<Identifier, Literal, Replace, Concatenation> Expression;
 
 // Config: Fields, targets, AST
 struct Field {
   Identifier identifier;
-  std::vector<Expression> expression;
-  size_t origin;
+  ASTObject expression;
+  Origin origin;
 
-  auto operator==(const Field &other) const {
+  auto operator==(Field const &other) const {
     return this->identifier == other.identifier &&
            this->expression == other.expression && this->origin == other.origin;
   }
 };
 struct Target {
-  Expression identifier;
-  Identifier public_name;
+  ASTObject identifier;
+  Identifier iterator;
   std::vector<Field> fields;
-  size_t origin;
+  Origin origin;
 
-  auto operator==(const Target &other) const {
+  auto operator==(Target const &other) const {
     return this->identifier == other.identifier &&
-           this->public_name == other.public_name &&
-           this->fields == other.fields && this->origin == other.origin;
+           this->iterator == other.iterator && this->fields == other.fields &&
+           this->origin == other.origin;
   }
 };
 struct AST {
@@ -75,22 +89,22 @@ private:
   std::vector<Token> m_token_stream;
   AST m_ast;
 
-  unsigned long long m_index;
+  size_t m_index;
   Token m_previous;
   Token m_current;
   Token m_next;
 
   Token consume_token();
   Token consume_token(int n);
+  std::optional<Token> consume_if(TokenType token_type);
   bool check_current(TokenType token_type);
   bool check_next(TokenType token_type);
+  std::optional<ASTObject> parse_ast_object();
+  std::optional<ASTObject> parse_list();
+  std::optional<ASTObject> parse_replace();
+  std::optional<ASTObject> parse_primary();
   std::optional<Field> parse_field();
   std::optional<Target> parse_target();
-  std::optional<std::tuple<Expression, Identifier, size_t>>
-  parse_target_header();
-  std::optional<Replace> parse_replace();
-  std::optional<std::vector<Expression>> parse_expression();
-  std::optional<Concatenation> parse_concatenation();
 
 public:
   Parser(std::vector<Token> token_stream);

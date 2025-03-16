@@ -36,6 +36,10 @@ objects as obj {
   run = "install -m 755 [binary] [install_dir]";
 }
 
+"test" {
+  run = "echo [foo] [bar]";
+}
+
 # Run
 "run" {
   depends = "quickbuild";
@@ -46,4 +50,8 @@ objects as obj {
 "clean" {
   run = "rm [objects]",
         "rm [binary]";
+}
+
+"one" {
+  run = "echo hey!";
 }
