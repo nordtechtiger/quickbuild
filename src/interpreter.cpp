@@ -98,43 +98,52 @@ EvaluationResult ASTVisitEvaluate::operator()(Identifier const &identifier) {
   __builtin_unreachable();
 }
 
-// note: if literal includes a `*`, globbing will be used - this is expensive.
+// note: we handle globbing **after** evaluating a formatted literal.
 EvaluationResult ASTVisitEvaluate::operator()(Literal const &literal) {
-  size_t i_asterisk = literal.content.find('*');
+  return QBString(literal.content, literal.origin);
+};
+
+// helper method: handles globbing.
+EvaluationResult expand_literal(QBString input_qbstring) {
+  size_t i_asterisk = input_qbstring.content.find('*');
   if (i_asterisk == std::string::npos) // no globbing.
-    return QBString(literal.content, literal.origin);
+    return input_qbstring;
 
   // globbing is required.
-  std::string prefix = literal.content.substr(0, i_asterisk);
-  std::string suffix = literal.content.substr(i_asterisk + 1);
+  std::string prefix = input_qbstring.content.substr(0, i_asterisk);
+  std::string suffix = input_qbstring.content.substr(i_asterisk + 1);
 
   // acts as a string vector.
   QBList matching_paths;
   for (std::filesystem::directory_entry const &dir_entry :
-       std::filesystem::recursive_directory_iterator()) {
+       std::filesystem::recursive_directory_iterator(".")) {
     std::string dir_path = dir_entry.path().string();
     size_t i_prefix = dir_path.find(prefix);
     size_t i_suffix = dir_path.find(suffix);
     if (prefix.empty() && i_suffix != std::string::npos)
       std::get<QBLIST_STR>(matching_paths.contents)
-          .push_back(QBString(dir_path, literal.origin));
+          .push_back(QBString(dir_path, input_qbstring.origin));
     else if (suffix.empty() && i_prefix != std::string::npos)
       std::get<QBLIST_STR>(matching_paths.contents)
-          .push_back(QBString(dir_path, literal.origin));
+          .push_back(QBString(dir_path, input_qbstring.origin));
     else if (!prefix.empty() && !suffix.empty() &&
              i_prefix != std::string::npos && i_suffix != std::string::npos &&
              i_prefix < i_suffix)
       std::get<QBLIST_STR>(matching_paths.contents)
-          .push_back(QBString(dir_path, literal.origin));
+          .push_back(QBString(dir_path, input_qbstring.origin));
   }
 
   if (std::get<QBLIST_STR>(matching_paths.contents).size() > 0)
     matching_paths.origin =
         std::get<QBLIST_STR>(matching_paths.contents)[0].origin;
 
-  return matching_paths;
-};
+  if (std::get<QBLIST_STR>(matching_paths.contents).size() == 1)
+    return std::get<QBLIST_STR>(matching_paths.contents)[0];
 
+  return matching_paths;
+}
+
+// note: if literal includes a `*`, globbing will be used - this is expensive.
 EvaluationResult
 ASTVisitEvaluate::operator()(FormattedLiteral const &formatted_literal) {
   QBString out;
@@ -184,8 +193,9 @@ ASTVisitEvaluate::operator()(FormattedLiteral const &formatted_literal) {
       }
     }
   }
-  return out;
+  return expand_literal(out);
 }
+
 
 EvaluationResult ASTVisitEvaluate::operator()(List const &list) {
   if (list.contents.size() <= 0)
@@ -268,7 +278,7 @@ void Interpreter::build() {
   if (m_ast.targets.empty())
     ErrorHandler::push_error_throw(Origin{0, 0}, I_NO_TARGETS);
 
-  ASTObject foo = Identifier {"sources", ORIGIN_UNDEFINED};
+  ASTObject foo = Identifier {"temp", ORIGIN_UNDEFINED};
   EvaluationResult result = std::visit(ASTVisitEvaluate {m_ast, EvaluationContext{std::nullopt, std::nullopt}}, foo);
   // result 
 
