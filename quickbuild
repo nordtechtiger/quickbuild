@@ -6,6 +6,7 @@ flags = "-g -O0 -Wall -Wextra -pedantic-errors -fcolor-diagnostics";
 sources = "src/*.cpp";
 headers = "src/*.hpp";
 
+testfoo = "[sources]";
 temp = "[sources] [headers]", "hi!";
 
 # Files to create

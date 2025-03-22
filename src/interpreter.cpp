@@ -74,6 +74,7 @@ struct ASTVisitEvaluate {
 };
 
 EvaluationResult ASTVisitEvaluate::operator()(Identifier const &identifier) {
+
   // target-specific fields.
   if (context.target_scope)
     for (Field const &field : context.target_scope->fields)
@@ -112,6 +113,8 @@ EvaluationResult expand_literal(QBString input_qbstring) {
   // globbing is required.
   std::string prefix = input_qbstring.content.substr(0, i_asterisk);
   std::string suffix = input_qbstring.content.substr(i_asterisk + 1);
+
+  std::cerr << "* <globbing>: " + input_qbstring.toString() << std::endl;;
 
   // acts as a string vector.
   QBList matching_paths;
@@ -196,7 +199,6 @@ ASTVisitEvaluate::operator()(FormattedLiteral const &formatted_literal) {
   return expand_literal(out);
 }
 
-
 EvaluationResult ASTVisitEvaluate::operator()(List const &list) {
   if (list.contents.size() <= 0)
     ErrorHandler::push_error_throw(ORIGIN_UNDEFINED,
@@ -218,7 +220,30 @@ EvaluationResult ASTVisitEvaluate::operator()(List const &list) {
       out.contents = std::vector<QBBool>();
   }
 
-  for (ASTObject const &ast_obj : list.contents) {
+  // add the early evaluated first element
+  if (std::holds_alternative<QBString>(_obj_result)) {
+    std::get<QBLIST_STR>(out.contents)
+        .push_back(std::get<QBString>(_obj_result));
+  } else if (std::holds_alternative<QBBool>(_obj_result)) {
+    std::get<QBLIST_BOOL>(out.contents)
+        .push_back(std::get<QBBool>(_obj_result));
+  } else if (std::holds_alternative<QBList>(_obj_result)) {
+    QBList obj_result_qblist = std::get<QBList>(_obj_result);
+    if (obj_result_qblist.holds_qbstring() && out.holds_qbstring()) {
+      std::get<QBLIST_STR>(out.contents)
+          .insert(std::get<QBLIST_STR>(out.contents).begin(),
+                  std::get<QBLIST_STR>(obj_result_qblist.contents).begin(),
+                  std::get<QBLIST_STR>(obj_result_qblist.contents).end());
+    } else if (obj_result_qblist.holds_qbbool() && out.holds_qbbool()) {
+      std::get<QBLIST_BOOL>(out.contents)
+          .insert(std::get<QBLIST_BOOL>(out.contents).begin(),
+                  std::get<QBLIST_BOOL>(obj_result_qblist.contents).begin(),
+                  std::get<QBLIST_BOOL>(obj_result_qblist.contents).end());
+    }
+  }
+
+  for (size_t i = 1; i < list.contents.size(); i++) {
+    ASTObject ast_obj = list.contents[i];
     EvaluationResult obj_result =
         std::visit(ASTVisitEvaluate{ast, context}, ast_obj);
     if (std::holds_alternative<QBString>(obj_result)) {
@@ -263,7 +288,6 @@ EvaluationResult ASTVisitEvaluate::operator()(Boolean const &boolean) {
 
 // note: this only supports a single wildcard. consider expanding.
 EvaluationResult ASTVisitEvaluate::operator()(Replace const &replace) {
-  std::cerr << "why u tryna evaluate a replace bruh" << std::endl;
   exit(-1);
 };
 
@@ -278,9 +302,11 @@ void Interpreter::build() {
   if (m_ast.targets.empty())
     ErrorHandler::push_error_throw(Origin{0, 0}, I_NO_TARGETS);
 
-  ASTObject foo = Identifier {"temp", ORIGIN_UNDEFINED};
-  EvaluationResult result = std::visit(ASTVisitEvaluate {m_ast, EvaluationContext{std::nullopt, std::nullopt}}, foo);
-  // result 
+  ASTObject foo = Identifier{"temp", ORIGIN_UNDEFINED};
+  EvaluationResult result = std::visit(
+      ASTVisitEvaluate{m_ast, EvaluationContext{std::nullopt, std::nullopt}},
+      foo);
+  // result
 
   LOG_STANDARD("= building " << GREEN);
 }
