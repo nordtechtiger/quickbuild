@@ -10,7 +10,7 @@ struct QBString {
   Origin origin;
   std::string content;
 
-  std::string toString();
+  std::string toString() const;
   QBString();
   QBString(Token);
   QBString(std::string, Origin);
@@ -22,7 +22,7 @@ struct QBBool {
   QBBool();
   QBBool(Token);
   QBBool(bool, Origin);
-  operator bool();
+  operator bool() const;
 };
 
 #define QBLIST_STR 0
@@ -31,8 +31,8 @@ struct QBBool {
 struct QBList {
   Origin origin;
   std::variant<std::vector<QBString>, std::vector<QBBool>> contents;
-  bool holds_qbstring();
-  bool holds_qbbool();
+  bool holds_qbstring() const;
+  bool holds_qbbool() const;
   QBList();
   QBList(std::variant<std::vector<QBString>, std::vector<QBBool>>);
 };
@@ -43,6 +43,7 @@ using EvaluationResult =
 struct EvaluationContext {
   std::optional<Target> target_scope;
   std::optional<std::string> target_iteration;
+  bool use_globbing = true;
 };
 
 class Interpreter {

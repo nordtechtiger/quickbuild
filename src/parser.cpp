@@ -4,7 +4,7 @@
 #include <memory>
 
 #define ITERATOR_INTERNAL                                                      \
-  Identifier { "__target__", Origin{0, 0} }
+  Identifier { "__target__", ORIGIN_UNDEFINED }
 
 // equality operators for AST objects.
 bool Identifier::operator==(Identifier const &other) const {
@@ -48,10 +48,10 @@ Parser::Parser(std::vector<Token> token_stream) {
   // the origin should never be read, so we can keep it as 0.
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
-                  : Token{TokenType::Invalid, "__invalid__", Origin{0, 0}};
+                  : Token{TokenType::Invalid, "__invalid__", ORIGIN_UNDEFINED};
   m_next = (m_token_stream.size() >= m_index + 2)
                ? m_token_stream[m_index + 1]
-               : Token{TokenType::Invalid, "__invalid__", Origin{0, 0}};
+               : Token{TokenType::Invalid, "__invalid__", ORIGIN_UNDEFINED};
 }
 
 // token checking, no side effects.
@@ -74,10 +74,10 @@ Token Parser::consume_token(int n) {
   // the origin should never be read, so we can keep it as 0.
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
-                  : Token{TokenType::Invalid, "__invalid__", Origin{0, 0}};
+                  : Token{TokenType::Invalid, "__invalid__", ORIGIN_UNDEFINED};
   m_next = (m_token_stream.size() >= m_index + 2)
                ? m_token_stream[m_index + 1]
-               : Token{TokenType::Invalid, "__invalid__", Origin{0, 0}};
+               : Token{TokenType::Invalid, "__invalid__", ORIGIN_UNDEFINED};
   return m_previous;
 }
 

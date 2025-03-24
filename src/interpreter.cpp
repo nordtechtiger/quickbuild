@@ -2,6 +2,12 @@
 #include "filesystem"
 #include "format.hpp"
 
+struct QBVisitOrigin {
+  Origin operator()(QBString qbstring) { return qbstring.origin; };
+  Origin operator()(QBBool qbbool) { return qbbool.origin; };
+  Origin operator()(QBList qblist) { return qblist.origin; };
+};
+
 // constructors & casts for internal data types.
 QBString::QBString() {
   this->origin = ORIGIN_UNDEFINED;
@@ -56,10 +62,10 @@ QBList::QBList(
     this->origin = contents_qbbool[0].origin;
   }
 }
-std::string QBString::toString() { return (this->content); };
-QBBool::operator bool() { return (this->content); };
-bool QBList::holds_qbstring() { return (this->contents.index() == QBLIST_STR); }
-bool QBList::holds_qbbool() { return (this->contents.index() == QBLIST_BOOL); }
+std::string QBString::toString() const { return (this->content); };
+QBBool::operator bool() const { return (this->content); };
+bool QBList::holds_qbstring() const { return (this->contents.index() == QBLIST_STR); }
+bool QBList::holds_qbbool() const { return (this->contents.index() == QBLIST_BOOL); }
 
 // visitor that evaluates an AST object recursively.
 struct ASTVisitEvaluate {
@@ -113,8 +119,6 @@ EvaluationResult expand_literal(QBString input_qbstring) {
   // globbing is required.
   std::string prefix = input_qbstring.content.substr(0, i_asterisk);
   std::string suffix = input_qbstring.content.substr(i_asterisk + 1);
-
-  std::cerr << "* <globbing>: " + input_qbstring.toString() << std::endl;;
 
   // acts as a string vector.
   QBList matching_paths;
@@ -196,7 +200,11 @@ ASTVisitEvaluate::operator()(FormattedLiteral const &formatted_literal) {
       }
     }
   }
-  return expand_literal(out);
+
+  if (context.use_globbing)
+    return expand_literal(out);
+  else
+    return out;
 }
 
 EvaluationResult ASTVisitEvaluate::operator()(List const &list) {
@@ -288,8 +296,29 @@ EvaluationResult ASTVisitEvaluate::operator()(Boolean const &boolean) {
 
 // note: this only supports a single wildcard. consider expanding.
 EvaluationResult ASTVisitEvaluate::operator()(Replace const &replace) {
+  // override use_globbing to false, we want to handle the wildcards separately
+  EvaluationContext _context = EvaluationContext {context.target_scope, context.target_iteration, false};
+  EvaluationResult identifier = std::visit(ASTVisitEvaluate {ast, _context}, *replace.identifier);
+  EvaluationResult original = std::visit(ASTVisitEvaluate {ast, _context}, *replace.original);
+  EvaluationResult replacement = std::visit(ASTVisitEvaluate {ast, _context}, *replace.original);
+
+  if (!std::holds_alternative<QBString>(original) || !std::holds_alternative<QBString>(replacement))
+    ErrorHandler::push_error_throw(std::visit(QBVisitOrigin {}, original), I_EVALUATE_REPLACE_TYPE_ERROR);
+    
+  QBList input;
+  if (std::holds_alternative<QBList>(identifier) && std::get<QBList>(identifier).holds_qbstring())
+    input = std::get<QBList>(identifier);
+  else if (std::holds_alternative<QBString>(identifier))
+    std::get<QBLIST_STR>(input.contents).push_back(std::get<QBString>(identifier));
+  else
+    ErrorHandler::push_error_throw(std::visit(QBVisitOrigin {}, identifier), I_EVALUATE_REPLACE_TYPE_ERROR);
+
+  for (QBString const &qbstring : std::get<QBLIST_STR>(input.contents)) {
+    std::cerr << qbstring.toString() << std::endl;
+  }
   exit(-1);
 };
+
 
 Interpreter::Interpreter(AST ast, Setup setup) {
   m_ast = ast;
@@ -300,9 +329,9 @@ void Interpreter::build() {
 
   // find the target.
   if (m_ast.targets.empty())
-    ErrorHandler::push_error_throw(Origin{0, 0}, I_NO_TARGETS);
+    ErrorHandler::push_error_throw(ORIGIN_UNDEFINED, I_NO_TARGETS);
 
-  ASTObject foo = Identifier{"temp", ORIGIN_UNDEFINED};
+  ASTObject foo = Identifier{"evaluate_me", ORIGIN_UNDEFINED};
   EvaluationResult result = std::visit(
       ASTVisitEvaluate{m_ast, EvaluationContext{std::nullopt, std::nullopt}},
       foo);
