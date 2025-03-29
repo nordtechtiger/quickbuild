@@ -178,9 +178,12 @@ std::optional<ASTObject> Parser::parse_ast_object() { return parse_list(); }
 // recursive descent parser, see grammar.
 std::optional<ASTObject> Parser::parse_list() {
   List list;
+  list.origin = ORIGIN_UNDEFINED;
   std::optional<ASTObject> ast_obj;
   ast_obj = parse_replace();
   while (ast_obj && consume_if(TokenType::Separator)) {
+    if (list.origin == ORIGIN_UNDEFINED)
+      list.origin = std::visit(ASTVisitOrigin{}, *ast_obj);
     list.contents.push_back(*ast_obj);
     ast_obj = parse_ast_object();
   }
@@ -192,6 +195,8 @@ std::optional<ASTObject> Parser::parse_list() {
     return std::nullopt;
 
   list.contents.push_back(*ast_obj);
+  if (list.origin == ORIGIN_UNDEFINED)
+    list.origin = std::visit(ASTVisitOrigin{}, *ast_obj);
   return list;
 }
 

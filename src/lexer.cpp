@@ -9,6 +9,8 @@
   (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')) || x == '_' ||     \
    x == '-')
 
+
+
 // initializes new lexer
 Lexer::Lexer(std::vector<unsigned char> input_bytes) {
   m_index = 0;

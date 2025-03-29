@@ -1,15 +1,17 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-// Token context indexes
+// token context indexes.
 #define CTX_STR 0
 #define CTX_VEC 1
 
+// todo: this should probably be removed.
 #define ORIGIN_UNDEFINED Origin{0, 0}
 
-// Macro madness - this just generates the appropriate function signatures,
-// along with a vector of lambda functions calling every rule
-// [NOTE]: This does automatically match tokens inside of formatted strings!!
+// macro madness - this just generates the appropriate function signatures,
+// along with a vector of lambda functions calling every rule.
+// [note]: This does __not__ automatically match tokens inside of formatted
+// strings.
 #define LEXING_RULES(_MACRO)                                                   \
   _MACRO(skip_whitespace_comments)                                             \
   _MACRO(match_equals)                                                         \
@@ -37,7 +39,7 @@
 #include <variant>
 #include <vector>
 
-// Defines what type of token it is
+// defines what type of token it is.
 enum class TokenType {
   Identifier,       // e.g. variable names
   Literal,          // pure strings
@@ -57,7 +59,7 @@ enum class TokenType {
   Invalid,          // internal return type in parser
 };
 
-// Small struct for tracking the origin of symbols
+// small struct for tracking the origin of symbols.
 struct Origin {
   size_t index;       // ASCII stream origin
   size_t line;        // Line number
@@ -71,14 +73,14 @@ struct Token;
 using TokenContext =
     std::optional<std::variant<std::string, std::vector<Token>>>;
 
-// Defines a general token
+// defines a general token.
 struct Token {
   TokenType type;
   TokenContext context;
-  Origin origin; // Index in original ascii stream
+  Origin origin; // index in original ascii stream
 };
 
-// Work class
+// work class.
 class Lexer {
 private:
   std::vector<unsigned char> m_input;
@@ -93,7 +95,7 @@ private:
   unsigned char consume_byte(int n);
   Origin get_local_origin();
 
-  // Here's the crazy macro magic
+  // here's the crazy macro magic.
   FUNCTION_DECLARE_ALL
   std::vector<std::function<std::optional<Token>(void)>> matching_rules{
       LAMBDA_DECLARE_ALL};

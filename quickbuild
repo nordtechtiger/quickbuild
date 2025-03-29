@@ -6,8 +6,6 @@ flags = "-g -O0 -Wall -Wextra -pedantic-errors -fcolor-diagnostics";
 sources = "src/*.cpp";
 headers = "src/*.hpp";
 
-evaluate_me = [sources, headers]: "src/*" -> "tmp/*";
-
 # Files to create
 objects = sources: "src/*.cpp" -> "obj/*.o";
 binary = "./bin/quickbuild";

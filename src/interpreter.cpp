@@ -64,8 +64,12 @@ QBList::QBList(
 }
 std::string QBString::toString() const { return (this->content); };
 QBBool::operator bool() const { return (this->content); };
-bool QBList::holds_qbstring() const { return (this->contents.index() == QBLIST_STR); }
-bool QBList::holds_qbbool() const { return (this->contents.index() == QBLIST_BOOL); }
+bool QBList::holds_qbstring() const {
+  return (this->contents.index() == QBLIST_STR);
+}
+bool QBList::holds_qbbool() const {
+  return (this->contents.index() == QBLIST_BOOL);
+}
 
 // visitor that evaluates an AST object recursively.
 struct ASTVisitEvaluate {
@@ -216,11 +220,12 @@ EvaluationResult ASTVisitEvaluate::operator()(List const &list) {
   // infer the list type. todo: consider a cleaner solution.
   EvaluationResult _obj_result =
       std::visit(ASTVisitEvaluate{ast, context}, list.contents[0]);
-  if (std::holds_alternative<QBString>(_obj_result))
+    out.origin = std::visit(QBVisitOrigin{}, _obj_result);
+  if (std::holds_alternative<QBString>(_obj_result)) {
     out.contents = std::vector<QBString>();
-  else if (std::holds_alternative<QBBool>(_obj_result))
+  } else if (std::holds_alternative<QBBool>(_obj_result)) {
     out.contents = std::vector<QBBool>();
-  else if (std::holds_alternative<QBList>(_obj_result)) {
+  } else if (std::holds_alternative<QBList>(_obj_result)) {
     QBList __obj_qblist = std::get<QBList>(_obj_result);
     if (std::holds_alternative<std::vector<QBString>>(__obj_qblist.contents))
       out.contents = std::vector<QBString>();
@@ -294,31 +299,82 @@ EvaluationResult ASTVisitEvaluate::operator()(Boolean const &boolean) {
   return QBBool(boolean.content, boolean.origin);
 };
 
-// note: this only supports a single wildcard. consider expanding.
 EvaluationResult ASTVisitEvaluate::operator()(Replace const &replace) {
-  // override use_globbing to false, we want to handle the wildcards separately
-  EvaluationContext _context = EvaluationContext {context.target_scope, context.target_iteration, false};
-  EvaluationResult identifier = std::visit(ASTVisitEvaluate {ast, _context}, *replace.identifier);
-  EvaluationResult original = std::visit(ASTVisitEvaluate {ast, _context}, *replace.original);
-  EvaluationResult replacement = std::visit(ASTVisitEvaluate {ast, _context}, *replace.original);
+  // override use_globbing to false, we want to handle the wildcards separately.
+  EvaluationContext _context =
+      EvaluationContext{context.target_scope, context.target_iteration, false};
+  EvaluationResult identifier =
+      std::visit(ASTVisitEvaluate{ast, _context}, *replace.identifier);
+  EvaluationResult original =
+      std::visit(ASTVisitEvaluate{ast, _context}, *replace.original);
+  EvaluationResult replacement =
+      std::visit(ASTVisitEvaluate{ast, _context}, *replace.replacement);
 
-  if (!std::holds_alternative<QBString>(original) || !std::holds_alternative<QBString>(replacement))
-    ErrorHandler::push_error_throw(std::visit(QBVisitOrigin {}, original), I_EVALUATE_REPLACE_TYPE_ERROR);
-    
+  if (!std::holds_alternative<QBString>(original) ||
+      !std::holds_alternative<QBString>(replacement))
+    ErrorHandler::push_error_throw(std::visit(QBVisitOrigin{}, original),
+                                   I_EVALUATE_REPLACE_TYPE_ERROR);
+
   QBList input;
-  if (std::holds_alternative<QBList>(identifier) && std::get<QBList>(identifier).holds_qbstring())
+  QBList output;
+  if (std::holds_alternative<QBList>(identifier) &&
+      std::get<QBList>(identifier).holds_qbstring())
     input = std::get<QBList>(identifier);
   else if (std::holds_alternative<QBString>(identifier))
-    std::get<QBLIST_STR>(input.contents).push_back(std::get<QBString>(identifier));
+    std::get<QBLIST_STR>(input.contents)
+        .push_back(std::get<QBString>(identifier));
   else
-    ErrorHandler::push_error_throw(std::visit(QBVisitOrigin {}, identifier), I_EVALUATE_REPLACE_TYPE_ERROR);
+    ErrorHandler::push_error_throw(std::visit(QBVisitOrigin{}, identifier),
+                                   I_EVALUATE_REPLACE_TYPE_ERROR);
 
+  // split original and replacement into chunks.
+  std::vector<std::string> original_chunked;
+  std::stringstream original_ss(std::get<QBString>(original).toString());
+  std::string original_buf;
+  while (std::getline(original_ss, original_buf, '*'))
+    original_chunked.push_back(original_buf);
+  std::vector<std::string> replacement_chunked;
+  std::stringstream replacement_ss(std::get<QBString>(replacement).toString());
+  std::string replacement_buf;
+  while (std::getline(replacement_ss, replacement_buf, '*'))
+    replacement_chunked.push_back(replacement_buf);
+
+  if (original_chunked.size() < replacement_chunked.size())
+    ErrorHandler::push_error_throw(replace.origin, I_REPLACE_CHUNKS_LENGTH_ERROR);
+
+  // actual string manipulation.
   for (QBString const &qbstring : std::get<QBLIST_STR>(input.contents)) {
-    std::cerr << qbstring.toString() << std::endl;
-  }
-  exit(-1);
-};
+    // split input into sections as delimited by the original chunks.
+    std::vector<std::string> input_chunked;
+    size_t last_token_i = 0;
+    for (std::string original_token : original_chunked) {
+      size_t token_i = qbstring.toString().find(original_token, last_token_i);
+      if (token_i == std::string::npos) {
+        std::get<QBLIST_STR>(output.contents).push_back(qbstring);
+        last_token_i = std::string::npos;
+        break;
+      }
+      input_chunked.push_back(qbstring.toString().substr(last_token_i, (token_i - last_token_i)));
+      last_token_i = token_i + original_token.length();
+    }
+    if (last_token_i == std::string::npos)
+      continue;
+    // last element.
+    input_chunked.push_back(qbstring.toString().substr(last_token_i));
 
+    // reconstruct new element from the chunked input and chunked replacement.
+    std::string reconstructed;
+    for (size_t i = 0; i < input_chunked.size() - 1; i++) {
+      reconstructed += input_chunked[i];
+      reconstructed += replacement_chunked[i];
+    }
+    // last element.
+    reconstructed += input_chunked[input_chunked.size() - 1];
+    std::get<QBLIST_STR>(output.contents).push_back(QBString(reconstructed, replace.origin));
+  }
+  // todo: consider returning a single qbstring if list only contains one item.
+  return output;
+};
 
 Interpreter::Interpreter(AST ast, Setup setup) {
   m_ast = ast;
