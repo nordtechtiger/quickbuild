@@ -1,6 +1,12 @@
 #include "interpreter.hpp"
 #include "filesystem"
 #include "format.hpp"
+#include "shell.hpp"
+
+#define IDENTIFIER_DEPENDS                                                     \
+  Identifier { "depends", ORIGIN_UNDEFINED }
+#define IDENTIFIER_RUN                                                         \
+  Identifier { "run", ORIGIN_UNDEFINED }
 
 struct QBVisitOrigin {
   Origin operator()(QBString qbstring) { return qbstring.origin; };
@@ -24,6 +30,11 @@ QBString::QBString(std::string content, Origin origin) {
   this->origin = origin;
   this->content = content;
 }
+std::string QBString::toString() const { return (this->content); };
+bool QBString::operator==(QBString const other) const {
+  return this->content == other.content;
+}
+
 QBBool::QBBool() {
   this->origin = ORIGIN_UNDEFINED;
   this->content = false;
@@ -38,6 +49,11 @@ QBBool::QBBool(bool content, Origin origin) {
   this->origin = origin;
   this->content = content;
 }
+bool QBBool::operator==(QBBool const other) const {
+  return this->content == other.content;
+}
+QBBool::operator bool() const { return (this->content); };
+
 QBList::QBList() {
   this->origin = ORIGIN_UNDEFINED;
   this->contents = std::vector<QBString>();
@@ -62,13 +78,14 @@ QBList::QBList(
     this->origin = contents_qbbool[0].origin;
   }
 }
-std::string QBString::toString() const { return (this->content); };
-QBBool::operator bool() const { return (this->content); };
 bool QBList::holds_qbstring() const {
   return (this->contents.index() == QBLIST_STR);
 }
 bool QBList::holds_qbbool() const {
   return (this->contents.index() == QBLIST_BOOL);
+}
+bool QBList::operator==(QBList const other) const {
+  return this->contents == other.contents;
 }
 
 // visitor that evaluates an AST object recursively.
@@ -220,7 +237,7 @@ EvaluationResult ASTVisitEvaluate::operator()(List const &list) {
   // infer the list type. todo: consider a cleaner solution.
   EvaluationResult _obj_result =
       std::visit(ASTVisitEvaluate{ast, context}, list.contents[0]);
-    out.origin = std::visit(QBVisitOrigin{}, _obj_result);
+  out.origin = std::visit(QBVisitOrigin{}, _obj_result);
   if (std::holds_alternative<QBString>(_obj_result)) {
     out.contents = std::vector<QBString>();
   } else if (std::holds_alternative<QBBool>(_obj_result)) {
@@ -340,7 +357,8 @@ EvaluationResult ASTVisitEvaluate::operator()(Replace const &replace) {
     replacement_chunked.push_back(replacement_buf);
 
   if (original_chunked.size() < replacement_chunked.size())
-    ErrorHandler::push_error_throw(replace.origin, I_REPLACE_CHUNKS_LENGTH_ERROR);
+    ErrorHandler::push_error_throw(replace.origin,
+                                   I_REPLACE_CHUNKS_LENGTH_ERROR);
 
   // actual string manipulation.
   for (QBString const &qbstring : std::get<QBLIST_STR>(input.contents)) {
@@ -354,7 +372,8 @@ EvaluationResult ASTVisitEvaluate::operator()(Replace const &replace) {
         last_token_i = std::string::npos;
         break;
       }
-      input_chunked.push_back(qbstring.toString().substr(last_token_i, (token_i - last_token_i)));
+      input_chunked.push_back(
+          qbstring.toString().substr(last_token_i, (token_i - last_token_i)));
       last_token_i = token_i + original_token.length();
     }
     if (last_token_i == std::string::npos)
@@ -370,7 +389,8 @@ EvaluationResult ASTVisitEvaluate::operator()(Replace const &replace) {
     }
     // last element.
     reconstructed += input_chunked[input_chunked.size() - 1];
-    std::get<QBLIST_STR>(output.contents).push_back(QBString(reconstructed, replace.origin));
+    std::get<QBLIST_STR>(output.contents)
+        .push_back(QBString(reconstructed, replace.origin));
   }
   // todo: consider returning a single qbstring if list only contains one item.
   return output;
@@ -381,17 +401,117 @@ Interpreter::Interpreter(AST ast, Setup setup) {
   m_setup = setup;
 }
 
+std::optional<Target> Interpreter::find_target(QBString identifier) {
+  for (Target target : m_ast.targets) {
+    EvaluationResult target_i =
+        std::visit(ASTVisitEvaluate{m_ast, {std::nullopt, std::nullopt}},
+                   target.identifier);
+    if (std::holds_alternative<QBString>(target_i) &&
+        std::get<QBString>(target_i) == identifier) {
+      return target;
+    } else if (std::holds_alternative<QBList>(target_i) &&
+               std::get<QBList>(target_i).holds_qbstring()) {
+      for (QBString target_j :
+           std::get<QBLIST_STR>(std::get<QBList>(target_i).contents)) {
+        if (target_j == identifier)
+          return target;
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+int Interpreter::run_target(Target target, std::string target_iteration) {
+  ASTObject _identifier_depends = IDENTIFIER_DEPENDS;
+  EvaluationResult dependencies = std::visit(
+      ASTVisitEvaluate{m_ast, {target, target_iteration}}, _identifier_depends);
+
+  if (std::holds_alternative<QBString>(dependencies)) {
+    QBString _target_iteration = std::get<QBString>(dependencies);
+    std::optional<Target> _target = find_target(_target_iteration);
+    if (!_target) {
+      // error out here?
+    }
+    run_target(*_target, _target_iteration.toString());
+  } else if (std::holds_alternative<QBList>(dependencies) &&
+             std::get<QBList>(dependencies).holds_qbstring()) {
+    // todo: handle concurrent execution of tasks.
+    for (QBString _target_iteration :
+         std::get<QBLIST_STR>(std::get<QBList>(dependencies).contents)) {
+      std::optional<Target> _target = find_target(_target_iteration);
+      if (!_target) {
+        // error out here?
+        continue;
+      }
+      auto _debug1 = *_target;
+      auto _debug2 = _target_iteration.toString();
+
+      run_target(*_target, _target_iteration.toString());
+    }
+  } else {
+    // error out here: dependencies are in the wrong type.
+  }
+
+  LOG_STANDARD("  - " << CYAN << "starting " << RESET << target_iteration);
+
+  // todo: handle concurrent execution of tasks.
+  ASTObject _identifier_run = IDENTIFIER_RUN;
+  EvaluationResult cmdlines = std::visit(
+      ASTVisitEvaluate{m_ast, {target, target_iteration}}, _identifier_run);
+  if (std::holds_alternative<QBString>(cmdlines)) {
+    QBString cmdline = std::get<QBString>(cmdlines);
+    ShellResult shell_result = Shell::execute(cmdline.toString());
+    if (shell_result.status != 0) {
+      // error out here: origin is stored in cmdline.origin
+    }
+  } else if (std::holds_alternative<QBList>(cmdlines) &&
+             std::get<QBList>(cmdlines).holds_qbstring()) {
+    for (QBString cmdline :
+         std::get<QBLIST_STR>(std::get<QBList>(cmdlines).contents)) {
+      ShellResult shell_result = Shell::execute(cmdline.toString());
+      if (shell_result.status != 0) {
+        // error out here: origin is stored in cmdline.origin
+      }
+    }
+  } else {
+    // error out here: run is in the wrong type
+  }
+
+  LOG_STANDARD("  - " << GREEN << "finished " << RESET << target_iteration);
+  return 0; // todo: this function probably shouldn't return anything.
+}
+
 void Interpreter::build() {
 
   // find the target.
   if (m_ast.targets.empty())
     ErrorHandler::push_error_throw(ORIGIN_UNDEFINED, I_NO_TARGETS);
+  std::optional<Target> target;
+  std::string target_iteration;
+  if (m_setup.target) {
+    target = find_target(QBString(*m_setup.target, ORIGIN_UNDEFINED));
+    target_iteration = *m_setup.target;
+  } else {
+    target = m_ast.targets[0];
+    // todo: if this doesn't evaluate nicely, we need to error out properly.
+    auto _debug =
+        std::visit(ASTVisitEvaluate{m_ast, {std::nullopt, std::nullopt}},
+                   m_ast.targets[0].identifier);
 
-  ASTObject foo = Identifier{"evaluate_me", ORIGIN_UNDEFINED};
-  EvaluationResult result = std::visit(
-      ASTVisitEvaluate{m_ast, EvaluationContext{std::nullopt, std::nullopt}},
-      foo);
-  // result
+    target_iteration =
+        std::get<QBString>(
+            std::visit(ASTVisitEvaluate{m_ast, {std::nullopt, std::nullopt}},
+                       m_ast.targets[0].identifier))
+            .toString();
+  }
 
-  LOG_STANDARD("= building " << GREEN);
+  LOG_STANDARD("= building " << GREEN << target_iteration << RESET);
+  // todo: error checking is also required here in case task doesn't exist.
+  if (0 == run_target(*target, target_iteration)) {
+    LOG_STANDARD(" = build completed " << GREEN << "successfully" << RESET
+                                       << ".");
+  } // else {
+  //  LOG_STANDARD(" = one or more tasks " << RED << "failed" << RESET << ";
+  //  build halted.");
+  //}
 }

@@ -6,6 +6,7 @@
 #ifdef __GNUC__
 #include <unistd.h>
 ShellResult Shell::execute(std::string cmdline) {
+  return {"", 0};
   // Setup pipes
   char buffer[128];
   std::string stdout;

@@ -14,6 +14,7 @@ struct QBString {
   QBString();
   QBString(Token);
   QBString(std::string, Origin);
+  bool operator==(QBString const other) const;
 };
 
 struct QBBool {
@@ -23,6 +24,7 @@ struct QBBool {
   QBBool(Token);
   QBBool(bool, Origin);
   operator bool() const;
+  bool operator==(QBBool const other) const;
 };
 
 #define QBLIST_STR 0
@@ -35,6 +37,7 @@ struct QBList {
   bool holds_qbbool() const;
   QBList();
   QBList(std::variant<std::vector<QBString>, std::vector<QBBool>>);
+  bool operator==(QBList const other) const;
 };
 
 using EvaluationResult =
@@ -51,7 +54,8 @@ private:
   AST m_ast;
   Setup m_setup;
 
-  std::optional<Target> find_target();
+  std::optional<Target> find_target(QBString identifier);
+  int run_target(Target target, std::string target_iteration);
 
 public:
   Interpreter(AST ast, Setup setup);

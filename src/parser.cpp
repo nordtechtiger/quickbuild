@@ -197,11 +197,14 @@ std::optional<ASTObject> Parser::parse_list() {
   list.contents.push_back(*ast_obj);
   if (list.origin == ORIGIN_UNDEFINED)
     list.origin = std::visit(ASTVisitOrigin{}, *ast_obj);
+
+  if (list.contents.size() == 1)
+    return list.contents[0];
+
   return list;
 }
 
 // recursive descent parser, see grammar.
-// todo: this never returns std::nullopt?
 std::optional<ASTObject> Parser::parse_replace() {
   std::optional<ASTObject> identifier = parse_primary();
   if (!consume_if(TokenType::Modify))
