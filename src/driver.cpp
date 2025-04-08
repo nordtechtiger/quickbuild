@@ -80,7 +80,7 @@ int Driver::run() {
   LOG_STANDARD(BOLD << "[ quickbuild dev v0.7.0 ]" << RESET);
 
   // compile the config.
-  LOG_STANDARD("⧖ compiling config...");
+  LOG_STANDARD("⧗ compiling config...");
   std::vector<unsigned char> config = get_config();
 
   Lexer lexer(config);
@@ -104,7 +104,6 @@ int Driver::run() {
     return EXIT_FAILURE;
   }
 
-  LOG_STANDARD("= build completed successfully.");
   return EXIT_SUCCESS;
 }
 

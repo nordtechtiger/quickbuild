@@ -430,7 +430,7 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
     QBString _target_iteration = std::get<QBString>(dependencies);
     std::optional<Target> _target = find_target(_target_iteration);
     if (_target) {
-    	run_target(*_target, _target_iteration.toString());
+      run_target(*_target, _target_iteration.toString());
     }
   } else if (std::holds_alternative<QBList>(dependencies) &&
              std::get<QBList>(dependencies).holds_qbstring()) {
@@ -451,7 +451,8 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
     // error out here: dependencies are in the wrong type.
   }
 
-  LOG_STANDARD("  " << CYAN << "↪" << RESET << " starting " << target_iteration);
+  LOG_STANDARD("  " << CYAN << "↪" << RESET << " starting "
+                    << target_iteration);
 
   // todo: handle concurrent execution of tasks.
   ASTObject _identifier_run = IDENTIFIER_RUN;
@@ -476,7 +477,8 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
     // error out here: run is in the wrong type
   }
 
-  LOG_STANDARD("  " << GREEN << "✓" << RESET << " finished " << target_iteration);
+  LOG_STANDARD("  " << GREEN << "✓" << RESET << " finished "
+                    << target_iteration);
   return 0; // todo: this function probably shouldn't return anything.
 }
 
@@ -504,11 +506,10 @@ void Interpreter::build() {
             .toString();
   }
 
-  LOG_STANDARD("⧖ building " << GREEN << target_iteration << RESET);
+  LOG_STANDARD("⧗ building " << GREEN << target_iteration << RESET);
   // todo: error checking is also required here in case task doesn't exist.
   if (0 == run_target(*target, target_iteration)) {
-    LOG_STANDARD(" = build completed " << GREEN << "successfully" << RESET
-                                       << ".");
+    LOG_STANDARD("➤ build completed");
   } // else {
   //  LOG_STANDARD(" = one or more tasks " << RED << "failed" << RESET << ";
   //  build halted.");

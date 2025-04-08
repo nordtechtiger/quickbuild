@@ -1,4 +1,4 @@
-# General compiler arguments
+# General compiler argumentsquick
 compiler = "clang++";
 flags = "-g -O0 -Wall -Wextra -pedantic-errors -fcolor-diagnostics";
 
