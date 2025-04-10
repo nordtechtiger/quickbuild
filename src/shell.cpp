@@ -1,5 +1,4 @@
 #include "shell.hpp"
-#include <iostream>
 
 #define __SHELL_SUFFIX " 2>&1"
 
@@ -7,7 +6,6 @@
 #ifdef __GNUC__
 #include <unistd.h>
 ShellResult Shell::execute(std::string cmdline) {
-	// std::cout << cmdline << std::endl;
   return {"", 0};
   // Setup pipes
   char buffer[128];

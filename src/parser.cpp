@@ -8,7 +8,8 @@
 
 // equality operators for AST objects.
 bool Identifier::operator==(Identifier const &other) const {
-  return this->content == other.content && this->origin == other.origin;
+  // return this->content == other.content && this->origin == other.origin;
+  return this->content == other.content;
 }
 bool Literal::operator==(Literal const &other) const {
   return this->content == other.content && this->origin == other.origin;

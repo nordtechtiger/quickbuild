@@ -21,12 +21,13 @@ install_dir = "/usr/bin";
 objects as obj {
   # If a header is changed, everything needs to be rebuilt
   obj_source = obj: "obj/*.o" -> "src/*.cpp";
-  depends = obj_source; #, headers;
+  depends = obj_source, headers;
   run = "[compiler] [flags] -c [obj_source] -o [obj]";
 }
 
 # Setup the build directories
 "setup" {
+  depends = "";
   run = "mkdir -p obj",
         "mkdir -p bin";
 }
@@ -37,6 +38,7 @@ objects as obj {
 }
 
 "test" {
+  depends = thing;
   run = "echo [foo] [bar]";
 }
 

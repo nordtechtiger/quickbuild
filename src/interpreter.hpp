@@ -5,6 +5,7 @@
 #include "parser.hpp"
 #include <variant>
 #include <vector>
+#include <map>
 
 struct QBString {
   Origin origin;
@@ -47,12 +48,24 @@ struct EvaluationContext {
   std::optional<Target> target_scope;
   std::optional<std::string> target_iteration;
   bool use_globbing = true;
+  bool context_verify(EvaluationContext const) const;
+};
+
+struct ValueInstance {
+  Identifier identifier;
+  EvaluationContext context;
+  EvaluationResult result;
+};
+
+struct EvaluationState {
+  std::vector<ValueInstance> values;
 };
 
 class Interpreter {
 private:
   AST m_ast;
   Setup m_setup;
+  std::shared_ptr<EvaluationState> state;
 
   std::optional<Target> find_target(QBString identifier);
   int run_target(Target target, std::string target_iteration);

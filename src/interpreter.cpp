@@ -88,10 +88,22 @@ bool QBList::operator==(QBList const other) const {
   return this->contents == other.contents;
 }
 
+// returns true if, and only if, the passed context can reach the caller.
+bool EvaluationContext::context_verify(EvaluationContext const other) const {
+  if (this->target_scope == other.target_scope &&
+      this->use_globbing == other.use_globbing)
+    return true;
+  if (this->target_scope == std::nullopt &&
+      this->use_globbing == other.use_globbing)
+    return true;
+  return false;
+}
+
 // visitor that evaluates an AST object recursively.
 struct ASTVisitEvaluate {
   AST ast;
   EvaluationContext context;
+  std::shared_ptr<EvaluationState> state;
   EvaluationResult operator()(Identifier const &identifier);
   EvaluationResult operator()(Literal const &literal);
   EvaluationResult operator()(FormattedLiteral const &formatted_literal);
@@ -101,24 +113,48 @@ struct ASTVisitEvaluate {
 };
 
 EvaluationResult ASTVisitEvaluate::operator()(Identifier const &identifier) {
+  // check for any cached values.
+  for (ValueInstance value : state->values) {
+    if (value.identifier == identifier && value.context.context_verify(context)) {
+      return value.result;
+    }
+  }
 
   // target-specific fields.
-  if (context.target_scope)
-    for (Field const &field : context.target_scope->fields)
-      if (field.identifier.content == identifier.content)
-        return std::visit(ASTVisitEvaluate{ast, context}, field.expression);
+  if (context.target_scope) {
+    for (Field const &field : context.target_scope->fields) {
+      if (field.identifier.content == identifier.content) {
+        EvaluationResult result =
+            std::visit(ASTVisitEvaluate{ast, context, state}, field.expression);
+        state->values.push_back(ValueInstance{
+            .identifier = identifier, .context = context, .result = result});
+        return result;
+      }
+    }
+  }
 
-  // target iteration variable.
+  // target iteration variable - this isn't cached for obvious reasons.
   if (context.target_iteration && context.target_scope)
     if (context.target_scope->iterator.content == identifier.content)
       return QBString(*context.target_iteration, context.target_scope->origin);
 
   // global fields.
   for (Field const &field : ast.fields) {
-    if (field.identifier.content == identifier.content)
-      return std::visit(
-          ASTVisitEvaluate{ast, EvaluationContext{std::nullopt, std::nullopt}},
+    if (field.identifier.content == identifier.content) {
+      EvaluationResult result = std::visit(
+          ASTVisitEvaluate{ast,
+                           EvaluationContext{.target_scope = std::nullopt,
+                                             .target_iteration = std::nullopt},
+                           state},
           field.expression);
+      EvaluationContext _context =
+          EvaluationContext{.target_scope = std::nullopt,
+                            .target_iteration = std::nullopt,
+                            .use_globbing = context.use_globbing};
+      state->values.push_back(ValueInstance{
+          .identifier = identifier, .context = _context, .result = result});
+      return result;
+    }
   }
 
   // identifier not found.
@@ -171,13 +207,14 @@ EvaluationResult expand_literal(QBString input_qbstring) {
   return matching_paths;
 }
 
-// note: if literal includes a `*`, globbing will be used - this is expensive.
+// note: if literal includes a `*`, globbing will be used - this is
+// expensive.
 EvaluationResult
 ASTVisitEvaluate::operator()(FormattedLiteral const &formatted_literal) {
   QBString out;
   for (ASTObject const &ast_obj : formatted_literal.contents) {
     EvaluationResult obj_result =
-        std::visit(ASTVisitEvaluate{ast, context}, ast_obj);
+        std::visit(ASTVisitEvaluate{ast, context, state}, ast_obj);
     // append a string.
     if (std::holds_alternative<QBString>(obj_result)) {
       if (out.origin == ORIGIN_UNDEFINED)
@@ -236,7 +273,7 @@ EvaluationResult ASTVisitEvaluate::operator()(List const &list) {
   QBList out;
   // infer the list type. todo: consider a cleaner solution.
   EvaluationResult _obj_result =
-      std::visit(ASTVisitEvaluate{ast, context}, list.contents[0]);
+      std::visit(ASTVisitEvaluate{ast, context, state}, list.contents[0]);
   out.origin = std::visit(QBVisitOrigin{}, _obj_result);
   if (std::holds_alternative<QBString>(_obj_result)) {
     out.contents = std::vector<QBString>();
@@ -275,7 +312,7 @@ EvaluationResult ASTVisitEvaluate::operator()(List const &list) {
   for (size_t i = 1; i < list.contents.size(); i++) {
     ASTObject ast_obj = list.contents[i];
     EvaluationResult obj_result =
-        std::visit(ASTVisitEvaluate{ast, context}, ast_obj);
+        std::visit(ASTVisitEvaluate{ast, context, state}, ast_obj);
     if (std::holds_alternative<QBString>(obj_result)) {
       if (out.holds_qbstring())
         std::get<QBLIST_STR>(out.contents)
@@ -317,15 +354,16 @@ EvaluationResult ASTVisitEvaluate::operator()(Boolean const &boolean) {
 };
 
 EvaluationResult ASTVisitEvaluate::operator()(Replace const &replace) {
-  // override use_globbing to false, we want to handle the wildcards separately.
+  // override use_globbing to false, we want to handle the wildcards
+  // separately.
   EvaluationContext _context =
       EvaluationContext{context.target_scope, context.target_iteration, false};
   EvaluationResult identifier =
-      std::visit(ASTVisitEvaluate{ast, _context}, *replace.identifier);
+      std::visit(ASTVisitEvaluate{ast, _context, state}, *replace.identifier);
   EvaluationResult original =
-      std::visit(ASTVisitEvaluate{ast, _context}, *replace.original);
+      std::visit(ASTVisitEvaluate{ast, _context, state}, *replace.original);
   EvaluationResult replacement =
-      std::visit(ASTVisitEvaluate{ast, _context}, *replace.replacement);
+      std::visit(ASTVisitEvaluate{ast, _context, state}, *replace.replacement);
 
   if (!std::holds_alternative<QBString>(original) ||
       !std::holds_alternative<QBString>(replacement))
@@ -381,7 +419,8 @@ EvaluationResult ASTVisitEvaluate::operator()(Replace const &replace) {
     // last element.
     input_chunked.push_back(qbstring.toString().substr(last_token_i));
 
-    // reconstruct new element from the chunked input and chunked replacement.
+    // reconstruct new element from the chunked input and chunked
+    // replacement.
     std::string reconstructed;
     for (size_t i = 0; i < input_chunked.size() - 1; i++) {
       reconstructed += input_chunked[i];
@@ -392,7 +431,8 @@ EvaluationResult ASTVisitEvaluate::operator()(Replace const &replace) {
     std::get<QBLIST_STR>(output.contents)
         .push_back(QBString(reconstructed, replace.origin));
   }
-  // todo: consider returning a single qbstring if list only contains one item.
+  // todo: consider returning a single qbstring if list only contains one
+  // item.
   return output;
 };
 
@@ -404,7 +444,7 @@ Interpreter::Interpreter(AST ast, Setup setup) {
 std::optional<Target> Interpreter::find_target(QBString identifier) {
   for (Target target : m_ast.targets) {
     EvaluationResult target_i =
-        std::visit(ASTVisitEvaluate{m_ast, {std::nullopt, std::nullopt}},
+        std::visit(ASTVisitEvaluate{m_ast, {std::nullopt, std::nullopt}, state},
                    target.identifier);
     if (std::holds_alternative<QBString>(target_i) &&
         std::get<QBString>(target_i) == identifier) {
@@ -424,7 +464,7 @@ std::optional<Target> Interpreter::find_target(QBString identifier) {
 int Interpreter::run_target(Target target, std::string target_iteration) {
   ASTObject _identifier_depends = IDENTIFIER_DEPENDS;
   EvaluationResult dependencies = std::visit(
-      ASTVisitEvaluate{m_ast, {target, target_iteration}}, _identifier_depends);
+      ASTVisitEvaluate{m_ast, {target, target_iteration}, state}, _identifier_depends);
 
   if (std::holds_alternative<QBString>(dependencies)) {
     QBString _target_iteration = std::get<QBString>(dependencies);
@@ -457,7 +497,7 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
   // todo: handle concurrent execution of tasks.
   ASTObject _identifier_run = IDENTIFIER_RUN;
   EvaluationResult cmdlines = std::visit(
-      ASTVisitEvaluate{m_ast, {target, target_iteration}}, _identifier_run);
+      ASTVisitEvaluate{m_ast, {target, target_iteration}, state}, _identifier_run);
   if (std::holds_alternative<QBString>(cmdlines)) {
     QBString cmdline = std::get<QBString>(cmdlines);
     ShellResult shell_result = Shell::execute(cmdline.toString());
@@ -484,6 +524,8 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
 
 void Interpreter::build() {
 
+  this->state = std::make_shared<EvaluationState>();
+
   // find the target.
   if (m_ast.targets.empty())
     ErrorHandler::push_error_throw(ORIGIN_UNDEFINED, I_NO_TARGETS);
@@ -492,16 +534,16 @@ void Interpreter::build() {
   if (m_setup.target) {
     target = find_target(QBString(*m_setup.target, ORIGIN_UNDEFINED));
     target_iteration = *m_setup.target;
+    if (!target) {
+      // error out here.
+    }
   } else {
     target = m_ast.targets[0];
     // todo: if this doesn't evaluate nicely, we need to error out properly.
-    auto _debug =
-        std::visit(ASTVisitEvaluate{m_ast, {std::nullopt, std::nullopt}},
-                   m_ast.targets[0].identifier);
 
     target_iteration =
         std::get<QBString>(
-            std::visit(ASTVisitEvaluate{m_ast, {std::nullopt, std::nullopt}},
+            std::visit(ASTVisitEvaluate{m_ast, {std::nullopt, std::nullopt}, state},
                        m_ast.targets[0].identifier))
             .toString();
   }
