@@ -331,12 +331,12 @@ EvaluationResult ASTVisitEvaluate::operator()(List const &list) {
       QBList obj_result_qblist = std::get<QBList>(obj_result);
       if (obj_result_qblist.holds_qbstring() && out.holds_qbstring()) {
         std::get<QBLIST_STR>(out.contents)
-            .insert(std::get<QBLIST_STR>(out.contents).begin(),
+            .insert(std::get<QBLIST_STR>(out.contents).end(),
                     std::get<QBLIST_STR>(obj_result_qblist.contents).begin(),
                     std::get<QBLIST_STR>(obj_result_qblist.contents).end());
       } else if (obj_result_qblist.holds_qbbool() && out.holds_qbbool()) {
         std::get<QBLIST_BOOL>(out.contents)
-            .insert(std::get<QBLIST_BOOL>(out.contents).begin(),
+            .insert(std::get<QBLIST_BOOL>(out.contents).end(),
                     std::get<QBLIST_BOOL>(obj_result_qblist.contents).begin(),
                     std::get<QBLIST_BOOL>(obj_result_qblist.contents).end());
 
@@ -346,6 +346,7 @@ EvaluationResult ASTVisitEvaluate::operator()(List const &list) {
       }
     }
   }
+
   return out;
 };
 
@@ -482,9 +483,6 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
         // error out here?
         continue;
       }
-      auto _debug1 = *_target;
-      auto _debug2 = _target_iteration.toString();
-
       run_target(*_target, _target_iteration.toString());
     }
   } else {
