@@ -5,7 +5,6 @@
 #include "parser.hpp"
 #include <variant>
 #include <vector>
-#include <map>
 
 struct QBString {
   Origin origin;
@@ -41,8 +40,10 @@ struct QBList {
   bool operator==(QBList const other) const;
 };
 
-using EvaluationResult =
-    std::variant<QBString, QBBool, QBList>;
+struct QBValue {
+  std::variant<QBString, QBBool, QBList> value;
+  bool immutable = true;
+};
 
 struct EvaluationContext {
   std::optional<Target> target_scope;
@@ -54,7 +55,7 @@ struct EvaluationContext {
 struct ValueInstance {
   Identifier identifier;
   EvaluationContext context;
-  EvaluationResult result;
+  QBValue result;
 };
 
 struct EvaluationState {
@@ -68,7 +69,9 @@ private:
   std::shared_ptr<EvaluationState> state;
 
   std::optional<Target> find_target(QBString identifier);
+  std::optional<Field> find_field(std::string identifier, std::optional<Target> target);
   int run_target(Target target, std::string target_iteration);
+  int solve_dependencies(QBValue dependencies);
 
 public:
   Interpreter(AST ast, Setup setup);

@@ -1,7 +1,7 @@
 # General compiler arguments
 CXX = clang++
-CXXFLAGS = -g -fstandalone-debug -O0 -Wall -Wextra -pthread -pedantic-errors -Wc++20-designator
-# CXXFLAGS = -O3 -Wall -Wextra -pthread -pedantic-errors -Wc++20-designator
+CXXFLAGS = -g -fstandalone-debug -O0 -Wall -Wextra -pedantic-errors -Wc++20-designator
+# CXXFLAGS = -O3 -Wall -Wextra -pthread -pedantic-errors -std=c++2c
 
 # Files to compile
 sources := $(wildcard src/*.cpp)

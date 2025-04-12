@@ -36,6 +36,7 @@ std::vector<unsigned char> Driver::get_config() {
     return std::vector<unsigned char>(all.begin(), all.end());
   }
   }
+  __builtin_unreachable();
 }
 
 // TODO: Perhaps also slightly messy. Refactor?
@@ -60,7 +61,7 @@ void Driver::display_error_stack(std::vector<unsigned char> config) {
   std::optional<ErrorInfo> error_info;
   LOG_STANDARD(RED << "! build stopped." << RESET);
   while ((error_info = ErrorHandler::pop_error())) {
-    if (0 <= error_info->origin.index) {
+    if (error_info->origin.line != 0) {
       std::string line_str = get_line(error_info->origin, config);
       // Todo: This is ugly, rewrite?
       std::string underline;
@@ -90,7 +91,7 @@ int Driver::run() {
     token_stream = lexer.get_token_stream(); 
     Parser parser = Parser(token_stream);
     ast = parser.parse_tokens();
-  } catch (BuildException e) {
+  } catch (BuildException &e) {
     display_error_stack(config);
     return EXIT_FAILURE;
   }
@@ -99,7 +100,7 @@ int Driver::run() {
   Interpreter interpreter(ast, m_setup);
   try {
     interpreter.build();
-  } catch (BuildException e) {
+  } catch (BuildException &e) {
     display_error_stack(config);
     return EXIT_FAILURE;
   }

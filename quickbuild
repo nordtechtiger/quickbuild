@@ -1,6 +1,6 @@
 # General compiler argumentsquick
 compiler = "clang++";
-flags = "-g -O0 -Wall -Wextra -pedantic-errors -fcolor-diagnostics";
+flags = "-g -O0 -fstandalone-debug -Wall -Wextra -pedantic-errors -Wc++20-designator";
 
 # Files to compile
 sources = "src/*.cpp";
@@ -27,7 +27,6 @@ objects as obj {
 
 # Setup the build directories
 "setup" {
-  depends = "";
   run = "mkdir -p obj",
         "mkdir -p bin";
 }
@@ -38,8 +37,8 @@ objects as obj {
 }
 
 "test" {
-  depends = thing;
-  run = "echo [foo] [bar]";
+  run = "sleep 2",
+        "sleep 2";
 }
 
 # Run
