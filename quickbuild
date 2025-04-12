@@ -14,6 +14,7 @@ install_dir = "/usr/bin";
 # Main target
 "quickbuild" {
   depends = "setup", objects, headers;
+  depends_parallel = true;
   run = "[compiler] [flags] [objects] -o [binary]";
 }
 
@@ -37,8 +38,9 @@ objects as obj {
 }
 
 "test" {
-  run = "sleep 2",
-        "sleep 2";
+  run = "sleep 2 && echo Hi from \#1!",
+        "sleep 1 && echo Hi from \#2!";
+  run_parallel = true;
 }
 
 # Run

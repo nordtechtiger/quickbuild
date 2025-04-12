@@ -3,9 +3,12 @@
 #include "format.hpp"
 #include "oslayer.hpp"
 #include <thread>
+#include <atomic>
 
-#define IDENTIFIER_DEPENDS "depends"
-#define IDENTIFIER_RUN "run"
+#define DEPENDS "depends"
+#define DEPENDS_PARALLEL "depends_parallel"
+#define RUN "run"
+#define RUN_PARALLEL "run_parallel"
 
 struct QBVisitOrigin {
   Origin operator()(QBString qbstring) { return qbstring.origin; };
@@ -491,7 +494,54 @@ std::optional<Field> Interpreter::find_field(std::string identifier,
   return std::nullopt;
 }
 
-int Interpreter::solve_dependencies(QBValue dependencies) {
+// void Interpreter::_run_target(Target target, std::string target_iteration, std::atomic<bool> &error) {
+void Interpreter::_run_target(Target target, std::string target_iteration) {
+  if (0 > run_target(target, target_iteration))
+    return;
+  // error = true;
+}
+
+int Interpreter::_solve_dependencies_parallel(QBValue dependencies) {
+  if (std::holds_alternative<QBString>(dependencies.value)) {
+    // only one dependency - no reason to use a separate thread.
+    QBString _target_iteration = std::get<QBString>(dependencies.value);
+    std::optional<Target> _target = find_target(_target_iteration);
+    if (_target) {
+      return run_target(*_target, _target_iteration.toString());
+    }
+    // check state of file?
+    return 0;
+  }
+  if (!std::holds_alternative<QBList>(dependencies.value) ||
+      !std::get<QBList>(dependencies.value).holds_qbstring()) {
+    // error out here.
+  }
+
+  std::vector<std::thread> pool;
+  std::atomic<bool> error = false;
+  QBList dependencies_list = std::get<QBList>(dependencies.value);
+    for (QBString _target_iteration :
+         std::get<QBLIST_STR>(std::get<QBList>(dependencies.value).contents)) {
+      std::optional<Target> _target = find_target(_target_iteration);
+      if (!_target) {
+        // check state of file
+        continue;
+      }
+      // pool.push_back(std::thread(&Interpreter::_run_target, this, *_target, _target_iteration.toString(), error));
+      pool.push_back(std::thread(&Interpreter::_run_target, this, *_target, _target_iteration.toString()));
+    }
+
+  for (std::thread &thread : pool) {
+    thread.join();
+  }
+
+  if (error)
+    return -1;
+  else
+    return 0;
+}
+
+int Interpreter::_solve_dependencies_sync(QBValue dependencies) {
   if (std::holds_alternative<QBString>(dependencies.value)) {
     QBString _target_iteration = std::get<QBString>(dependencies.value);
     std::optional<Target> _target = find_target(_target_iteration);
@@ -521,21 +571,38 @@ int Interpreter::solve_dependencies(QBValue dependencies) {
   }
 }
 
+int Interpreter::solve_dependencies(QBValue dependencies, bool parallel) {
+  if (parallel)
+    return _solve_dependencies_parallel(dependencies);
+  else
+    return _solve_dependencies_sync(dependencies);
+}
+
 int Interpreter::run_target(Target target, std::string target_iteration) {
   // ASTObject _identifier_depends = IDENTIFIER_DEPENDS;
-  std::optional<Field> field_depends = find_field(IDENTIFIER_DEPENDS, target);
+  std::optional<Field> field_depends = find_field(DEPENDS, target);
   if (field_depends) {
     ASTEvaluate ast_visitor = {m_ast, {target, target_iteration}, state};
     QBValue dependencies =
         std::visit(ast_visitor, field_depends->expression);
-    solve_dependencies(dependencies);
+    bool parallel = false;
+    std::optional<Field> field_depends_parallel = find_field(DEPENDS_PARALLEL, target);
+    if (field_depends_parallel) {
+      QBValue depends_parallel = std::visit(ast_visitor, field_depends_parallel->expression);
+      if (std::holds_alternative<QBBool>(depends_parallel.value))
+        parallel = std::get<QBBool>(depends_parallel.value);
+      else {
+        // error out here
+      }
+    }
+    solve_dependencies(dependencies, parallel);
   }
 
   LOG_STANDARD("  " << CYAN << "↪" << RESET << " starting "
                     << target_iteration);
 
   // todo: handle concurrent execution of tasks.
-  std::optional<Field> field_run = find_field(IDENTIFIER_RUN, target);
+  std::optional<Field> field_run = find_field(RUN, target);
   if (!field_run) {
     // throw proper error here...
   }
@@ -544,10 +611,21 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
   QBValue command_expr =
       std::visit(ast_visitor, field_run->expression);
 
+  bool parallel = false;
+  std::optional<Field> field_run_parallel = find_field(RUN_PARALLEL, target);
+  if (field_run_parallel) {
+    QBValue run_parallel = std::visit(ast_visitor, field_run_parallel->expression);
+    if (std::holds_alternative<QBBool>(run_parallel.value))
+        parallel = std::get<QBBool>(run_parallel.value);
+    else {
+      // error out here
+    }
+  }
+
   if (std::holds_alternative<QBString>(command_expr.value)) {
     // single command
     QBString command = std::get<QBString>(command_expr.value);
-    OSLayer os_layer(false, false);
+    OSLayer os_layer(parallel, false);
     os_layer.queue_command(command.toString());
     if (os_layer.execute_queue()) {
       std::cerr << "huh, something failed here too!" << std::endl;
@@ -556,7 +634,7 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
   } else if (std::holds_alternative<QBList>(command_expr.value) &&
              std::get<QBList>(command_expr.value).holds_qbstring()) {
     // multiple commands
-    OSLayer os_layer(false, false);
+    OSLayer os_layer(parallel, false);
     for (QBString command :
          std::get<QBLIST_STR>(std::get<QBList>(command_expr.value).contents)) {
       os_layer.queue_command(command.toString());
@@ -602,8 +680,7 @@ void Interpreter::build() {
   // todo: error checking is also required here in case task doesn't exist.
   if (0 == run_target(*target, target_iteration)) {
     LOG_STANDARD("➤ build completed");
-  } // else {
-  //  LOG_STANDARD(" = one or more tasks " << RED << "failed" << RESET << ";
-  //  build halted.");
-  //}
+  } else {
+    LOG_STANDARD("➤ build " << RED << "failed" << RESET);
+  }
 }

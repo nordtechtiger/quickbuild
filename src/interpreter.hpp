@@ -70,8 +70,12 @@ private:
 
   std::optional<Target> find_target(QBString identifier);
   std::optional<Field> find_field(std::string identifier, std::optional<Target> target);
+  // void _run_target(Target target, std::string target_iteration, std::atomic<bool> &error);
+  void _run_target(Target target, std::string target_iteration);
   int run_target(Target target, std::string target_iteration);
-  int solve_dependencies(QBValue dependencies);
+  int _solve_dependencies_parallel(QBValue dependencies);
+  int _solve_dependencies_sync(QBValue dependencies);
+  int solve_dependencies(QBValue dependencies, bool parallel);
 
 public:
   Interpreter(AST ast, Setup setup);

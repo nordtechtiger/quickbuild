@@ -36,7 +36,12 @@ bool OSLayer::_execute_queue_sync() {
 }
 
 void OSLayer::_execute_command(std::string command, bool silent) {
-  int code = system(command.c_str());
+  int code;
+  if (silent)
+    code = system((command + " 1>/dev/null 2>&1").c_str());
+  else
+    code = system(command.c_str());
+
   if (code != 0)
     error = true;
 }
