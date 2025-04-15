@@ -1,4 +1,4 @@
-# General compiler argumentsquick
+# General compiler arguments
 compiler = "clang++";
 flags = "-g -O0 -fstandalone-debug -Wall -Wextra -pedantic-errors -Wc++20-designator";
 

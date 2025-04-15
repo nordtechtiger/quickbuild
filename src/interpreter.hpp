@@ -3,6 +3,7 @@
 
 #include "driver.hpp"
 #include "parser.hpp"
+#include <mutex>
 #include <variant>
 #include <vector>
 
@@ -67,10 +68,16 @@ private:
   AST m_ast;
   Setup m_setup;
   std::shared_ptr<EvaluationState> state;
+  std::mutex evaluation_lock;
 
+  QBValue evaluate_ast_object(ASTObject ast_object, AST ast,
+                              EvaluationContext context,
+                              std::shared_ptr<EvaluationState> state);
   std::optional<Target> find_target(QBString identifier);
-  std::optional<Field> find_field(std::string identifier, std::optional<Target> target);
-  // void _run_target(Target target, std::string target_iteration, std::atomic<bool> &error);
+  std::optional<Field> find_field(std::string identifier,
+                                  std::optional<Target> target);
+  // void _run_target(Target target, std::string target_iteration,
+  // std::atomic<bool> &error);
   void _run_target(Target target, std::string target_iteration);
   int run_target(Target target, std::string target_iteration);
   int _solve_dependencies_parallel(QBValue dependencies);
