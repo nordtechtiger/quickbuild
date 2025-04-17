@@ -44,15 +44,15 @@ install_dir = "/usr/bin";
 # object files.
 objects_debug as obj {
   # If a header is changed, everything needs to be rebuilt
-  obj_source = obj: "obj/*.o" -> "src/*.cpp";
-  depends = obj_source, headers;
-  run = "[compiler] [flags_debug] -c [obj_source] -o [obj]";
+  obj_cpp = obj: "obj/*.o" -> "src/*.cpp";
+  depends = obj_cpp, headers;
+  run = "[compiler] [flags_debug] -c [obj_cpp] -o [obj]";
 }
 objects_release as obj {
   # If a header is changed, everything needs to be rebuilt
-  obj_source = obj: "obj/*.o" -> "src/*.cpp";
-  depends = obj_source, headers;
-  run = "[compiler] [flags_release] -c [obj_source] -o [obj]";
+  obj_cpp = obj: "obj/*.o" -> "src/*.cpp";
+  depends = obj_cpp, headers;
+  run = "[compiler] [flags_release] -c [obj_cpp] -o [obj]";
 }
 
 # binary install.
