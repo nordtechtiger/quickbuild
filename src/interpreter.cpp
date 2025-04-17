@@ -3,6 +3,7 @@
 #include "format.hpp"
 #include "oslayer.hpp"
 #include <atomic>
+#include <memory>
 #include <thread>
 
 #define DEPENDS "depends"
@@ -510,22 +511,25 @@ std::optional<Field> Interpreter::find_field(std::string identifier,
 
 // void Interpreter::_run_target(Target target, std::string target_iteration,
 // std::atomic<bool> &error) {
-void Interpreter::_run_target(Target target, std::string target_iteration) {
+void Interpreter::_run_target(Target target, std::string target_iteration,
+                              std::shared_ptr<std::atomic<bool>> error) {
   if (0 > run_target(target, target_iteration))
     return;
-  // error = true;
+  *error = true;
 }
 
-int Interpreter::_solve_dependencies_parallel(QBValue dependencies) {
+DependencyStatus
+Interpreter::_solve_dependencies_parallel(QBValue dependencies) {
   if (std::holds_alternative<QBString>(dependencies.value)) {
     // only one dependency - no reason to use a separate thread.
-    QBString _target_iteration = std::get<QBString>(dependencies.value);
-    std::optional<Target> _target = find_target(_target_iteration);
-    if (_target) {
-      return run_target(*_target, _target_iteration.toString());
+    QBString target_iteration = std::get<QBString>(dependencies.value);
+    std::optional<Target> _target = find_target(target_iteration);
+    std::optional<size_t> modified =
+        OSLayer::get_file_timestamp(target_iteration.toString());
+    if (!_target) {
+      return {0, modified};
     }
-    // check state of file?
-    return 0;
+    return {0 == run_target(*_target, target_iteration.toString()), modified};
   }
   if (!std::holds_alternative<QBList>(dependencies.value) ||
       !std::get<QBList>(dependencies.value).holds_qbstring()) {
@@ -533,19 +537,24 @@ int Interpreter::_solve_dependencies_parallel(QBValue dependencies) {
   }
 
   std::vector<std::thread> pool;
-  std::atomic<bool> error = false;
   QBList dependencies_list = std::get<QBList>(dependencies.value);
-  for (QBString _target_iteration :
+  std::shared_ptr<std::atomic<bool>> error =
+      std::make_shared<std::atomic<bool>>();
+  *error = false;
+  std::optional<size_t> modified;
+
+  for (QBString target_iteration :
        std::get<QBLIST_STR>(std::get<QBList>(dependencies.value).contents)) {
-    std::optional<Target> _target = find_target(_target_iteration);
+    std::optional<Target> _target = find_target(target_iteration);
+    std::optional<size_t> modified_i =
+        OSLayer::get_file_timestamp(target_iteration.toString());
+    if (!modified || (modified_i && modified < modified_i))
+      modified = modified_i;
     if (!_target) {
-      // check state of file
       continue;
     }
-    // pool.push_back(std::thread(&Interpreter::_run_target, this, *_target,
-    // _target_iteration.toString(), error));
     pool.push_back(std::thread(&Interpreter::_run_target, this, *_target,
-                               _target_iteration.toString()));
+                               target_iteration.toString(), error));
   }
 
   for (std::thread &thread : pool) {
@@ -553,42 +562,50 @@ int Interpreter::_solve_dependencies_parallel(QBValue dependencies) {
   }
 
   if (error)
-    return -1;
+    return {false, modified};
   else
-    return 0;
+    return {true, modified};
 }
 
-int Interpreter::_solve_dependencies_sync(QBValue dependencies) {
+DependencyStatus Interpreter::_solve_dependencies_sync(QBValue dependencies) {
   if (std::holds_alternative<QBString>(dependencies.value)) {
-    QBString _target_iteration = std::get<QBString>(dependencies.value);
-    std::optional<Target> _target = find_target(_target_iteration);
+    QBString target_iteration = std::get<QBString>(dependencies.value);
+    std::optional<Target> _target = find_target(target_iteration);
+    std::optional<size_t> modified =
+        OSLayer::get_file_timestamp(target_iteration.toString());
     if (_target) {
-      return run_target(*_target, _target_iteration.toString());
+      return {0 == run_target(*_target, target_iteration.toString()), modified};
     }
     // check state of file
-    return 0;
+    return {0, modified};
   } else if (std::holds_alternative<QBList>(dependencies.value) &&
              std::get<QBList>(dependencies.value).holds_qbstring()) {
     // todo: handle concurrent execution of tasks.
-    for (QBString _target_iteration :
+    std::optional<size_t> modified;
+    for (QBString target_iteration :
          std::get<QBLIST_STR>(std::get<QBList>(dependencies.value).contents)) {
-      std::optional<Target> _target = find_target(_target_iteration);
+      std::optional<Target> _target = find_target(target_iteration);
+      std::optional<size_t> modified_i =
+          OSLayer::get_file_timestamp(target_iteration.toString());
+      if (!modified || (modified_i && modified < modified_i))
+        modified = modified_i;
       if (!_target) {
-        // check state of file
         continue;
       }
-      if (0 > run_target(*_target, _target_iteration.toString())) {
-        return -1;
+      if (0 > run_target(*_target, target_iteration.toString())) {
+        return {false, modified};
       }
     }
-    return 0;
+    return {true, modified};
   } else {
     // error out here: dependencies are in the wrong type.
-    return -1;
+    exit(-1);
+    return {false};
   }
 }
 
-int Interpreter::solve_dependencies(QBValue dependencies, bool parallel) {
+DependencyStatus Interpreter::solve_dependencies(QBValue dependencies,
+                                                 bool parallel) {
   if (parallel)
     return _solve_dependencies_parallel(dependencies);
   else
@@ -598,6 +615,7 @@ int Interpreter::solve_dependencies(QBValue dependencies, bool parallel) {
 int Interpreter::run_target(Target target, std::string target_iteration) {
   // ASTObject _identifier_depends = IDENTIFIER_DEPENDS;
   std::optional<Field> field_depends = find_field(DEPENDS, target);
+  std::optional<size_t> dep_modified;
   if (field_depends) {
     QBValue dependencies = evaluate_ast_object(
         field_depends->expression, m_ast, {target, target_iteration}, state);
@@ -614,17 +632,25 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
         // error out here
       }
     }
-    solve_dependencies(dependencies, parallel);
+    DependencyStatus dep_stat = solve_dependencies(dependencies, parallel);
+    dep_modified = dep_stat.modified;
   }
 
-  LOG_STANDARD("  " << CYAN << "↪" << RESET << " starting "
-                    << target_iteration);
+  std::optional<size_t> this_modified =
+      OSLayer::get_file_timestamp(target_iteration);
+  if (this_modified && dep_modified && *this_modified >= *dep_modified) {
+    LOG_STANDARD("  " << "•" << RESET << " skipped " << target_iteration);
+    return 0;
+  }
 
   // todo: handle concurrent execution of tasks.
   std::optional<Field> field_run = find_field(RUN, target);
   if (!field_run) {
-    // throw proper error here...
+    return 0; // abstract task.
   }
+
+  LOG_STANDARD("  " << CYAN << "»" << RESET << " starting "
+                    << target_iteration);
 
   QBValue command_expr = evaluate_ast_object(field_run->expression, m_ast,
                                              {target, target_iteration}, state);

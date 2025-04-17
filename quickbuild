@@ -1,60 +1,75 @@
-# General compiler arguments
+# general compiler arguments.
 compiler = "clang++";
-flags = "-g -O0 -fstandalone-debug -Wall -Wextra -pedantic-errors -Wc++20-designator";
+flags_debug = "-g -O0 -fstandalone-debug -Wall -Wextra -pedantic-errors -Wc++20-designator";
+flags_release = "-O3 -fstandalone-debug -Wall -Wextra -pedantic-errors -Wc++20-designator";
 
-# Files to compile
+# files to compile.
 sources = "src/*.cpp";
 headers = "src/*.hpp";
 
-# Files to create
+# files to create.
 objects = sources: "src/*.cpp" -> "obj/*.o";
+objects_release = objects;
+objects_debug = objects;
 binary = "./bin/quickbuild";
 install_dir = "/usr/bin";
 
-# Main target
-"quickbuild" {
-  depends = "setup", objects, headers;
+# main targets.
+"quickbuild_debug" {
+  depends = "setup", "build_objs_debug";
+  run = "[compiler] [flags_debug] [objects] -o [binary]";
+}
+"quickbuild_release" {
+  depends = "setup", "build_objs_release";
+  run = "[compiler] [flags_release] [objects] -o [binary]";
+}
+
+# abstract tasks for parallel object building.
+"build_objs_debug" {
+  depends = objects_release, headers;
   depends_parallel = true;
-  run = "[compiler] [flags] [objects] -o [binary]";
+}
+"build_objs_release" {
+  depends = objects_debug, headers;
+  depends_parallel = true;
 }
 
-# Object files
-objects as obj {
-  # If a header is changed, everything needs to be rebuilt
-  obj_source = obj: "obj/*.o" -> "src/*.cpp";
-  depends = obj_source, headers;
-  run = "[compiler] [flags] -c [obj_source] -o [obj]";
-}
-
-# Setup the build directories
+# setup for the build directories.
 "setup" {
+  run_parallel = true;
   run = "mkdir -p obj",
         "mkdir -p bin";
 }
 
-# Install binary
+# object files.
+objects_debug as obj {
+  # If a header is changed, everything needs to be rebuilt
+  obj_source = obj: "obj/*.o" -> "src/*.cpp";
+  depends = obj_source, headers;
+  run = "[compiler] [flags_debug] -c [obj_source] -o [obj]";
+}
+objects_release as obj {
+  # If a header is changed, everything needs to be rebuilt
+  obj_source = obj: "obj/*.o" -> "src/*.cpp";
+  depends = obj_source, headers;
+  run = "[compiler] [flags_release] -c [obj_source] -o [obj]";
+}
+
+# binary install.
 "install" {
   run = "install -m 755 [binary] [install_dir]";
 }
 
-"test" {
-  run = "sleep 2 && echo Hi from \#1!",
-        "sleep 1 && echo Hi from \#2!";
-  run_parallel = true;
-}
-
-# Run
+# run output.
 "run" {
-  depends = "quickbuild";
+  depends = "quickbuild_debug";
   run = "[binary]";
 }
 
-# Clean
+# clean build directories.
 "clean" {
+  run_parallel = true;
   run = "rm [objects]",
         "rm [binary]";
 }
 
-"one" {
-  run = "echo hey!";
-}

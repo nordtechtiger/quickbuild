@@ -39,7 +39,7 @@ std::vector<unsigned char> Driver::get_config() {
   __builtin_unreachable();
 }
 
-// TODO: Perhaps also slightly messy. Refactor?
+// todo: perhaps also slightly messy. refactor?
 std::string get_line(Origin origin, std::vector<unsigned char> config) {
   int line_start = 0;
   int line_end = 0;

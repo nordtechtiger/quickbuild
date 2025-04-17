@@ -5,6 +5,7 @@
 #include <thread>
 #include <vector>
 #include <atomic>
+#include <optional>
 
 class OSLayer {
 private:
@@ -23,7 +24,7 @@ public:
   void queue_command(std::string command);
   bool execute_queue();
 
-  static size_t get_file_timestamp();
+  static std::optional<size_t> get_file_timestamp(std::string path);
 };
 
 #endif

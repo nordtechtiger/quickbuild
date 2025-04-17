@@ -1,5 +1,17 @@
 #include "oslayer.hpp"
-#include <iostream>
+#include <sys/stat.h>
+
+// this might incorrectly modify struct name.
+#ifdef WIN32
+#define stat _stat
+#endif
+
+// account for darwin naming conventions.
+#ifdef __APPLE__
+#define ST_CTIME st_ctimespec.tv_sec
+#else
+#define ST_CTIME st_ctime
+#endif
 
 OSLayer::OSLayer(bool parallel, bool silent) {
   this->parallel = parallel;
@@ -9,7 +21,6 @@ OSLayer::OSLayer(bool parallel, bool silent) {
 void OSLayer::queue_command(std::string command) { queue.push_back(command); }
 
 bool OSLayer::execute_queue() {
-  return false; // debug.
   if (parallel)
     return _execute_queue_parallel();
   else
@@ -19,7 +30,8 @@ bool OSLayer::execute_queue() {
 bool OSLayer::_execute_queue_parallel() {
   std::vector<std::thread> pool;
   for (std::string const &command : queue) {
-    pool.push_back(std::thread(&OSLayer::_execute_command, this, command, silent));
+    pool.push_back(
+        std::thread(&OSLayer::_execute_command, this, command, silent));
   }
   queue = {};
   for (std::thread &thread : pool) {
@@ -45,6 +57,13 @@ void OSLayer::_execute_command(std::string command, bool silent) {
 
   if (code != 0)
     error = true;
+}
+
+std::optional<size_t> OSLayer::get_file_timestamp(std::string path) {
+  struct stat t_stat;
+  if (0 > stat(path.c_str(), &t_stat))
+    return std::nullopt;
+  return t_stat.ST_CTIME;
 }
 
 // #define __SHELL_SUFFIX " 2>&1"

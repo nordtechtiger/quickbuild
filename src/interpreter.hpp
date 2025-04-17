@@ -59,8 +59,14 @@ struct ValueInstance {
   QBValue result;
 };
 
+
 struct EvaluationState {
   std::vector<ValueInstance> values;
+};
+
+struct DependencyStatus {
+  bool success;
+  std::optional<size_t> modified;
 };
 
 class Interpreter {
@@ -78,11 +84,11 @@ private:
                                   std::optional<Target> target);
   // void _run_target(Target target, std::string target_iteration,
   // std::atomic<bool> &error);
-  void _run_target(Target target, std::string target_iteration);
+  void _run_target(Target target, std::string target_iteration, std::shared_ptr<std::atomic<bool>> error);
   int run_target(Target target, std::string target_iteration);
-  int _solve_dependencies_parallel(QBValue dependencies);
-  int _solve_dependencies_sync(QBValue dependencies);
-  int solve_dependencies(QBValue dependencies, bool parallel);
+  DependencyStatus _solve_dependencies_parallel(QBValue dependencies);
+  DependencyStatus _solve_dependencies_sync(QBValue dependencies);
+  DependencyStatus solve_dependencies(QBValue dependencies, bool parallel);
 
 public:
   Interpreter(AST &ast, Setup setup);
