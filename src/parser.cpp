@@ -43,7 +43,7 @@ struct ASTVisitOrigin {
 };
 
 // initialises fields.
-Parser::Parser(std::vector<Token> token_stream) {
+Parser::Parser(std::vector<Token> token_stream) : m_ast() {
   m_token_stream = token_stream;
   m_index = 0;
   // the origin should never be read, so we can keep it as 0.
@@ -105,7 +105,7 @@ AST Parser::parse_tokens() {
     }
     ErrorHandler::push_error_throw(m_current.origin, P_NO_MATCH);
   }
-  return ast;
+  return AST(ast);
 }
 
 // attempts to parse a field.

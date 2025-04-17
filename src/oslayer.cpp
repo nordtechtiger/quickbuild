@@ -9,6 +9,7 @@ OSLayer::OSLayer(bool parallel, bool silent) {
 void OSLayer::queue_command(std::string command) { queue.push_back(command); }
 
 bool OSLayer::execute_queue() {
+  return false; // debug.
   if (parallel)
     return _execute_queue_parallel();
   else

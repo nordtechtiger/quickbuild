@@ -103,7 +103,7 @@ bool EvaluationContext::context_verify(EvaluationContext const other) const {
 
 // visitor that evaluates an AST object recursively.
 struct ASTEvaluate {
-  AST ast;
+  AST &ast;
   EvaluationContext context;
   std::shared_ptr<EvaluationState> state;
   QBValue operator()(Identifier const &identifier);
@@ -115,7 +115,7 @@ struct ASTEvaluate {
 };
 
 QBValue
-Interpreter::evaluate_ast_object(ASTObject ast_object, AST ast,
+Interpreter::evaluate_ast_object(ASTObject ast_object, AST &ast,
                                  EvaluationContext context,
                                  std::shared_ptr<EvaluationState> state) {
   evaluation_lock.lock();
@@ -468,8 +468,7 @@ QBValue ASTEvaluate::operator()(Replace const &replace) {
   return {output, immutable};
 };
 
-Interpreter::Interpreter(AST ast, Setup setup) {
-  m_ast = ast;
+Interpreter::Interpreter(AST &ast, Setup setup) : m_ast(ast) {
   m_setup = setup;
 }
 

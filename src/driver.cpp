@@ -1,7 +1,7 @@
 #include "driver.hpp"
-#include "interpreter.hpp"
 #include "error.hpp"
 #include "format.hpp"
+#include "interpreter.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 
@@ -69,7 +69,8 @@ void Driver::display_error_stack(std::vector<unsigned char> config) {
         underline += "^";
       }
       LOG_STANDARD(std::right << std::setw(5) << " " << "| ...");
-      LOG_STANDARD(std::right << std::setw(4) << error_info->origin.line << " | " << line_str);
+      LOG_STANDARD(std::right << std::setw(4) << error_info->origin.line
+                              << " | " << line_str);
       LOG_STANDARD(std::right << std::setw(5) << " " << "| " << underline);
     }
     LOG_STANDARD(RED << "! error: " << error_info->message);
@@ -80,26 +81,24 @@ void Driver::display_error_stack(std::vector<unsigned char> config) {
 int Driver::run() {
   LOG_STANDARD(BOLD << "[ quickbuild dev v0.7.0 ]" << RESET);
 
-  // compile the config.
+  // config needs to be fetched out of scope so that
+  // it can be read when unwinding the error stack.
   LOG_STANDARD("⧗ compiling config...");
   std::vector<unsigned char> config = get_config();
 
-  Lexer lexer(config);
-  std::vector<Token> token_stream;
-  AST ast;
   try {
-    token_stream = lexer.get_token_stream(); 
-    Parser parser = Parser(token_stream);
-    ast = parser.parse_tokens();
-  } catch (BuildException &e) {
-    display_error_stack(config);
-    return EXIT_FAILURE;
-  }
+    // build script.
+    Lexer lexer(config);
+    std::vector<Token> token_stream;
+    token_stream = lexer.get_token_stream();
 
-  // build target.
-  Interpreter interpreter(ast, m_setup);
-  try {
+    Parser parser = Parser(token_stream);
+    AST ast(parser.parse_tokens());
+
+    // build target.
+    Interpreter interpreter(ast, m_setup);
     interpreter.build();
+
   } catch (BuildException &e) {
     display_error_stack(config);
     return EXIT_FAILURE;
@@ -107,4 +106,3 @@ int Driver::run() {
 
   return EXIT_SUCCESS;
 }
-

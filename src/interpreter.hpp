@@ -65,12 +65,12 @@ struct EvaluationState {
 
 class Interpreter {
 private:
-  AST m_ast;
+  AST &m_ast;
   Setup m_setup;
   std::shared_ptr<EvaluationState> state;
   std::mutex evaluation_lock;
 
-  QBValue evaluate_ast_object(ASTObject ast_object, AST ast,
+  QBValue evaluate_ast_object(ASTObject ast_object, AST &ast,
                               EvaluationContext context,
                               std::shared_ptr<EvaluationState> state);
   std::optional<Target> find_target(QBString identifier);
@@ -85,7 +85,7 @@ private:
   int solve_dependencies(QBValue dependencies, bool parallel);
 
 public:
-  Interpreter(AST ast, Setup setup);
+  Interpreter(AST &ast, Setup setup);
   void build();
 };
 

@@ -12,8 +12,8 @@ struct FormattedLiteral;
 struct List;
 struct Boolean;
 struct Replace;
-using ASTObject = std::variant<Identifier, Literal, FormattedLiteral, List, Boolean,
-                               Replace>;
+using ASTObject =
+    std::variant<Identifier, Literal, FormattedLiteral, List, Boolean, Replace>;
 
 // Logic: Expressions
 struct Identifier {
@@ -43,7 +43,7 @@ struct Boolean {
 struct List {
   std::vector<ASTObject> contents;
   Origin origin;
-  
+
   bool operator==(List const &other) const;
 };
 struct Replace {
@@ -81,6 +81,9 @@ struct Target {
 struct AST {
   std::vector<Field> fields;
   std::vector<Target> targets;
+  // delete the copy constructor to emphasize performance.
+  explicit AST(AST const &) = default;
+  AST() = default;
 };
 
 // Work class
