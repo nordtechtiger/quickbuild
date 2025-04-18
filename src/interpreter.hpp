@@ -82,8 +82,7 @@ private:
   std::optional<Target> find_target(QBString identifier);
   std::optional<Field> find_field(std::string identifier,
                                   std::optional<Target> target);
-  // void _run_target(Target target, std::string target_iteration,
-  // std::atomic<bool> &error);
+  QBValue evaluate_field(std::string identifier, EvaluationContext context, std::shared_ptr<EvaluationState> state, std::optional<QBValue> default_value);
   void _run_target(Target target, std::string target_iteration, std::shared_ptr<std::atomic<bool>> error);
   int run_target(Target target, std::string target_iteration);
   DependencyStatus _solve_dependencies_parallel(QBValue dependencies);

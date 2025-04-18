@@ -3,6 +3,7 @@
 #include "format.hpp"
 #include "oslayer.hpp"
 #include <atomic>
+#include <filesystem>
 #include <memory>
 #include <thread>
 
@@ -305,7 +306,7 @@ QBValue ASTEvaluate::operator()(List const &list) {
       out.contents = std::vector<QBBool>();
   }
 
-  // add the early evaluated first element
+  // add the early evaluated first element.
   if (std::holds_alternative<QBString>(_obj_result.value)) {
     std::get<QBLIST_STR>(out.contents)
         .push_back(std::get<QBString>(_obj_result.value));
@@ -509,8 +510,20 @@ std::optional<Field> Interpreter::find_field(std::string identifier,
   return std::nullopt;
 }
 
-// void Interpreter::_run_target(Target target, std::string target_iteration,
-// std::atomic<bool> &error) {
+QBValue Interpreter::evaluate_field(std::string identifier,
+                                    EvaluationContext context,
+                                    std::shared_ptr<EvaluationState> state,
+                                    std::optional<QBValue> default_value) {
+  std::optional<Field> field = find_field(identifier, context.target_scope);
+  if (!field) {
+    if (!default_value) {
+      // todo: handle error ErrorHandler::push_error_throw();
+    }
+    return *default_value;
+  }
+  return evaluate_ast_object(field->expression, m_ast, context, state);
+}
+
 void Interpreter::_run_target(Target target, std::string target_iteration,
                               std::shared_ptr<std::atomic<bool>> error) {
   if (0 > run_target(target, target_iteration))
@@ -533,7 +546,7 @@ Interpreter::_solve_dependencies_parallel(QBValue dependencies) {
   }
   if (!std::holds_alternative<QBList>(dependencies.value) ||
       !std::get<QBList>(dependencies.value).holds_qbstring()) {
-    // error out here.
+    // todo: error out here.
   }
 
   std::vector<std::thread> pool;
@@ -576,7 +589,6 @@ DependencyStatus Interpreter::_solve_dependencies_sync(QBValue dependencies) {
     if (_target) {
       return {0 == run_target(*_target, target_iteration.toString()), modified};
     }
-    // check state of file
     return {0, modified};
   } else if (std::holds_alternative<QBList>(dependencies.value) &&
              std::get<QBList>(dependencies.value).holds_qbstring()) {
@@ -598,7 +610,7 @@ DependencyStatus Interpreter::_solve_dependencies_sync(QBValue dependencies) {
     }
     return {true, modified};
   } else {
-    // error out here: dependencies are in the wrong type.
+    // todo: error out here: dependencies are in the wrong type.
     exit(-1);
     return {false};
   }
@@ -613,7 +625,6 @@ DependencyStatus Interpreter::solve_dependencies(QBValue dependencies,
 }
 
 int Interpreter::run_target(Target target, std::string target_iteration) {
-  // ASTObject _identifier_depends = IDENTIFIER_DEPENDS;
   std::optional<Field> field_depends = find_field(DEPENDS, target);
   std::optional<size_t> dep_modified;
   if (field_depends) {
@@ -629,7 +640,7 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
       if (std::holds_alternative<QBBool>(depends_parallel.value))
         parallel = std::get<QBBool>(depends_parallel.value);
       else {
-        // error out here
+        // todo: error out here
       }
     }
     DependencyStatus dep_stat = solve_dependencies(dependencies, parallel);
@@ -664,7 +675,7 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
     if (std::holds_alternative<QBBool>(run_parallel.value))
       parallel = std::get<QBBool>(run_parallel.value);
     else {
-      // error out here
+      // todo: error out here
     }
   }
 
@@ -690,7 +701,7 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
       exit(-1);
     }
   } else {
-    // error out here: run is in the wrong type
+    // todo: error out here: run is in the wrong type
   }
 
   LOG_STANDARD("  " << GREEN << "✓" << RESET << " finished "
@@ -711,7 +722,7 @@ void Interpreter::build() {
     target = find_target(QBString(*m_setup.target, ORIGIN_UNDEFINED));
     target_iteration = *m_setup.target;
     if (!target) {
-      // error out here.
+      // todo: error out here.
     }
   } else {
     target = m_ast.targets[0];
@@ -724,7 +735,7 @@ void Interpreter::build() {
             .toString();
   }
 
-  LOG_STANDARD("⧗ building " << GREEN << target_iteration << RESET);
+  LOG_STANDARD("⧗ building " << CYAN << target_iteration << RESET);
   // todo: error checking is also required here in case task doesn't exist.
   if (0 == run_target(*target, target_iteration)) {
     LOG_STANDARD("➤ build completed");

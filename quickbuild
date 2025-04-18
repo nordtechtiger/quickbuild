@@ -43,13 +43,13 @@ install_dir = "/usr/bin";
 
 # object files.
 objects_debug as obj {
-  # If a header is changed, everything needs to be rebuilt
+  # if a header is changed, everything needs to be rebuilt.
   obj_cpp = obj: "obj/*.o" -> "src/*.cpp";
   depends = obj_cpp, headers;
   run = "[compiler] [flags_debug] -c [obj_cpp] -o [obj]";
 }
 objects_release as obj {
-  # If a header is changed, everything needs to be rebuilt
+  # if a header is changed, everything needs to be rebuilt.
   obj_cpp = obj: "obj/*.o" -> "src/*.cpp";
   depends = obj_cpp, headers;
   run = "[compiler] [flags_release] -c [obj_cpp] -o [obj]";
@@ -68,8 +68,9 @@ objects_release as obj {
 
 # clean build directories.
 "clean" {
-  run_parallel = true;
   run = "rm [objects]",
-        "rm [binary]";
+        "rm [binary]",
+        "rmdir obj",
+        "rmdir bin";
 }
 
