@@ -5,24 +5,22 @@ std::vector<ErrorInfo> ErrorHandler::error_stack = {};
 
 // push an error onto the stack so that it can be traced later.
 void ErrorHandler::push_error(Origin origin, ErrorCode error_code) {
-  auto [message, description] = _ERROR_LOOKUP_TABLE.at(error_code);
+  std::string message = _ERROR_LOOKUP_TABLE.at(error_code);
   ErrorInfo error_info = {
       origin,
       error_code,
       message,
-      description,
   };
   error_stack.push_back(error_info);
 }
 
 // push an error and abandon ship.
 void ErrorHandler::push_error_throw(Origin origin, ErrorCode error_code) {
-  auto [message, description] = _ERROR_LOOKUP_TABLE.at(error_code);
+  std::string message = _ERROR_LOOKUP_TABLE.at(error_code);
   ErrorInfo error_info = {
       origin,
       error_code,
       message,
-      description,
   };
   error_stack.push_back(error_info);
   throw BuildException(message.c_str());

@@ -4,7 +4,7 @@
 #include <memory>
 
 #define ITERATOR_INTERNAL                                                      \
-  Identifier { "__target__", ORIGIN_UNDEFINED }
+  Identifier { "__target__", InternalNode{} }
 
 // equality operators for AST objects.
 bool Identifier::operator==(Identifier const &other) const {
@@ -12,22 +12,21 @@ bool Identifier::operator==(Identifier const &other) const {
   return this->content == other.content;
 }
 bool Literal::operator==(Literal const &other) const {
-  return this->content == other.content && this->origin == other.origin;
+  return this->content == other.content;
 }
 bool FormattedLiteral::operator==(FormattedLiteral const &other) const {
-  return this->contents == other.contents && this->origin == other.origin;
+  return this->contents == other.contents;
 }
 bool Boolean::operator==(Boolean const &other) const {
-  return this->content == other.content && this->origin == other.origin;
+  return this->content == other.content;
 }
 bool Replace::operator==(Replace const &other) const {
   return this->identifier == other.identifier &&
          *(this->original) == *(other.original) &&
-         *(this->replacement) == *(other.replacement) &&
-         this->origin == other.origin;
+         *(this->replacement) == *(other.replacement);
 }
 bool List::operator==(List const &other) const {
-  return this->contents == other.contents && this->origin == other.origin;
+  return this->contents == other.contents;
 }
 
 // visitor that simply returns the origin of an AST object.
@@ -46,13 +45,13 @@ struct ASTVisitOrigin {
 Parser::Parser(std::vector<Token> token_stream) : m_ast() {
   m_token_stream = token_stream;
   m_index = 0;
-  // the origin should never be read, so we can keep it as 0.
+  // the origin should never be read, so we can keep this as an internalnode.
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
-                  : Token{TokenType::Invalid, "__invalid__", ORIGIN_UNDEFINED};
+                  : Token{TokenType::Invalid, "__invalid__", InternalNode{}};
   m_next = (m_token_stream.size() >= m_index + 2)
                ? m_token_stream[m_index + 1]
-               : Token{TokenType::Invalid, "__invalid__", ORIGIN_UNDEFINED};
+               : Token{TokenType::Invalid, "__invalid__", InternalNode{}};
 }
 
 // token checking, no side effects.
@@ -75,10 +74,10 @@ Token Parser::consume_token(int n) {
   // the origin should never be read, so we can keep it as 0.
   m_current = (m_token_stream.size() >= m_index + 1)
                   ? m_token_stream[m_index]
-                  : Token{TokenType::Invalid, "__invalid__", ORIGIN_UNDEFINED};
+                  : Token{TokenType::Invalid, "__invalid__", InternalNode{}};
   m_next = (m_token_stream.size() >= m_index + 2)
                ? m_token_stream[m_index + 1]
-               : Token{TokenType::Invalid, "__invalid__", ORIGIN_UNDEFINED};
+               : Token{TokenType::Invalid, "__invalid__", InternalNode{}};
   return m_previous;
 }
 
@@ -179,11 +178,11 @@ std::optional<ASTObject> Parser::parse_ast_object() { return parse_list(); }
 // recursive descent parser, see grammar.
 std::optional<ASTObject> Parser::parse_list() {
   List list;
-  list.origin = ORIGIN_UNDEFINED;
+  list.origin = InternalNode {};
   std::optional<ASTObject> ast_obj;
   ast_obj = parse_replace();
   while (ast_obj && consume_if(TokenType::Separator)) {
-    if (list.origin == ORIGIN_UNDEFINED)
+    if (std::holds_alternative<InternalNode>(list.origin))
       list.origin = std::visit(ASTVisitOrigin{}, *ast_obj);
     list.contents.push_back(*ast_obj);
     ast_obj = parse_ast_object();
@@ -196,7 +195,7 @@ std::optional<ASTObject> Parser::parse_list() {
     return std::nullopt;
 
   list.contents.push_back(*ast_obj);
-  if (list.origin == ORIGIN_UNDEFINED)
+  if (std::holds_alternative<InternalNode>(list.origin))
     list.origin = std::visit(ASTVisitOrigin{}, *ast_obj);
 
   if (list.contents.size() == 1)

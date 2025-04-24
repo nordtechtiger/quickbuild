@@ -60,14 +60,16 @@ enum class TokenType {
 };
 
 // small struct for tracking the origin of symbols.
-struct Origin {
+struct InputStreamPos{
   size_t index;       // ASCII stream origin
   size_t line;        // Line number
   /* size_t length */ // Length of symbol for e.g. highlighting
-  bool operator==(Origin const &other) const {
+  bool operator==(InputStreamPos const &other) const {
     return this->index == other.index && this->line == other.line;
   }
 };
+struct InternalNode{};
+using Origin = std::variant<InputStreamPos, InternalNode>;
 
 struct Token;
 using TokenContext =

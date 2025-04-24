@@ -35,7 +35,7 @@ unsigned char Lexer::consume_byte(int n) {
 }
 
 // turn the current state into an origin
-Origin Lexer::get_local_origin() { return Origin{m_index, _m_line}; }
+Origin Lexer::get_local_origin() { return InputStreamPos{m_index, _m_line}; }
 
 // gets next token from stream
 std::vector<Token> Lexer::get_token_stream() {

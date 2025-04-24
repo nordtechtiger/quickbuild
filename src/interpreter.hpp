@@ -59,7 +59,6 @@ struct ValueInstance {
   QBValue result;
 };
 
-
 struct EvaluationState {
   std::vector<ValueInstance> values;
 };
@@ -82,8 +81,15 @@ private:
   std::optional<Target> find_target(QBString identifier);
   std::optional<Field> find_field(std::string identifier,
                                   std::optional<Target> target);
-  QBValue evaluate_field(std::string identifier, EvaluationContext context, std::shared_ptr<EvaluationState> state, std::optional<QBValue> default_value);
-  void _run_target(Target target, std::string target_iteration, std::shared_ptr<std::atomic<bool>> error);
+  std::optional<QBValue>
+  evaluate_field_optional(std::string identifier, EvaluationContext context,
+                          std::shared_ptr<EvaluationState> state);
+  QBValue evaluate_field_default(std::string identifier,
+                                 EvaluationContext context,
+                                 std::shared_ptr<EvaluationState> state,
+                                 std::optional<QBValue> default_value);
+  void _run_target(Target target, std::string target_iteration,
+                   std::shared_ptr<std::atomic<bool>> error);
   int run_target(Target target, std::string target_iteration);
   DependencyStatus _solve_dependencies_parallel(QBValue dependencies);
   DependencyStatus _solve_dependencies_sync(QBValue dependencies);

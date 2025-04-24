@@ -63,7 +63,7 @@ struct Field {
 
   auto operator==(Field const &other) const {
     return this->identifier == other.identifier &&
-           this->expression == other.expression && this->origin == other.origin;
+           this->expression == other.expression;
   }
 };
 struct Target {
@@ -74,8 +74,7 @@ struct Target {
 
   auto operator==(Target const &other) const {
     return this->identifier == other.identifier &&
-           this->iterator == other.iterator && this->fields == other.fields &&
-           this->origin == other.origin;
+           this->iterator == other.iterator && this->fields == other.fields;
   }
 };
 struct AST {

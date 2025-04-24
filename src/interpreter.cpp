@@ -20,7 +20,7 @@ struct QBVisitOrigin {
 
 // constructors & casts for internal data types.
 QBString::QBString() {
-  this->origin = ORIGIN_UNDEFINED;
+  this->origin = InternalNode{};
   this->content = "";
 }
 QBString::QBString(Token token) {
@@ -40,7 +40,7 @@ bool QBString::operator==(QBString const other) const {
 }
 
 QBBool::QBBool() {
-  this->origin = ORIGIN_UNDEFINED;
+  this->origin = InternalNode{};
   this->content = false;
 }
 QBBool::QBBool(Token token) {
@@ -59,7 +59,7 @@ bool QBBool::operator==(QBBool const other) const {
 QBBool::operator bool() const { return (this->content); };
 
 QBList::QBList() {
-  this->origin = ORIGIN_UNDEFINED;
+  this->origin = InternalNode{};
   this->contents = std::vector<QBString>();
 }
 QBList::QBList(
@@ -68,7 +68,7 @@ QBList::QBList(
     std::vector<QBString> contents_qbstring =
         std::get<std::vector<QBString>>(contents);
     if (contents_qbstring.size() <= 0)
-      ErrorHandler::push_error_throw(ORIGIN_UNDEFINED,
+      ErrorHandler::push_error_throw(InternalNode{},
                                      I_CONSTRUCTOR_EXPECTED_NONEMPTY);
     this->contents = contents_qbstring;
     this->origin = contents_qbstring[0].origin;
@@ -76,7 +76,7 @@ QBList::QBList(
     std::vector<QBBool> contents_qbbool =
         std::get<std::vector<QBBool>>(contents);
     if (contents_qbbool.size() <= 0)
-      ErrorHandler::push_error_throw(ORIGIN_UNDEFINED,
+      ErrorHandler::push_error_throw(InternalNode{},
                                      I_CONSTRUCTOR_EXPECTED_NONEMPTY);
     this->contents = contents_qbbool;
     this->origin = contents_qbbool[0].origin;
@@ -229,14 +229,14 @@ QBValue ASTEvaluate::operator()(FormattedLiteral const &formatted_literal) {
     QBValue obj_result = std::visit(ast_visitor, ast_obj);
     // append a string.
     if (std::holds_alternative<QBString>(obj_result.value)) {
-      if (out.origin == ORIGIN_UNDEFINED)
+      if (std::holds_alternative<InternalNode>(out.origin))
         out.origin = std::get<QBString>(obj_result.value).origin;
       out.content += std::get<QBString>(obj_result.value).content;
       immutable &= obj_result.immutable;
     }
     // append a bool.
     else if (std::holds_alternative<QBBool>(obj_result.value)) {
-      if (out.origin == ORIGIN_UNDEFINED)
+      if (std::holds_alternative<InternalNode>(out.origin))
         out.origin = std::get<QBBool>(obj_result.value).origin;
       out.content += (std::get<QBBool>(obj_result.value) ? "true" : "false");
       immutable &= obj_result.immutable;
@@ -248,7 +248,7 @@ QBValue ASTEvaluate::operator()(FormattedLiteral const &formatted_literal) {
       QBList obj_result_list = std::get<QBList>(obj_result.value);
       for (size_t i = 0;
            i < std::get<QBLIST_STR>(obj_result_list.contents).size(); i++) {
-        if (out.origin == ORIGIN_UNDEFINED)
+        if (std::holds_alternative<InternalNode>(out.origin))
           out.origin = std::get<QBLIST_STR>(obj_result_list.contents)[i].origin;
         out.content +=
             std::get<QBLIST_STR>(obj_result_list.contents)[i].content;
@@ -264,7 +264,7 @@ QBValue ASTEvaluate::operator()(FormattedLiteral const &formatted_literal) {
       QBList obj_result_list = std::get<QBList>(obj_result.value);
       for (size_t i = 0;
            i < std::get<QBLIST_BOOL>(obj_result_list.contents).size(); i++) {
-        if (out.origin == ORIGIN_UNDEFINED)
+        if (std::holds_alternative<InternalNode>(out.origin))
           out.origin =
               std::get<QBLIST_BOOL>(obj_result_list.contents)[i].origin;
         out.content +=
@@ -285,7 +285,7 @@ QBValue ASTEvaluate::operator()(FormattedLiteral const &formatted_literal) {
 
 QBValue ASTEvaluate::operator()(List const &list) {
   if (list.contents.size() <= 0)
-    ErrorHandler::push_error_throw(ORIGIN_UNDEFINED,
+    ErrorHandler::push_error_throw(InternalNode{},
                                    I_EVALUATE_EXPECTED_NONEMPTY);
 
   QBList out;
@@ -510,7 +510,8 @@ std::optional<Field> Interpreter::find_field(std::string identifier,
   return std::nullopt;
 }
 
-QBValue Interpreter::evaluate_field(std::string identifier,
+QBValue
+Interpreter::evaluate_field_default(std::string identifier,
                                     EvaluationContext context,
                                     std::shared_ptr<EvaluationState> state,
                                     std::optional<QBValue> default_value) {
@@ -521,6 +522,16 @@ QBValue Interpreter::evaluate_field(std::string identifier,
     }
     return *default_value;
   }
+  return evaluate_ast_object(field->expression, m_ast, context, state);
+}
+
+std::optional<QBValue>
+Interpreter::evaluate_field_optional(std::string identifier,
+                                     EvaluationContext context,
+                                     std::shared_ptr<EvaluationState> state) {
+  std::optional<Field> field = find_field(identifier, context.target_scope);
+  if (!field)
+    return std::nullopt;
   return evaluate_ast_object(field->expression, m_ast, context, state);
 }
 
@@ -625,28 +636,24 @@ DependencyStatus Interpreter::solve_dependencies(QBValue dependencies,
 }
 
 int Interpreter::run_target(Target target, std::string target_iteration) {
-  std::optional<Field> field_depends = find_field(DEPENDS, target);
+  // solve dependencies.
+  std::optional<QBValue> dependencies =
+      evaluate_field_optional(DEPENDS, {target, target_iteration}, this->state);
   std::optional<size_t> dep_modified;
-  if (field_depends) {
-    QBValue dependencies = evaluate_ast_object(
-        field_depends->expression, m_ast, {target, target_iteration}, state);
-    bool parallel = false;
-    std::optional<Field> field_depends_parallel =
-        find_field(DEPENDS_PARALLEL, target);
-    if (field_depends_parallel) {
-      QBValue depends_parallel =
-          evaluate_ast_object(field_depends_parallel->expression, m_ast,
-                              {target, target_iteration}, state);
-      if (std::holds_alternative<QBBool>(depends_parallel.value))
-        parallel = std::get<QBBool>(depends_parallel.value);
-      else {
-        // todo: error out here
-      }
+  if (dependencies) {
+    QBValue parallel_default = {QBBool(false, InternalNode{}), true};
+    QBValue parallel =
+        evaluate_field_default(DEPENDS_PARALLEL, {target, target_iteration},
+                               this->state, parallel_default);
+    if (!std::holds_alternative<QBBool>(parallel.value)) {
+      // todo: error out here.
     }
-    DependencyStatus dep_stat = solve_dependencies(dependencies, parallel);
+    DependencyStatus dep_stat =
+        solve_dependencies(*dependencies, std::get<QBBool>(parallel.value));
     dep_modified = dep_stat.modified;
   }
 
+  // check for changes.
   std::optional<size_t> this_modified =
       OSLayer::get_file_timestamp(target_iteration);
   if (this_modified && dep_modified && *this_modified >= *dep_modified) {
@@ -654,54 +661,47 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
     return 0;
   }
 
-  // todo: handle concurrent execution of tasks.
-  std::optional<Field> field_run = find_field(RUN, target);
-  if (!field_run) {
+  // execution related fields.
+  std::optional<QBValue> command_expr =
+      evaluate_field_optional(RUN, {target, target_iteration}, this->state);
+  if (!command_expr) {
     return 0; // abstract task.
   }
-
-  LOG_STANDARD("  " << CYAN << "»" << RESET << " starting "
-                    << target_iteration);
-
-  QBValue command_expr = evaluate_ast_object(field_run->expression, m_ast,
-                                             {target, target_iteration}, state);
-
-  bool parallel = false;
-  std::optional<Field> field_run_parallel = find_field(RUN_PARALLEL, target);
-  if (field_run_parallel) {
-    QBValue run_parallel =
-        evaluate_ast_object(field_run_parallel->expression, m_ast,
-                            {target, target_iteration}, state);
-    if (std::holds_alternative<QBBool>(run_parallel.value))
-      parallel = std::get<QBBool>(run_parallel.value);
-    else {
-      // todo: error out here
-    }
+  QBValue run_parallel_default = {QBBool(false, InternalNode{}), true};
+  QBValue run_parallel =
+      evaluate_field_default(RUN_PARALLEL, {target, target_iteration},
+                             this->state, run_parallel_default);
+  if (!std::holds_alternative<QBBool>(run_parallel.value)) {
+    // todo: error out here.
+  }
+  if (!std::holds_alternative<QBString>(command_expr->value) &&
+      (!std::holds_alternative<QBList>(command_expr->value) &&
+       std::get<QBList>(command_expr->value).holds_qbstring())) {
+    // todo: error out here.
   }
 
-  if (std::holds_alternative<QBString>(command_expr.value)) {
+  // execute task.
+  LOG_STANDARD("  " << CYAN << "»" << RESET << " starting "
+                    << target_iteration);
+  if (std::holds_alternative<QBString>(command_expr->value)) {
     // single command
-    QBString command = std::get<QBString>(command_expr.value);
-    OSLayer os_layer(parallel, false);
+    QBString command = std::get<QBString>(command_expr->value);
+    OSLayer os_layer(std::get<QBBool>(run_parallel.value), false);
     os_layer.queue_command(command.toString());
     if (os_layer.execute_queue()) {
-      std::cerr << "huh, something failed here too!" << std::endl;
-      exit(-1);
+      // todo: error out here.
     }
-  } else if (std::holds_alternative<QBList>(command_expr.value) &&
-             std::get<QBList>(command_expr.value).holds_qbstring()) {
+  } else if (std::holds_alternative<QBList>(command_expr->value) &&
+             std::get<QBList>(command_expr->value).holds_qbstring()) {
     // multiple commands
-    OSLayer os_layer(parallel, false);
+    OSLayer os_layer(std::get<QBBool>(run_parallel.value), false);
     for (QBString command :
-         std::get<QBLIST_STR>(std::get<QBList>(command_expr.value).contents)) {
+         std::get<QBLIST_STR>(std::get<QBList>(command_expr->value).contents)) {
       os_layer.queue_command(command.toString());
     }
     if (os_layer.execute_queue()) {
-      std::cerr << "something went wrong here!" << std::endl;
-      exit(-1);
+      // todo: erroro ut here.
     }
-  } else {
-    // todo: error out here: run is in the wrong type
   }
 
   LOG_STANDARD("  " << GREEN << "✓" << RESET << " finished "
@@ -715,11 +715,11 @@ void Interpreter::build() {
 
   // find the target.
   if (m_ast.targets.empty())
-    ErrorHandler::push_error_throw(ORIGIN_UNDEFINED, I_NO_TARGETS);
+    ErrorHandler::push_error_throw(InternalNode{}, I_NO_TARGETS);
   std::optional<Target> target;
   std::string target_iteration;
   if (m_setup.target) {
-    target = find_target(QBString(*m_setup.target, ORIGIN_UNDEFINED));
+    target = find_target(QBString(*m_setup.target, InternalNode{}));
     target_iteration = *m_setup.target;
     if (!target) {
       // todo: error out here.
