@@ -5,9 +5,6 @@
 #define CTX_STR 0
 #define CTX_VEC 1
 
-// todo: this should probably be removed.
-#define ORIGIN_UNDEFINED Origin{0, 0}
-
 // macro madness - this just generates the appropriate function signatures,
 // along with a vector of lambda functions calling every rule.
 // [note]: This does __not__ automatically match tokens inside of formatted
@@ -69,7 +66,8 @@ struct InputStreamPos{
   }
 };
 struct InternalNode{};
-using Origin = std::variant<InputStreamPos, InternalNode>;
+using ObjectReference = std::string;
+using Origin = std::variant<InputStreamPos, ObjectReference, InternalNode>;
 
 struct Token;
 using TokenContext =

@@ -4,7 +4,9 @@
 #include <memory>
 
 #define ITERATOR_INTERNAL                                                      \
-  Identifier { "__target__", InternalNode{} }
+  Identifier {                                                                 \
+    "__target__", InternalNode {}                                              \
+  }
 
 // equality operators for AST objects.
 bool Identifier::operator==(Identifier const &other) const {
@@ -178,7 +180,7 @@ std::optional<ASTObject> Parser::parse_ast_object() { return parse_list(); }
 // recursive descent parser, see grammar.
 std::optional<ASTObject> Parser::parse_list() {
   List list;
-  list.origin = InternalNode {};
+  list.origin = InternalNode{};
   std::optional<ASTObject> ast_obj;
   ast_obj = parse_replace();
   while (ast_obj && consume_if(TokenType::Separator)) {

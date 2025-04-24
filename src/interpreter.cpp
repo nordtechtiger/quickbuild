@@ -518,7 +518,7 @@ Interpreter::evaluate_field_default(std::string identifier,
   std::optional<Field> field = find_field(identifier, context.target_scope);
   if (!field) {
     if (!default_value) {
-      // todo: handle error ErrorHandler::push_error_throw();
+      ErrorHandler::push_error_throw(ObjectReference(identifier), I_NO_FIELD_NOR_DEFAULT);
     }
     return *default_value;
   }
@@ -551,13 +551,14 @@ Interpreter::_solve_dependencies_parallel(QBValue dependencies) {
     std::optional<size_t> modified =
         OSLayer::get_file_timestamp(target_iteration.toString());
     if (!_target) {
-      return {0, modified};
+      return {true, modified};
     }
     return {0 == run_target(*_target, target_iteration.toString()), modified};
   }
   if (!std::holds_alternative<QBList>(dependencies.value) ||
       !std::get<QBList>(dependencies.value).holds_qbstring()) {
-    // todo: error out here.
+    ErrorHandler::push_error_throw(std::visit(QBVisitOrigin{}, dependencies.value), I_TYPE_DEPENDENCIES);
+    __builtin_unreachable();
   }
 
   std::vector<std::thread> pool;
@@ -600,10 +601,9 @@ DependencyStatus Interpreter::_solve_dependencies_sync(QBValue dependencies) {
     if (_target) {
       return {0 == run_target(*_target, target_iteration.toString()), modified};
     }
-    return {0, modified};
+    return {true, modified};
   } else if (std::holds_alternative<QBList>(dependencies.value) &&
              std::get<QBList>(dependencies.value).holds_qbstring()) {
-    // todo: handle concurrent execution of tasks.
     std::optional<size_t> modified;
     for (QBString target_iteration :
          std::get<QBLIST_STR>(std::get<QBList>(dependencies.value).contents)) {
@@ -621,9 +621,8 @@ DependencyStatus Interpreter::_solve_dependencies_sync(QBValue dependencies) {
     }
     return {true, modified};
   } else {
-    // todo: error out here: dependencies are in the wrong type.
-    exit(-1);
-    return {false};
+    ErrorHandler::push_error_throw(std::visit(QBVisitOrigin{}, dependencies.value), I_TYPE_DEPENDENCIES);
+    __builtin_unreachable();
   }
 }
 
@@ -646,11 +645,13 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
         evaluate_field_default(DEPENDS_PARALLEL, {target, target_iteration},
                                this->state, parallel_default);
     if (!std::holds_alternative<QBBool>(parallel.value)) {
-      // todo: error out here.
+      ErrorHandler::push_error_throw(std::visit(QBVisitOrigin{}, parallel.value), I_TYPE_PARALLEL);
     }
     DependencyStatus dep_stat =
         solve_dependencies(*dependencies, std::get<QBBool>(parallel.value));
     dep_modified = dep_stat.modified;
+    if (!dep_stat.success)
+      return -1;
   }
 
   // check for changes.
@@ -672,12 +673,12 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
       evaluate_field_default(RUN_PARALLEL, {target, target_iteration},
                              this->state, run_parallel_default);
   if (!std::holds_alternative<QBBool>(run_parallel.value)) {
-    // todo: error out here.
+    ErrorHandler::push_error_throw(std::visit(QBVisitOrigin{}, run_parallel.value), I_TYPE_PARALLEL);
   }
   if (!std::holds_alternative<QBString>(command_expr->value) &&
       (!std::holds_alternative<QBList>(command_expr->value) &&
        std::get<QBList>(command_expr->value).holds_qbstring())) {
-    // todo: error out here.
+    ErrorHandler::push_error_throw(std::visit(QBVisitOrigin{}, command_expr->value), I_TYPE_RUN);
   }
 
   // execute task.
@@ -689,7 +690,8 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
     OSLayer os_layer(std::get<QBBool>(run_parallel.value), false);
     os_layer.queue_command(command.toString());
     if (os_layer.execute_queue()) {
-      // todo: error out here.
+      ErrorHandler::push_error(target.origin, I_NONZERO_PROCESS);
+      return -1;
     }
   } else if (std::holds_alternative<QBList>(command_expr->value) &&
              std::get<QBList>(command_expr->value).holds_qbstring()) {
@@ -700,7 +702,8 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
       os_layer.queue_command(command.toString());
     }
     if (os_layer.execute_queue()) {
-      // todo: erroro ut here.
+      ErrorHandler::push_error(target.origin, I_NONZERO_PROCESS);
+      return -1;
     }
   }
 
@@ -722,17 +725,22 @@ void Interpreter::build() {
     target = find_target(QBString(*m_setup.target, InternalNode{}));
     target_iteration = *m_setup.target;
     if (!target) {
-      // todo: error out here.
+      ErrorHandler::push_error_throw(ObjectReference(*m_setup.target), I_SPECIFIED_TARGET_NOT_FOUND);
     }
-  } else {
+  } else if (m_ast.targets.size() > 0) {
     target = m_ast.targets[0];
-    // todo: if this doesn't evaluate nicely, we need to error out properly.
+    QBValue target_iteration_qbvalue = evaluate_ast_object(m_ast.targets[0].identifier, m_ast, {std::nullopt, std::nullopt}, state);
+    if (!std::holds_alternative<QBString>(target_iteration_qbvalue.value)) {
+      ErrorHandler::push_error_throw(std::visit(QBVisitOrigin{}, target_iteration_qbvalue.value), I_MULTIPLE_TARGETS);
+    }
     target_iteration =
         std::get<QBString>(
             evaluate_ast_object(m_ast.targets[0].identifier, m_ast,
                                 {std::nullopt, std::nullopt}, state)
                 .value)
             .toString();
+  } else {
+    ErrorHandler::push_error_throw(InternalNode{}, I_NO_TARGETS);
   }
 
   LOG_STANDARD("⧗ building " << CYAN << target_iteration << RESET);
@@ -741,5 +749,6 @@ void Interpreter::build() {
     LOG_STANDARD("➤ build completed");
   } else {
     LOG_STANDARD("➤ build " << RED << "failed" << RESET);
+    ErrorHandler::push_error_throw(target->origin, I_BUILD_FAILED);
   }
 }
