@@ -1,6 +1,6 @@
 # General compiler arguments
 CXX = clang++
-CXXFLAGS = -g -fstandalone-debug -O0 -Wall -Wextra -pedantic-errors -Wc++20-designator
+CXXFLAGS = -g -fstandalone-debug -O0 -Wall -Wextra -pedantic-errors -Wc++20-designator -std=c++17
 # CXXFLAGS = -O3 -Wall -Wextra -pthread -pedantic-errors -std=c++2c
 
 # Files to compile

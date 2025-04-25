@@ -1,7 +1,7 @@
 # general compiler arguments.
 compiler = "clang++";
-flags_debug = "-g -O0 -fstandalone-debug -Wall -Wextra -pedantic-errors -Wc++20-designator";
-flags_release = "-O3 -fstandalone-debug -Wall -Wextra -pedantic-errors -Wc++20-designator";
+flags_debug = "-g -O0 -fstandalone-debug -Wall -Wextra -pedantic-errors -Wc++20-designator -std=c++17";
+flags_release = "-O3 -fstandalone-debug -Wall -Wextra -pedantic-errors -Wc++20-designator -std=c++17";
 
 # files to compile.
 sources = "src/*.cpp";
