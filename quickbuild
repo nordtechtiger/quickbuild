@@ -14,6 +14,11 @@ objects_debug = objects;
 binary = "./bin/quickbuild";
 install_dir = "/usr/bin";
 
+"foo" {
+  thing = ["hello, hi", "world!"]: "hello"-> "hi";
+  run = "echo [thing]";
+}
+
 # main targets.
 "quickbuild_debug" {
   depends = "setup", "build_objs_debug";

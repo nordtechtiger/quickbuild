@@ -64,8 +64,10 @@ std::string get_line(Origin origin, std::vector<unsigned char> config) {
 void Driver::display_error_stack(std::vector<unsigned char> config) {
   std::optional<ErrorInfo> error_info;
   LOG_STANDARD(RED << "! build stopped. unwinding error stack..." << RESET);
+  int error_n = 0;
   while ((error_info = ErrorHandler::pop_error())) {
     // render trace/point of failure.
+    LOG_STANDARD("[" << error_n << "]:");
     if (std::holds_alternative<InternalNode>(error_info->origin)) {\
       LOG_STANDARD("! warning: internal compiler reference, no trace available");
     }
@@ -84,7 +86,9 @@ void Driver::display_error_stack(std::vector<unsigned char> config) {
       LOG_STANDARD("! warning: couldn't retrieve trace, consider submitting a bug report");
     }
     // print error message.
-    LOG_STANDARD(RED << "! error: " << error_info->message);
+    LOG_STANDARD(RED << "! error: " << error_info->message << RESET);
+    LOG_STANDARD("");
+    error_n++;
   }
 }
 
@@ -111,8 +115,10 @@ int Driver::run() {
 
   } catch (BuildException &e) {
     display_error_stack(config);
+    LOG_STANDARD("➤ build " << RED << "failed" << RESET);
     return EXIT_FAILURE;
   }
 
+  LOG_STANDARD("➤ build completed");
   return EXIT_SUCCESS;
 }

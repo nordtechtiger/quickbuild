@@ -6,23 +6,34 @@
 #include <vector>
 #include <atomic>
 #include <optional>
+#include <mutex>
+#include "lexer.hpp"
+#include "error.hpp"
+
+struct Command {
+  std::string cmdline;
+  Origin origin;
+};
 
 class OSLayer {
 private:
   bool silent;
   bool parallel;
-  std::atomic<bool> error = false;
 
-  std::vector<std::string> queue = {};
-  void _execute_command(std::string command, bool silent);
+  std::vector<Command> queue = {};
+  std::vector<Origin> errors;
+  std::mutex error_lock;
+
+  void _execute_command(Command command);
   
-  bool _execute_queue_sync();
-  bool _execute_queue_parallel();
+  void _execute_queue_sync();
+  void _execute_queue_parallel();
 
 public:
   OSLayer(bool parallel, bool silent);
-  void queue_command(std::string command);
-  bool execute_queue();
+  void queue_command(Command command);
+  void execute_queue();
+  std::vector<Origin> get_errors();
 
   static std::optional<size_t> get_file_timestamp(std::string path);
 };

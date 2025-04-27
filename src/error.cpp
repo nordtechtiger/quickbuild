@@ -11,7 +11,9 @@ void ErrorHandler::push_error(Origin origin, ErrorCode error_code) {
       error_code,
       message,
   };
+  error_lock.lock();
   error_stack.push_back(error_info);
+  error_lock.unlock();
 }
 
 // push an error and abandon ship.
@@ -22,7 +24,9 @@ void ErrorHandler::push_error_throw(Origin origin, ErrorCode error_code) {
       error_code,
       message,
   };
+  error_lock.lock();
   error_stack.push_back(error_info);
+  error_lock.unlock();
   throw BuildException(message.c_str());
 }
 

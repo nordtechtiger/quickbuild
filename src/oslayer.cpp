@@ -18,45 +18,48 @@ OSLayer::OSLayer(bool parallel, bool silent) {
   this->silent = silent;
 }
 
-void OSLayer::queue_command(std::string command) { queue.push_back(command); }
-
-bool OSLayer::execute_queue() {
-  if (parallel)
-    return _execute_queue_parallel();
-  else
-    return _execute_queue_sync();
+void OSLayer::queue_command(Command command) {
+  queue.push_back(command);
 }
 
-bool OSLayer::_execute_queue_parallel() {
+void OSLayer::execute_queue() {
+  if (parallel)
+    _execute_queue_parallel();
+  else
+    _execute_queue_sync();
+}
+
+void OSLayer::_execute_queue_parallel() {
   std::vector<std::thread> pool;
-  for (std::string const &command : queue) {
+  for (Command const &command : queue) {
     pool.push_back(
-        std::thread(&OSLayer::_execute_command, this, command, silent));
+        std::thread(&OSLayer::_execute_command, this, command));
   }
   queue = {};
   for (std::thread &thread : pool) {
     thread.join();
   }
-  return error;
 }
 
-bool OSLayer::_execute_queue_sync() {
-  for (std::string const &command : queue) {
-    _execute_command(command, silent);
+void OSLayer::_execute_queue_sync() {
+  for (Command const &command: queue) {
+    _execute_command(command);
   }
   queue = {};
-  return error;
 }
 
-void OSLayer::_execute_command(std::string command, bool silent) {
+void OSLayer::_execute_command(Command command) {
   int code;
   if (silent)
-    code = system((command + " 1>/dev/null 2>&1").c_str());
+    code = system((command.cmdline + " 1>/dev/null 2>&1").c_str());
   else
-    code = system(command.c_str());
+    code = system(command.cmdline.c_str());
 
-  if (code != 0)
-    error = true;
+  if (0 != code) {
+    this->error_lock.lock();
+    errors.push_back(command.origin);
+    this->error_lock.unlock();
+  }
 }
 
 std::optional<size_t> OSLayer::get_file_timestamp(std::string path) {
@@ -64,6 +67,10 @@ std::optional<size_t> OSLayer::get_file_timestamp(std::string path) {
   if (0 > stat(path.c_str(), &t_stat))
     return std::nullopt;
   return t_stat.ST_CTIME;
+}
+
+std::vector<Origin> OSLayer::get_errors() {
+  return this->errors;
 }
 
 // #define __SHELL_SUFFIX " 2>&1"

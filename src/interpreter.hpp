@@ -97,7 +97,7 @@ private:
 
 public:
   Interpreter(AST &ast, Setup setup);
-  void build();
+  int build();
 };
 
 #endif
