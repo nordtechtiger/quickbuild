@@ -62,7 +62,6 @@ void Driver::display_error_stack(std::vector<unsigned char> config) {
   LOG_STANDARD(RED << "⮾ build stopped." << RESET << " unwinding error stack...");
   int error_n = 0;
   while ((error_info = ErrorHandler::pop_error())) {
-    // render trace/point of failure.
     std::string prefix(error_n*2, ' ');
     LOG_STANDARD(prefix << "┊");
     std::string ref = (error_info->context.ref ? " (object: '" + *error_info->context.ref + "')" : "");
@@ -74,14 +73,13 @@ void Driver::display_error_stack(std::vector<unsigned char> config) {
         underline += "^";
       }
       LOG_STANDARD(prefix << "│" << std::right << std::setw(4)
-                          << error_info->context.stream_pos->line << " │  "
+                          << error_info->context.stream_pos->line << " │ "
                           << line_str);
       LOG_STANDARD(prefix << "╰───" << std::right << std::setw(2) << " " << "╵ "
                           << underline);
     } else {
       LOG_STANDARD(prefix << "╰───" << " warning: couldn't trace origin of error");
     }
-    // print error message.
     error_n++;
   }
 }

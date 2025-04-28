@@ -691,7 +691,7 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
         std::visit(QBVisitOrigin{}, run_parallel.value), I_TYPE_PARALLEL);
   }
   if (!std::holds_alternative<QBString>(command_expr->value) &&
-      (!std::holds_alternative<QBList>(command_expr->value) &&
+      !(std::holds_alternative<QBList>(command_expr->value) &&
        std::get<QBList>(command_expr->value).holds_qbstring())) {
     ErrorHandler::push_error_throw(
         std::visit(QBVisitOrigin{}, command_expr->value), I_TYPE_RUN);

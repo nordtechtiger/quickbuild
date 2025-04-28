@@ -17,7 +17,6 @@ install_dir = "/usr/bin";
 # main targets.
 "quickbuild_debug" {
   depends = "setup", "build_objs_debug";
-  run = false;
   run = "[compiler] [flags_debug] [objects] -o [binary]";
 }
 "quickbuild_release" {
