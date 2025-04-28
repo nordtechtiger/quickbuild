@@ -1,5 +1,5 @@
 #include "parser.hpp"
-#include "error.hpp"
+#include "errors.hpp"
 #include "lexer.hpp"
 #include <memory>
 
@@ -192,7 +192,7 @@ std::optional<ASTObject> Parser::parse_list() {
 
   if (!ast_obj && !list.contents.empty())
     ErrorHandler::push_error_throw(
-        std::visit(ASTVisitOrigin{}, list.contents[0]), P_AST_INVALID_END);
+      std::visit(ASTVisitOrigin{}, list.contents[0]), P_AST_INVALID_END);
   else if (!ast_obj && list.contents.empty())
     return std::nullopt;
 
@@ -261,9 +261,12 @@ std::optional<ASTObject> Parser::parse_primary() {
     return formattedLiteral;
   } else if ((token = consume_if(TokenType::ExpressionOpen))) {
     std::optional<ASTObject> ast_object = parse_ast_object();
-    if (!consume_if(TokenType::ExpressionClose) || !ast_object)
+    if (!consume_if(TokenType::ExpressionClose))
       ErrorHandler::push_error_throw(std::visit(ASTVisitOrigin{}, *ast_object),
                                      P_AST_NO_CLOSE);
+    if (!ast_object)
+      ErrorHandler::push_error(token->origin, P_EMPTY_LIST);
+      
     return ast_object;
   }
 

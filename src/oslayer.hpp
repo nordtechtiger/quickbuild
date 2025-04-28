@@ -8,7 +8,7 @@
 #include <optional>
 #include <mutex>
 #include "lexer.hpp"
-#include "error.hpp"
+#include "errors.hpp"
 
 struct Command {
   std::string cmdline;
@@ -21,7 +21,7 @@ private:
   bool parallel;
 
   std::vector<Command> queue = {};
-  std::vector<Origin> errors;
+  std::vector<ErrorContext> errors;
   std::mutex error_lock;
 
   void _execute_command(Command command);
@@ -33,7 +33,7 @@ public:
   OSLayer(bool parallel, bool silent);
   void queue_command(Command command);
   void execute_queue();
-  std::vector<Origin> get_errors();
+  std::vector<ErrorContext> get_errors();
 
   static std::optional<size_t> get_file_timestamp(std::string path);
 };

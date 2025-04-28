@@ -170,7 +170,8 @@ QBValue ASTEvaluate::operator()(Identifier const &identifier) {
   }
 
   // identifier not found.
-  ErrorHandler::push_error_throw(identifier.origin, I_NO_MATCHING_IDENTIFIER);
+  ErrorHandler::push_error_throw({identifier.origin, identifier.content},
+                                 I_NO_MATCHING_IDENTIFIER);
   __builtin_unreachable();
 }
 
@@ -706,8 +707,8 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
     os_layer.queue_command({cmdline.toString(), cmdline.origin});
     os_layer.execute_queue();
     if (!os_layer.get_errors().empty()) {
-      for (Origin const &e_origin : os_layer.get_errors()) {
-        ErrorHandler::push_error(e_origin, I_NONZERO_PROCESS);
+      for (ErrorContext const &e_ctx : os_layer.get_errors()) {
+        ErrorHandler::push_error(e_ctx, I_NONZERO_PROCESS);
       }
       return -1;
     }
@@ -721,8 +722,8 @@ int Interpreter::run_target(Target target, std::string target_iteration) {
     }
     os_layer.execute_queue();
     if (!os_layer.get_errors().empty()) {
-      for (Origin const &e_origin : os_layer.get_errors()) {
-        ErrorHandler::push_error(e_origin, I_NONZERO_PROCESS);
+      for (ErrorContext const &e_ctx : os_layer.get_errors()) {
+        ErrorHandler::push_error(e_ctx, I_NONZERO_PROCESS);
       }
       return -1;
     }

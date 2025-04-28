@@ -1,17 +1,15 @@
 #include "lexer.hpp"
-#include "error.hpp"
+#include "errors.hpp"
 #include <functional>
 #include <variant>
-#include <iostream>
 
-// Used for determining e.g. variable names
-#define IS_ALPHABETIC(x)                                                       \
-  (((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')) || x == '_' ||     \
-   x == '-')
+// used for determining e.g. variable names.
+inline bool is_alphabetic(char x) {
+  return ((x >= 'A') && (x <= 'Z')) || ((x >= 'a') && (x <= 'z')) || x == '_' ||
+         x == '-' || (x >= '0' && x <= '9');
+}
 
-
-
-// initializes new lexer
+// initializes new lexer.
 Lexer::Lexer(std::vector<unsigned char> input_bytes) {
   m_index = 0;
   _m_line = 1;
@@ -24,7 +22,7 @@ unsigned char Lexer::consume_byte() { return consume_byte(1); }
 
 unsigned char Lexer::consume_byte(int n) {
   size_t original_index = m_index;
-  // loop to scan for newlines
+  // loop to scan for newlines.
   for (; m_index < original_index + n; m_index++) {
     m_current = (m_input.size() >= m_index + 1) ? m_input[m_index] : '\0';
     m_next = (m_input.size() >= m_index + 2) ? m_input[m_index + 1] : '\0';
@@ -34,10 +32,10 @@ unsigned char Lexer::consume_byte(int n) {
   return m_current;
 }
 
-// turn the current state into an origin
+// turn the current state into an origin.
 Origin Lexer::get_local_origin() { return InputStreamPos{m_index, _m_line}; }
 
-// gets next token from stream
+// gets next token from stream.
 std::vector<Token> Lexer::get_token_stream() {
   while (m_current != '\0') {
     bool match = false;
@@ -52,26 +50,24 @@ std::vector<Token> Lexer::get_token_stream() {
     if (m_current == '\0')
       break;
     if (!match) {
-      // break here please
       ErrorHandler::push_error_throw(get_local_origin(), L_INVALID_SYMBOL);
     }
   }
   return m_token_stream;
 }
 
-// skip all whitespace characters and comments
+// skip all whitespace characters and comments.
 std::optional<Token> Lexer::skip_whitespace_comments() {
   while (m_current == ' ' || m_current == '\n' || m_current == '\t' ||
          m_current == '#') {
     while (m_current == ' ' || m_current == '\n' || m_current == '\t')
       consume_byte();
     if (m_current != '#')
-      return std::nullopt; // not a comment
+      return std::nullopt; // not a comment.
     while (m_current != '\n') {
-      consume_byte(); // currently in a comment
+      consume_byte(); // currently in a comment.
     }
   }
-
   return std::nullopt;
 }
 
@@ -177,7 +173,8 @@ std::optional<Token> Lexer::match_literal() {
         }
 
         if (!inner_token)
-          ErrorHandler::push_error_throw(get_local_origin(), L_INVALID_LITERAL);
+          ErrorHandler::push_error_throw(get_local_origin(),
+                                         L_INVALID_LITERAL);
 
         std::get<CTX_VEC>(*formatted_literal.context).push_back(*inner_token);
       }
@@ -197,10 +194,10 @@ std::optional<Token> Lexer::match_literal() {
 
 // match identifiers
 std::optional<Token> Lexer::match_identifier() {
-  if (!IS_ALPHABETIC(m_current))
+  if (!is_alphabetic(m_current))
     return std::nullopt;
   std::string identifier;
-  while (IS_ALPHABETIC(m_current)) {
+  while (is_alphabetic(m_current)) {
     identifier += m_current;
     consume_byte();
   }

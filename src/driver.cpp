@@ -1,5 +1,5 @@
 #include "driver.hpp"
-#include "error.hpp"
+#include "errors.hpp"
 #include "format.hpp"
 #include "interpreter.hpp"
 #include "lexer.hpp"
@@ -40,11 +40,7 @@ std::vector<unsigned char> Driver::get_config() {
 }
 
 // todo: perhaps also slightly messy. refactor?
-std::string get_line(Origin origin, std::vector<unsigned char> config) {
-  if (!std::holds_alternative<InputStreamPos>(origin)) {
-    // todo: error out here.
-  }
-  InputStreamPos pos = std::get<InputStreamPos>(origin);
+std::string get_line(InputStreamPos pos, std::vector<unsigned char> config) {
   int line_start = 0;
   int line_end = 0;
   for (size_t i = 0; i < pos.index && i < config.size(); i++) {
@@ -63,31 +59,29 @@ std::string get_line(Origin origin, std::vector<unsigned char> config) {
 // TODO: Not too bad, but consider a refactor
 void Driver::display_error_stack(std::vector<unsigned char> config) {
   std::optional<ErrorInfo> error_info;
-  LOG_STANDARD(RED << "! build stopped. unwinding error stack..." << RESET);
+  LOG_STANDARD(RED << "⮾ build stopped." << RESET << " unwinding error stack...");
   int error_n = 0;
   while ((error_info = ErrorHandler::pop_error())) {
     // render trace/point of failure.
-    LOG_STANDARD("[" << error_n << "]:");
-    if (std::holds_alternative<InternalNode>(error_info->origin)) {\
-      LOG_STANDARD("! warning: internal compiler reference, no trace available");
-    }
-    else if (std::holds_alternative<InputStreamPos>(error_info->origin)) {
-      InputStreamPos pos = std::get<InputStreamPos>(error_info->origin);
-      std::string line_str = get_line(error_info->origin, config);
+    std::string prefix(error_n*2, ' ');
+    LOG_STANDARD(prefix << "┊");
+    std::string ref = (error_info->context.ref ? " (object: '" + *error_info->context.ref + "')" : "");
+    LOG_STANDARD(prefix << "├" << RED << "❬error #" << error_n << "❭: " + error_info->message << ref << RESET);
+    if (error_info->context.stream_pos) {
+      std::string line_str = get_line(*error_info->context.stream_pos, config);
       std::string underline;
       for (const auto &_ : line_str) {
         underline += "^";
       }
-      LOG_STANDARD(std::right << std::setw(5) << " " << "| ...");
-      LOG_STANDARD(std::right << std::setw(4) << pos.line
-                              << " | " << line_str);
-      LOG_STANDARD(std::right << std::setw(5) << " " << "| " << underline);
+      LOG_STANDARD(prefix << "│" << std::right << std::setw(4)
+                          << error_info->context.stream_pos->line << " │  "
+                          << line_str);
+      LOG_STANDARD(prefix << "╰───" << std::right << std::setw(2) << " " << "╵ "
+                          << underline);
     } else {
-      LOG_STANDARD("! warning: couldn't retrieve trace, consider submitting a bug report");
+      LOG_STANDARD(prefix << "╰───" << " warning: couldn't trace origin of error");
     }
     // print error message.
-    LOG_STANDARD(RED << "! error: " << error_info->message << RESET);
-    LOG_STANDARD("");
     error_n++;
   }
 }
@@ -115,6 +109,7 @@ int Driver::run() {
 
   } catch (BuildException &e) {
     display_error_stack(config);
+    LOG_STANDARD("");
     LOG_STANDARD("➤ build " << RED << "failed" << RESET);
     return EXIT_FAILURE;
   }

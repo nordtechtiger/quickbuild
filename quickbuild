@@ -14,14 +14,10 @@ objects_debug = objects;
 binary = "./bin/quickbuild";
 install_dir = "/usr/bin";
 
-"foo" {
-  thing = ["hello, hi", "world!"]: "hello"-> "hi";
-  run = "echo [thing]";
-}
-
 # main targets.
 "quickbuild_debug" {
   depends = "setup", "build_objs_debug";
+  run = false;
   run = "[compiler] [flags_debug] [objects] -o [binary]";
 }
 "quickbuild_release" {
@@ -73,9 +69,13 @@ objects_release as obj {
 
 # clean build directories.
 "clean" {
-  run = "rm [objects]",
-        "rm [binary]",
+  run = "rm --force [objects]",
+        "rm --force [binary]",
         "rmdir obj",
         "rmdir bin";
 }
 
+"foo" {
+  thing = ["foo, hello, hi", "world!"]: "*hello*" -> "*hi*";
+  run = "echo [faulty_var]";
+}

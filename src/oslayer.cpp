@@ -57,7 +57,7 @@ void OSLayer::_execute_command(Command command) {
 
   if (0 != code) {
     this->error_lock.lock();
-    errors.push_back(command.origin);
+    errors.push_back({command.origin, command.cmdline});
     this->error_lock.unlock();
   }
 }
@@ -69,7 +69,7 @@ std::optional<size_t> OSLayer::get_file_timestamp(std::string path) {
   return t_stat.ST_CTIME;
 }
 
-std::vector<Origin> OSLayer::get_errors() {
+std::vector<ErrorContext> OSLayer::get_errors() {
   return this->errors;
 }
 
