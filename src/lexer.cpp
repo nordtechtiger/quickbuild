@@ -23,7 +23,8 @@ unsigned char Lexer::consume_byte() { return consume_byte(1); }
 unsigned char Lexer::consume_byte(int n) {
   size_t original_index = m_index;
   // loop to scan for newlines.
-  for (; m_index < original_index + n; m_index++) {
+  for (; m_index < original_index + n;) {
+    m_index++;
     m_current = (m_input.size() >= m_index + 1) ? m_input[m_index] : '\0';
     m_next = (m_input.size() >= m_index + 2) ? m_input[m_index + 1] : '\0';
     if (m_current == '\n')
