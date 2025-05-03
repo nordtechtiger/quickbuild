@@ -169,10 +169,9 @@ std::optional<Target> Parser::parse_target() {
  * ========
  * ASTOBJ -> LIST
  * LIST -> REPLACE ("," REPLACE)*
- * REPLACE -> PRIMARY ":" PRIMARY "->" PRIMARY | PRIMARY
+ * REPLACE -> (PRIMARY ":" PRIMARY "->" PRIMARY) | PRIMARY
  * PRIMARY -> token_literal | token_formattedliteral | token_identifier |
- * token_true | token_false |
- *            "[" ASTOBJ "]"
+ *            token_true | token_false | ("[" ASTOBJ "]")
  */
 
 std::optional<ASTObject> Parser::parse_ast_object() { return parse_list(); }
