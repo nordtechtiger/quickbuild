@@ -265,7 +265,7 @@ std::optional<ASTObject> Parser::parse_primary() {
       ErrorHandler::push_error_throw(std::visit(ASTVisitOrigin{}, *ast_object),
                                      P_AST_NO_CLOSE);
     if (!ast_object)
-      ErrorHandler::push_error(token->origin, P_EMPTY_LIST);
+      ErrorHandler::push_error(token->origin, P_EMPTY_EXPRESSION);
       
     return ast_object;
   }

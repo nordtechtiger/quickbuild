@@ -22,7 +22,7 @@ enum ErrorCode {
   P_AST_INVALID_REPLACE,
   P_AST_INVALID_ESCAPE,
   P_AST_NO_CLOSE,
-  P_EMPTY_LIST,
+  P_EMPTY_EXPRESSION,
 
   // interpreter.
   _I_CONSTRUCTOR_EXPECTED_LITERAL,
@@ -90,8 +90,8 @@ const std::map<ErrorCode, std::string> _ERROR_LOOKUP_TABLE = {
                            "expressions were invalid."},
     {P_AST_NO_CLOSE,
      "expected a closing square bracket, but none was encountered."},
-    {P_EMPTY_LIST,
-     "empty lists are not allowed because their type cannot be inferred."},
+    {P_EMPTY_EXPRESSION,
+     "empty expressions are not allowed because their type cannot be inferred."},
     {L_INVALID_SYMBOL,
      "encountered an invalid symbol and couldn't recover. make sure no "
      "erroneous characters are present in the config."},

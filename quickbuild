@@ -5,7 +5,7 @@ flags_release = "-O3 -fstandalone-debug -Wall -Wextra -pedantic-errors -Wc++20-d
 
 # files to compile.
 sources = "src/*.cpp";
-headers = "src/*.hpp";
+headers = []; # "src/*.hpp";
 
 # files to create.
 objects = sources: "src/*.cpp" -> "obj/*.o";

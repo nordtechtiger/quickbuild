@@ -294,7 +294,7 @@ QBValue ASTEvaluate::operator()(List const &list) {
   // infer the list type. todo: consider a cleaner solution.
   ASTEvaluate ast_visitor = {ast, context, state};
   QBValue _obj_result = std::visit(ast_visitor, list.contents[0]);
-  out.origin = std::visit(QBVisitOrigin{}, _obj_result.value);
+  out.origin = list.origin; // std::visit(QBVisitOrigin{}, _obj_result.value);
   if (std::holds_alternative<QBString>(_obj_result.value)) {
     out.contents = std::vector<QBString>();
   } else if (std::holds_alternative<QBBool>(_obj_result.value)) {
@@ -344,7 +344,7 @@ QBValue ASTEvaluate::operator()(List const &list) {
         immutable &= _obj_result.immutable;
       } else
         ErrorHandler::push_error_throw(
-            std::get<QBString>(obj_result.value).origin,
+        {out.origin, std::get<QBString>(obj_result.value).toString()},
             I_EVALUATE_LIST_TYPE_MISMATCH);
     } else if (std::holds_alternative<QBBool>(obj_result.value)) {
       if (out.holds_qbbool()) {
@@ -353,7 +353,7 @@ QBValue ASTEvaluate::operator()(List const &list) {
         immutable &= _obj_result.immutable;
       } else
         ErrorHandler::push_error_throw(
-            std::get<QBBool>(obj_result.value).origin,
+        {out.origin, std::get<QBBool>(obj_result.value) ? "true" : "false"},
             I_EVALUATE_LIST_TYPE_MISMATCH);
     } else if (std::holds_alternative<QBList>(obj_result.value)) {
       QBList obj_result_qblist = std::get<QBList>(obj_result.value);
@@ -370,8 +370,7 @@ QBValue ASTEvaluate::operator()(List const &list) {
                     std::get<QBLIST_BOOL>(obj_result_qblist.contents).end());
         immutable &= _obj_result.immutable;
       } else {
-        ErrorHandler::push_error_throw(obj_result_qblist.origin,
-                                       I_EVALUATE_LIST_TYPE_MISMATCH);
+        ErrorHandler::push_error_throw(out.origin, I_EVALUATE_LIST_TYPE_MISMATCH);
       }
     }
   }
