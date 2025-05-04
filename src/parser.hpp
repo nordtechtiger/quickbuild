@@ -55,7 +55,7 @@ struct Replace {
   bool operator==(Replace const &other) const;
 };
 
-// Config: Fields, targets, AST
+// Config: Fields, tasks, AST
 struct Field {
   Identifier identifier;
   ASTObject expression;
@@ -66,20 +66,20 @@ struct Field {
            this->expression == other.expression;
   }
 };
-struct Target {
+struct Task {
   ASTObject identifier;
   Identifier iterator;
   std::vector<Field> fields;
   Origin origin;
 
-  auto operator==(Target const &other) const {
+  auto operator==(Task const &other) const {
     return this->identifier == other.identifier &&
            this->iterator == other.iterator && this->fields == other.fields;
   }
 };
 struct AST {
   std::vector<Field> fields;
-  std::vector<Target> targets;
+  std::vector<Task> tasks;
   // delete the copy constructor to emphasize performance.
   explicit AST(AST const &) = default;
   AST() = default;
@@ -106,7 +106,7 @@ private:
   std::optional<ASTObject> parse_replace();
   std::optional<ASTObject> parse_primary();
   std::optional<Field> parse_field();
-  std::optional<Target> parse_target();
+  std::optional<Task> parse_task();
 
 public:
   Parser(std::vector<Token> token_stream);

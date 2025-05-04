@@ -7,48 +7,48 @@
 #include <variant>
 #include <vector>
 
-struct QBString {
+struct IString {
   Origin origin;
   std::string content;
 
   std::string toString() const;
-  QBString();
-  QBString(Token);
-  QBString(std::string, Origin);
-  bool operator==(QBString const other) const;
+  IString();
+  IString(Token);
+  IString(std::string, Origin);
+  bool operator==(IString const other) const;
 };
 
-struct QBBool {
+struct IBool {
   Origin origin;
   bool content;
-  QBBool();
-  QBBool(Token);
-  QBBool(bool, Origin);
+  IBool();
+  IBool(Token);
+  IBool(bool, Origin);
   operator bool() const;
-  bool operator==(QBBool const other) const;
+  bool operator==(IBool const other) const;
 };
 
 #define QBLIST_STR 0
 #define QBLIST_BOOL 1
 
-struct QBList {
+struct IList {
   Origin origin;
-  std::variant<std::vector<QBString>, std::vector<QBBool>> contents;
+  std::variant<std::vector<IString>, std::vector<IBool>> contents;
   bool holds_qbstring() const;
   bool holds_qbbool() const;
-  QBList();
-  QBList(std::variant<std::vector<QBString>, std::vector<QBBool>>);
-  bool operator==(QBList const other) const;
+  IList();
+  IList(std::variant<std::vector<IString>, std::vector<IBool>>);
+  bool operator==(IList const other) const;
 };
 
-struct QBValue {
-  std::variant<QBString, QBBool, QBList> value;
+struct IValue {
+  std::variant<IString, IBool, IList> value;
   bool immutable = true;
 };
 
 struct EvaluationContext {
-  std::optional<Target> target_scope;
-  std::optional<std::string> target_iteration;
+  std::optional<Task> task_scope;
+  std::optional<std::string> task_iteration;
   bool use_globbing = true;
   bool context_verify(EvaluationContext const) const;
 };
@@ -56,7 +56,7 @@ struct EvaluationContext {
 struct ValueInstance {
   Identifier identifier;
   EvaluationContext context;
-  QBValue result;
+  IValue result;
 };
 
 struct EvaluationState {
@@ -75,25 +75,25 @@ private:
   std::shared_ptr<EvaluationState> state;
   std::mutex evaluation_lock;
 
-  QBValue evaluate_ast_object(ASTObject ast_object, AST &ast,
-                              EvaluationContext context,
-                              std::shared_ptr<EvaluationState> state);
-  std::optional<Target> find_target(QBString identifier);
+  IValue evaluate_ast_object(ASTObject ast_object, AST &ast,
+                             EvaluationContext context,
+                             std::shared_ptr<EvaluationState> state);
+  std::optional<Task> find_task(IString identifier);
   std::optional<Field> find_field(std::string identifier,
-                                  std::optional<Target> target);
-  std::optional<QBValue>
+                                  std::optional<Task> task);
+  std::optional<IValue>
   evaluate_field_optional(std::string identifier, EvaluationContext context,
                           std::shared_ptr<EvaluationState> state);
-  QBValue evaluate_field_default(std::string identifier,
-                                 EvaluationContext context,
-                                 std::shared_ptr<EvaluationState> state,
-                                 std::optional<QBValue> default_value);
-  void _run_target(Target target, std::string target_iteration,
+  IValue evaluate_field_default(std::string identifier,
+                                EvaluationContext context,
+                                std::shared_ptr<EvaluationState> state,
+                                std::optional<IValue> default_value);
+  void _run_task(Task task, std::string task_iteration,
                    std::shared_ptr<std::atomic<bool>> error);
-  int run_target(Target target, std::string target_iteration);
-  DependencyStatus _solve_dependencies_parallel(QBValue dependencies);
-  DependencyStatus _solve_dependencies_sync(QBValue dependencies);
-  DependencyStatus solve_dependencies(QBValue dependencies, bool parallel);
+  int run_task(Task task, std::string task_iteration);
+  DependencyStatus _solve_dependencies_parallel(IValue dependencies);
+  DependencyStatus _solve_dependencies_sync(IValue dependencies);
+  DependencyStatus solve_dependencies(IValue dependencies, bool parallel);
 
 public:
   Interpreter(AST &ast, Setup setup);

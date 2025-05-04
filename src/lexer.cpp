@@ -129,19 +129,19 @@ std::optional<Token> Lexer::match_expressionclose() {
 }
 
 // match {
-std::optional<Token> Lexer::match_targetopen() {
+std::optional<Token> Lexer::match_taskopen() {
   if (m_current != '{')
     return std::nullopt;
   consume_byte();
-  return Token{TokenType::TargetOpen, std::nullopt, get_local_origin()};
+  return Token{TokenType::TaskOpen, std::nullopt, get_local_origin()};
 }
 
 // match }
-std::optional<Token> Lexer::match_targetclose() {
+std::optional<Token> Lexer::match_taskclose() {
   if (m_current != '}')
     return std::nullopt;
   consume_byte();
-  return Token{TokenType::TargetClose, std::nullopt, get_local_origin()};
+  return Token{TokenType::TaskClose, std::nullopt, get_local_origin()};
 }
 
 // match literals

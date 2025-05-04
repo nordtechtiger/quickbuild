@@ -14,9 +14,9 @@ enum ErrorCode {
   P_NO_MATCH,
   P_FIELD_NO_EXPR,
   P_FIELD_NO_LINESTOP,
-  P_TARGET_NO_ITERATOR,
-  P_TARGET_NO_OPEN,
-  P_TARGET_NO_CLOSE,
+  P_TASK_NO_ITERATOR,
+  P_TASK_NO_OPEN,
+  P_TASK_NO_CLOSE,
   P_AST_INVALID_END,
   P_AST_NO_ARROW,
   P_AST_INVALID_REPLACE,
@@ -38,9 +38,9 @@ enum ErrorCode {
   I_TYPE_RUN,
   I_TYPE_PARALLEL,
   I_NONZERO_PROCESS,
-  I_SPECIFIED_TARGET_NOT_FOUND,
-  I_NO_TARGETS,
-  I_MULTIPLE_TARGETS,
+  I_SPECIFIED_TASK_NOT_FOUND,
+  I_NO_TASKS,
+  I_MULTIPLE_TASKS,
   I_BUILD_FAILED,
   I_DEPENDENCY_FAILED,
 
@@ -74,11 +74,11 @@ const std::map<ErrorCode, std::string> _ERROR_LOOKUP_TABLE = {
     {P_FIELD_NO_EXPR,
      "an invalid expression was encountered while parsing a field."},
     {P_FIELD_NO_LINESTOP, "expected a semicolon, but none was encountered."},
-    {P_TARGET_NO_ITERATOR, "encountered an explicitly declared iterator, but "
+    {P_TASK_NO_ITERATOR, "encountered an explicitly declared iterator, but "
                            "no iteration variable was found."},
-    {P_TARGET_NO_OPEN, "expected an opening curly bracket, but none was "
+    {P_TASK_NO_OPEN, "expected an opening curly bracket, but none was "
                        "encountered. are you trying to declare a target?"},
-    {P_TARGET_NO_CLOSE, "expected a closing curly bracket but none was "
+    {P_TASK_NO_CLOSE, "expected a closing curly bracket but none was "
                         "encountered. are you trying to declare a field?"},
     {P_AST_INVALID_END, "encountered a list of expressions but one or more "
                         "elements were invalid."},
@@ -111,9 +111,9 @@ const std::map<ErrorCode, std::string> _ERROR_LOOKUP_TABLE = {
      "the parallel specifier only contains a single boolean."},
     {I_NONZERO_PROCESS,
      "one or more commands failed and returned a non-zero exit value."},
-    {I_SPECIFIED_TARGET_NOT_FOUND, "the user-specified task does not exist."},
-    {I_NO_TARGETS, "no tasks were declared."},
-    {I_MULTIPLE_TARGETS,
+    {I_SPECIFIED_TASK_NOT_FOUND, "the user-specified task does not exist."},
+    {I_NO_TASKS, "no tasks were declared."},
+    {I_MULTIPLE_TASKS,
      "no task was specified and the implicit default is ambiguous."},
     {I_BUILD_FAILED, "couldn't build the specified task."},
     {I_DEPENDENCY_FAILED,

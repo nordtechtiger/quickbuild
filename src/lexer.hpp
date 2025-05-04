@@ -18,8 +18,8 @@
   _MACRO(match_separator)                                                      \
   _MACRO(match_expressionopen)                                                 \
   _MACRO(match_expressionclose)                                                \
-  _MACRO(match_targetopen)                                                     \
-  _MACRO(match_targetclose)                                                    \
+  _MACRO(match_taskopen)                                                       \
+  _MACRO(match_taskclose)                                                      \
   _MACRO(match_literal)                                                        \
   _MACRO(match_identifier)
 
@@ -49,15 +49,15 @@ enum class TokenType {
   Separator,        // ','
   ExpressionOpen,   // `[`
   ExpressionClose,  // `]`
-  TargetOpen,       // `{`
-  TargetClose,      // `}`
+  TaskOpen,         // `{`
+  TaskClose,        // `}`
   True,             // `true`
   False,            // `false`
   Invalid,          // internal return type in parser
 };
 
 // small struct for tracking the origin of symbols.
-struct InputStreamPos{
+struct InputStreamPos {
   size_t index;       // ASCII stream origin
   size_t line;        // Line number
   /* size_t length */ // Length of symbol for e.g. highlighting
@@ -65,7 +65,7 @@ struct InputStreamPos{
     return this->index == other.index && this->line == other.line;
   }
 };
-struct InternalNode{};
+struct InternalNode {};
 using ObjectReference = std::string;
 using Origin = std::variant<InputStreamPos, ObjectReference, InternalNode>;
 

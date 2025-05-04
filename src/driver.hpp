@@ -19,7 +19,7 @@ enum class LoggingLevel {
 };
 
 struct Setup {
-  std::optional<std::string> target;
+  std::optional<std::string> task;
   InputMethod input_method;
   LoggingLevel logging_level;
   bool dry_run;

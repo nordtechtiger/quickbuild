@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     else if (arg == "--dry-run")
       setup.dry_run = true;
     else if (arg == "--help") {
-      std::cout << "Usage: quickbuild [arguments] <target>\n"
+      std::cout << "Usage: quickbuild [arguments] <task>\n"
                    "  --stdin: reads config from stdin\n"
                    "  --configfile: reads config from file\n"
                    "  --log-quiet: sets logging level to quiet\n"
@@ -33,10 +33,10 @@ int main(int argc, char **argv) {
                    "  --dry-run: doesn't execute any commands\n"
                    "  --help: shows this message and exits\n";
       exit(EXIT_SUCCESS);
-    } else if (!setup.target)
-      setup.target = arg;
+    } else if (!setup.task)
+      setup.task = arg;
     else {
-      std::cerr << "Error: More than one target was selected. Cannot proceed."
+      std::cerr << "Error: More than one task was selected. Cannot proceed."
                 << std::endl;
       exit(EXIT_FAILURE);
     }

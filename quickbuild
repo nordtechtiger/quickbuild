@@ -14,7 +14,7 @@ objects_debug = objects;
 binary = "./bin/quickbuild";
 install_dir = "/usr/bin";
 
-# main targets.
+# main tasks.
 "quickbuild_debug" {
   depends = "setup", "build_objs_debug";
   run = "[compiler] [flags_debug] [objects] -o [binary]";

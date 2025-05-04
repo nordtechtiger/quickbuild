@@ -5,7 +5,7 @@
 
 #define ITERATOR_INTERNAL                                                      \
   Identifier {                                                                 \
-    "__target__", InternalNode {}                                              \
+    "__task__", InternalNode {}                                              \
   }
 
 // equality operators for AST objects.
@@ -99,9 +99,9 @@ AST Parser::parse_tokens() {
       ast.fields.push_back(*field);
       continue;
     }
-    std::optional<Target> target = parse_target();
-    if (target) {
-      ast.targets.push_back(*target);
+    std::optional<Task> task = parse_task();
+    if (task) {
+      ast.tasks.push_back(*task);
       continue;
     }
     ErrorHandler::push_error_throw(m_current.origin, P_NO_MATCH);
@@ -131,8 +131,8 @@ std::optional<Field> Parser::parse_field() {
   return field;
 }
 
-// attempts to parse a target.
-std::optional<Target> Parser::parse_target() {
+// attempts to parse a task.
+std::optional<Task> Parser::parse_task() {
   std::optional<ASTObject> identifier = parse_ast_object();
   Identifier iterator = ITERATOR_INTERNAL;
   if (!identifier)
@@ -142,26 +142,26 @@ std::optional<Target> Parser::parse_target() {
   if (consume_if(TokenType::IterateAs)) {
     std::optional<Token> iterator_token = consume_if(TokenType::Identifier);
     if (!iterator_token)
-      ErrorHandler::push_error_throw(origin, P_TARGET_NO_ITERATOR);
+      ErrorHandler::push_error_throw(origin, P_TASK_NO_ITERATOR);
     iterator = Identifier{std::get<CTX_STR>(*iterator_token->context),
                           iterator_token->origin};
   }
-  if (!consume_if(TokenType::TargetOpen))
-    ErrorHandler::push_error_throw(origin, P_TARGET_NO_OPEN);
+  if (!consume_if(TokenType::TaskOpen))
+    ErrorHandler::push_error_throw(origin, P_TASK_NO_OPEN);
 
-  Target target;
-  target.identifier = *identifier;
-  target.iterator = iterator;
-  target.origin = origin;
+  Task task;
+  task.identifier = *identifier;
+  task.iterator = iterator;
+  task.origin = origin;
 
   std::optional<Field> field;
   while ((field = parse_field()))
-    target.fields.push_back(*field);
+    task.fields.push_back(*field);
 
-  if (!consume_if(TokenType::TargetClose))
-    ErrorHandler::push_error_throw(origin, P_TARGET_NO_CLOSE);
+  if (!consume_if(TokenType::TaskClose))
+    ErrorHandler::push_error_throw(origin, P_TASK_NO_CLOSE);
 
-  return target;
+  return task;
 }
 
 /*

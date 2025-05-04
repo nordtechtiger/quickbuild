@@ -101,7 +101,7 @@ int Driver::run() {
     Parser parser = Parser(token_stream);
     AST ast(parser.parse_tokens());
 
-    // build target.
+    // build task.
     Interpreter interpreter(ast, m_setup);
     interpreter.build();
 
