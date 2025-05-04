@@ -174,8 +174,7 @@ std::optional<Token> Lexer::match_literal() {
         }
 
         if (!inner_token)
-          ErrorHandler::push_error_throw(get_local_origin(),
-                                         L_INVALID_LITERAL);
+          ErrorHandler::push_error_throw(get_local_origin(), L_INVALID_LITERAL);
 
         std::get<CTX_VEC>(*formatted_literal.context).push_back(*inner_token);
       }

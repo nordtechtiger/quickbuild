@@ -59,13 +59,17 @@ std::string get_line(InputStreamPos pos, std::vector<unsigned char> config) {
 // TODO: Not too bad, but consider a refactor
 void Driver::display_error_stack(std::vector<unsigned char> config) {
   std::optional<ErrorInfo> error_info;
-  LOG_STANDARD(RED << "⮾ build stopped." << RESET << " unwinding error stack...");
+  LOG_STANDARD(RED << "⮾ build stopped." << RESET
+                   << " unwinding error stack...");
   int error_n = 0;
   while ((error_info = ErrorHandler::pop_error())) {
-    std::string prefix(error_n*2, ' ');
+    std::string prefix(error_n * 2, ' ');
     LOG_STANDARD(prefix << "┊");
-    std::string ref = (error_info->context.ref ? " (object: '" + *error_info->context.ref + "')" : "");
-    LOG_STANDARD(prefix << "├" << RED << "❬error #" << error_n << "❭: " + error_info->message << ref << RESET);
+    std::string ref = (error_info->context.ref
+                           ? " (object: '" + *error_info->context.ref + "')"
+                           : "");
+    LOG_STANDARD(prefix << "├" << RED << "❬error #" << error_n
+                        << "❭: " + error_info->message << ref << RESET);
     if (error_info->context.stream_pos) {
       std::string line_str = get_line(*error_info->context.stream_pos, config);
       std::string underline;
@@ -78,7 +82,8 @@ void Driver::display_error_stack(std::vector<unsigned char> config) {
       LOG_STANDARD(prefix << "╰───" << std::right << std::setw(2) << " " << "╵ "
                           << underline);
     } else {
-      LOG_STANDARD(prefix << "╰───" << " warning: couldn't trace origin of error");
+      LOG_STANDARD(prefix << "╰───"
+                          << " warning: couldn't trace origin of error");
     }
     error_n++;
   }

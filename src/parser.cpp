@@ -5,7 +5,7 @@
 
 #define ITERATOR_INTERNAL                                                      \
   Identifier {                                                                 \
-    "__task__", InternalNode {}                                              \
+    "__task__", InternalNode {}                                                \
   }
 
 // equality operators for AST objects.
@@ -191,7 +191,7 @@ std::optional<ASTObject> Parser::parse_list() {
 
   if (!ast_obj && !list.contents.empty())
     ErrorHandler::push_error_throw(
-      std::visit(ASTVisitOrigin{}, list.contents[0]), P_AST_INVALID_END);
+        std::visit(ASTVisitOrigin{}, list.contents[0]), P_AST_INVALID_END);
   else if (!ast_obj && list.contents.empty())
     return std::nullopt;
 
@@ -265,7 +265,7 @@ std::optional<ASTObject> Parser::parse_primary() {
                                      P_AST_NO_CLOSE);
     if (!ast_object)
       ErrorHandler::push_error(token->origin, P_EMPTY_EXPRESSION);
-      
+
     return ast_object;
   }
 

@@ -18,9 +18,7 @@ OSLayer::OSLayer(bool parallel, bool silent) {
   this->silent = silent;
 }
 
-void OSLayer::queue_command(Command command) {
-  queue.push_back(command);
-}
+void OSLayer::queue_command(Command command) { queue.push_back(command); }
 
 void OSLayer::execute_queue() {
   if (parallel)
@@ -32,8 +30,7 @@ void OSLayer::execute_queue() {
 void OSLayer::_execute_queue_parallel() {
   std::vector<std::thread> pool;
   for (Command const &command : queue) {
-    pool.push_back(
-        std::thread(&OSLayer::_execute_command, this, command));
+    pool.push_back(std::thread(&OSLayer::_execute_command, this, command));
   }
   queue = {};
   for (std::thread &thread : pool) {
@@ -42,7 +39,7 @@ void OSLayer::_execute_queue_parallel() {
 }
 
 void OSLayer::_execute_queue_sync() {
-  for (Command const &command: queue) {
+  for (Command const &command : queue) {
     _execute_command(command);
   }
   queue = {};
@@ -69,9 +66,7 @@ std::optional<size_t> OSLayer::get_file_timestamp(std::string path) {
   return t_stat.ST_CTIME;
 }
 
-std::vector<ErrorContext> OSLayer::get_errors() {
-  return this->errors;
-}
+std::vector<ErrorContext> OSLayer::get_errors() { return this->errors; }
 
 // #define __SHELL_SUFFIX " 2>&1"
 //

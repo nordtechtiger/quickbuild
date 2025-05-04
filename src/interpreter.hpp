@@ -88,8 +88,8 @@ private:
                                 EvaluationContext context,
                                 std::shared_ptr<EvaluationState> state,
                                 std::optional<IValue> default_value);
-  void _run_task(Task task, std::string task_iteration,
-                   std::shared_ptr<std::atomic<bool>> error);
+  void t_run_task(Task task, std::string task_iteration,
+                  std::shared_ptr<std::atomic<bool>> error);
   int run_task(Task task, std::string task_iteration);
   DependencyStatus _solve_dependencies_parallel(IValue dependencies);
   DependencyStatus _solve_dependencies_sync(IValue dependencies);

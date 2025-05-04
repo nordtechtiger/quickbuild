@@ -75,11 +75,11 @@ const std::map<ErrorCode, std::string> _ERROR_LOOKUP_TABLE = {
      "an invalid expression was encountered while parsing a field."},
     {P_FIELD_NO_LINESTOP, "expected a semicolon, but none was encountered."},
     {P_TASK_NO_ITERATOR, "encountered an explicitly declared iterator, but "
-                           "no iteration variable was found."},
+                         "no iteration variable was found."},
     {P_TASK_NO_OPEN, "expected an opening curly bracket, but none was "
-                       "encountered. are you trying to declare a target?"},
+                     "encountered. are you trying to declare a target?"},
     {P_TASK_NO_CLOSE, "expected a closing curly bracket but none was "
-                        "encountered. are you trying to declare a field?"},
+                      "encountered. are you trying to declare a field?"},
     {P_AST_INVALID_END, "encountered a list of expressions but one or more "
                         "elements were invalid."},
     {P_AST_NO_ARROW,
@@ -90,8 +90,8 @@ const std::map<ErrorCode, std::string> _ERROR_LOOKUP_TABLE = {
                            "expressions were invalid."},
     {P_AST_NO_CLOSE,
      "expected a closing square bracket, but none was encountered."},
-    {P_EMPTY_EXPRESSION,
-     "empty expressions are not allowed because their type cannot be inferred."},
+    {P_EMPTY_EXPRESSION, "empty expressions are not allowed because their type "
+                         "cannot be inferred."},
     {L_INVALID_SYMBOL,
      "encountered an invalid symbol and couldn't recover. make sure no "
      "erroneous characters are present in the config."},

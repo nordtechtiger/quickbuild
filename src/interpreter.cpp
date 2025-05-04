@@ -62,8 +62,7 @@ IList::IList() {
   this->origin = InternalNode{};
   this->contents = std::vector<IString>();
 }
-IList::IList(
-    std::variant<std::vector<IString>, std::vector<IBool>> contents) {
+IList::IList(std::variant<std::vector<IString>, std::vector<IBool>> contents) {
   if (std::holds_alternative<std::vector<IString>>(contents)) {
     std::vector<IString> contents_qbstring =
         std::get<std::vector<IString>>(contents);
@@ -73,8 +72,7 @@ IList::IList(
     this->contents = contents_qbstring;
     this->origin = contents_qbstring[0].origin;
   } else if (std::holds_alternative<std::vector<IBool>>(contents)) {
-    std::vector<IBool> contents_qbbool =
-        std::get<std::vector<IBool>>(contents);
+    std::vector<IBool> contents_qbbool = std::get<std::vector<IBool>>(contents);
     if (contents_qbbool.size() <= 0)
       ErrorHandler::push_error_throw(InternalNode{},
                                      _I_CONSTRUCTOR_EXPECTED_NONEMPTY);
@@ -120,10 +118,9 @@ IValue
 Interpreter::evaluate_ast_object(ASTObject ast_object, AST &ast,
                                  EvaluationContext context,
                                  std::shared_ptr<EvaluationState> state) {
-  evaluation_lock.lock();
   // evaluation visitor can amend shared data in the state.
+  std::lock_guard<std::mutex> guard(evaluation_lock);
   IValue value = std::visit(ASTEvaluate{ast, context, state}, ast_object);
-  evaluation_lock.unlock();
   return value;
 }
 
@@ -244,8 +241,7 @@ IValue ASTEvaluate::operator()(FormattedLiteral const &formatted_literal) {
     }
     // append a list of strings.
     else if (std::holds_alternative<IList>(obj_result.value) &&
-             std::get<IList>(obj_result.value).contents.index() ==
-                 QBLIST_STR) {
+             std::get<IList>(obj_result.value).contents.index() == QBLIST_STR) {
       IList obj_result_list = std::get<IList>(obj_result.value);
       for (size_t i = 0;
            i < std::get<QBLIST_STR>(obj_result_list.contents).size(); i++) {
@@ -344,7 +340,7 @@ IValue ASTEvaluate::operator()(List const &list) {
         immutable &= _obj_result.immutable;
       } else
         ErrorHandler::push_error_throw(
-        {out.origin, std::get<IString>(obj_result.value).toString()},
+            {out.origin, std::get<IString>(obj_result.value).toString()},
             I_EVALUATE_LIST_TYPE_MISMATCH);
     } else if (std::holds_alternative<IBool>(obj_result.value)) {
       if (out.holds_qbbool()) {
@@ -353,7 +349,7 @@ IValue ASTEvaluate::operator()(List const &list) {
         immutable &= _obj_result.immutable;
       } else
         ErrorHandler::push_error_throw(
-        {out.origin, std::get<IBool>(obj_result.value) ? "true" : "false"},
+            {out.origin, std::get<IBool>(obj_result.value) ? "true" : "false"},
             I_EVALUATE_LIST_TYPE_MISMATCH);
     } else if (std::holds_alternative<IList>(obj_result.value)) {
       IList obj_result_qblist = std::get<IList>(obj_result.value);
@@ -370,7 +366,8 @@ IValue ASTEvaluate::operator()(List const &list) {
                     std::get<QBLIST_BOOL>(obj_result_qblist.contents).end());
         immutable &= _obj_result.immutable;
       } else {
-        ErrorHandler::push_error_throw(out.origin, I_EVALUATE_LIST_TYPE_MISMATCH);
+        ErrorHandler::push_error_throw(out.origin,
+                                       I_EVALUATE_LIST_TYPE_MISMATCH);
       }
     }
   }
@@ -477,7 +474,7 @@ Interpreter::Interpreter(AST &ast, Setup setup) : m_ast(ast) {
 std::optional<Task> Interpreter::find_task(IString identifier) {
   for (Task task : m_ast.tasks) {
     IValue task_i = evaluate_ast_object(task.identifier, m_ast,
-                                           {std::nullopt, std::nullopt}, state);
+                                        {std::nullopt, std::nullopt}, state);
     if (std::holds_alternative<IString>(task_i.value) &&
         std::get<IString>(task_i.value) == identifier) {
       return task;
@@ -536,10 +533,17 @@ Interpreter::evaluate_field_optional(std::string identifier,
   return evaluate_ast_object(field->expression, m_ast, context, state);
 }
 
-void Interpreter::_run_task(Task task, std::string task_iteration,
-                              std::shared_ptr<std::atomic<bool>> error) {
-  if (0 > run_task(task, task_iteration))
+void Interpreter::t_run_task(Task task, std::string task_iteration,
+                             std::shared_ptr<std::atomic<bool>> error) {
+  try {
+    if (0 > run_task(task, task_iteration))
+      *error = true;
+  } catch (...) {
+    // it's ok to ignore the exception, since the task failure will throw an
+    // I_DEPENDENCY_FAILED regardless, which will unwind the combined error
+    // stack.
     *error = true;
+  }
 }
 
 DependencyStatus
@@ -582,7 +586,7 @@ Interpreter::_solve_dependencies_parallel(IValue dependencies) {
     if (!_task) {
       continue;
     }
-    pool.push_back(std::thread(&Interpreter::_run_task, this, *_task,
+    pool.push_back(std::thread(&Interpreter::t_run_task, this, *_task,
                                task_iteration.toString(), error));
   }
 
@@ -682,23 +686,21 @@ int Interpreter::run_task(Task task, std::string task_iteration) {
     return 0; // abstract task.
   }
   IValue run_parallel_default = {IBool(false, InternalNode{}), true};
-  IValue run_parallel =
-      evaluate_field_default(RUN_PARALLEL, {task, task_iteration},
-                             this->state, run_parallel_default);
+  IValue run_parallel = evaluate_field_default(
+      RUN_PARALLEL, {task, task_iteration}, this->state, run_parallel_default);
   if (!std::holds_alternative<IBool>(run_parallel.value)) {
     ErrorHandler::push_error_throw(
         std::visit(QBVisitOrigin{}, run_parallel.value), I_TYPE_PARALLEL);
   }
   if (!std::holds_alternative<IString>(command_expr->value) &&
       !(std::holds_alternative<IList>(command_expr->value) &&
-       std::get<IList>(command_expr->value).holds_qbstring())) {
+        std::get<IList>(command_expr->value).holds_qbstring())) {
     ErrorHandler::push_error_throw(
         std::visit(QBVisitOrigin{}, command_expr->value), I_TYPE_RUN);
   }
 
   // execute task.
-  LOG_STANDARD("  " << CYAN << "»" << RESET << " starting "
-                    << task_iteration);
+  LOG_STANDARD("  " << CYAN << "»" << RESET << " starting " << task_iteration);
   if (std::holds_alternative<IString>(command_expr->value)) {
     // single command
     IString cmdline = std::get<IString>(command_expr->value);
@@ -728,8 +730,7 @@ int Interpreter::run_task(Task task, std::string task_iteration) {
     }
   }
 
-  LOG_STANDARD("  " << GREEN << "✓" << RESET << " finished "
-                    << task_iteration);
+  LOG_STANDARD("  " << GREEN << "✓" << RESET << " finished " << task_iteration);
   return 0;
 }
 
@@ -751,20 +752,18 @@ int Interpreter::build() {
     }
   } else if (m_ast.tasks.size() > 0) {
     task = m_ast.tasks[0];
-    IValue task_iteration_qbvalue =
-        evaluate_ast_object(m_ast.tasks[0].identifier, m_ast,
-                            {std::nullopt, std::nullopt}, state);
+    IValue task_iteration_qbvalue = evaluate_ast_object(
+        m_ast.tasks[0].identifier, m_ast, {std::nullopt, std::nullopt}, state);
     if (!std::holds_alternative<IString>(task_iteration_qbvalue.value)) {
       ErrorHandler::push_error_throw(
           std::visit(QBVisitOrigin{}, task_iteration_qbvalue.value),
           I_MULTIPLE_TASKS);
     }
-    task_iteration =
-        std::get<IString>(
-            evaluate_ast_object(m_ast.tasks[0].identifier, m_ast,
-                                {std::nullopt, std::nullopt}, state)
-                .value)
-            .toString();
+    task_iteration = std::get<IString>(evaluate_ast_object(
+                                           m_ast.tasks[0].identifier, m_ast,
+                                           {std::nullopt, std::nullopt}, state)
+                                           .value)
+                         .toString();
   } else {
     ErrorHandler::push_error_throw(InternalNode{}, I_NO_TASKS);
   }
