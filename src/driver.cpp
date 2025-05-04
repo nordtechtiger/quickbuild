@@ -90,7 +90,7 @@ void Driver::display_error_stack(std::vector<unsigned char> config) {
 }
 
 int Driver::run() {
-  LOG_STANDARD(BOLD << "[ quickbuild dev v0.7.0 ]" << RESET);
+  LOG_STANDARD(BOLD << "[ quickbuild dev v0.7.1 ]" << RESET);
 
   // config needs to be fetched out of scope so that
   // it can be read when unwinding the error stack.
